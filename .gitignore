@@ -1,0 +1,10 @@
+# latex-compilation byproducts
+*.aux
+*.fdb_latexmk
+*.log
+*.toc
+*.fls
+*.synctex.gz\
+*.bbl
+*.out
+*.bcf
