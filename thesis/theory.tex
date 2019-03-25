@@ -1,7 +1,13 @@
 % !Tex root = main.tex
 \newpage
 \section{Theory}
-Im folgenden Abschnitt sollen die Grundlagen für eine weitere Auseinandersetzung mit den Folgen von Unconscious Bias geschaffen werden. Dabei wird der Begriff des Bias diskutiert, dessen evolutionäre Vorgeschichte umrissen und Arten des Bias kategorisiert sowie besprochen.\\
+\emph{Functional dependencies}(FD) are a way of expressing ``\emph{a priori} knowledge of restrictions or constraints on permissible sets of data''\cite[p.42]{MAI83} in relational database theory. In order to give a definition of FDs, some concepts stemming from relational database theory need to be introduced beforehand.
 
-\subsection{Begriffsdiskussion}
-Der englische Begriff des \glqq Bias\grqq~lässt sich im Deutschen als \glqq Vorurteil\grqq~oder \glqq Voreingenommenheit\grqq~übersetzen. Da die Fachdiskussion vor allem im englischsprachigen Raum vorangetrieben wird, wollen wir in diesem Beitrag auch den Begriff des \glqq Bias\grqq~verwenden. Motiviert ist dies dadurch, dass obengenannte Übersetzung nämlich - wie in den folgenden Abschnitten herausgearbeitet werden soll - nicht einfach übersetzt werden kann und durch den wissenschaftlichen Diskurs bereits viel breiter besetzt ist, als der Begriff \glqq Vorurteil\grqq~es vermuten lässt. \\
+\subsection{Relational Database Theory}
+A \emph{relation scheme} $R$ is a finite set of \emph{attribute names} ${A_1, A_2, \dots, A_n}$, with each attribute name $A_i$ having a corresponding set $D_i$, $1 \leq i \leq n$, called \emph{domain} of $A_i$. Let $\boldsymbol{D} = D_1 \cup D_2 \cup \dots \cup D_n$, then a \emph{relation} $r$ on relation scheme $R$ is a finite set of mappings ${t_1, t_2, \dots, t_p}$ from $R$ to $\boldsymbol{D}$. We call those mappings \emph{tuples} under the restriction that $t(A_i) \subseteq D_i$, $1 \leq i \leq n$.\cite[p.2]{MAI83}
+
+
+\subsection{Definition of a Functional Dependency}
+Therefore, a relation $r$ on scheme $R$ with subsets $X$ and $Y$ of $R$ is considered. The relation $r$ is said to 
+\subsection{Properties of Functional Dependencies}
+
