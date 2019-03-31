@@ -1,13 +1,55 @@
 % !Tex root = main.tex
 \newpage
 \section{Theory}
-\emph{Functional dependencies}(FD) are a way of expressing ``\emph{a priori} knowledge of restrictions or constraints on permissible sets of data''\cite[p.42]{MAI83} in relational database theory. In order to give a definition of FDs, some concepts stemming from relational database theory need to be introduced beforehand.
+\emph{Functional dependencies}(FD) are a way of expressing ``\emph{a priori} knowledge of restrictions or constraints on permissible sets of data''\cite[p.42]{MAI83} in relational database theory.
+In order to give a definition of FDs, some concepts stemming from relational database theory need to be introduced beforehand.
 
 \subsection{Relational Database Theory}
-A \emph{relation scheme} $R$ is a finite set of \emph{attribute names} ${A_1, A_2, \dots, A_n}$, with each attribute name $A_i$ having a corresponding set $D_i$, $1 \leq i \leq n$, called \emph{domain} of $A_i$. Let $\boldsymbol{D} = D_1 \cup D_2 \cup \dots \cup D_n$, then a \emph{relation} $r$ on relation scheme $R$ is a finite set of mappings ${t_1, t_2, \dots, t_p}$ from $R$ to $\boldsymbol{D}$. We call those mappings \emph{tuples} under the restriction that $t(A_i) \subseteq D_i$, $1 \leq i \leq n$.\cite[p.2]{MAI83}
+A \emph{relation scheme}\footnote{also called \emph{relational schema} in literature\cite[p.21]{ABE19}} $R$ is a finite set of \emph{attribute names} $\{A_1, A_2, \dots, A_n\}$, where to each attribute name $A_i$ corresponds a set $D_i$, called \emph{domain} of $A_i$, $1 \leq i \leq n$. \\
 
+Let $\boldsymbol{D} = D_1 \cup D_2 \cup \dots \cup D_n$, then a \emph{relation} $r$ on relation scheme $R$ is a finite set of mappings $\{t_1, t_2, \dots, t_p\}$ from $R$ to $\boldsymbol{D}$:
+\begin{align}
+  &t_i: R \to \boldsymbol{D},
+\end{align}
+where we call those mappings \emph{tuples} under the constraint that \cite[p.2]{MAI83}
+\begin{align}
+  t(A_i) \subseteq D_i.
+\end{align}
 
 \subsection{Definition of a Functional Dependency}
-Therefore, a relation $r$ on scheme $R$ with subsets $X$ and $Y$ of $R$ is considered. The relation $r$ is said to 
-\subsection{Properties of Functional Dependencies}
+For giving a definition of a FD, relation $r$ on scheme $R$ with subset $X \subseteq R$ and a single attribute $A_i \in R$ are considered.
+A FD $X \to A$ is said to be \emph{valid} in $r$, if and only if
+\begin{align}\label{eq:fd-condition}
+  t_i[X] = t_j[X] \Rightarrow t_i[A] = t_j[A]
+\end{align}
+holds for all all pairs of distinct tuples $t_i,t_j \in r$.\cite[p.21]{ABE19} 
+We say that $X$ \emph{functionally determines} $A$\cite[p.43]{MAI83} and name $X$ the \emph{left side}, whilst calling $A$ the \emph{right side}.
 
+\subsection{Approximate Functional Dependencies}
+In the field of data profiling an extensive body of theory and algorithms for FD detection has been created in the past decades.
+These mainly consider FDs as defined in equation \ref{eq:fd-condition}.
+Howevever, the strict detection of FDs yields results that are solely applicable in a strictly controlled environment.
+Real-world datasets faced by data-scientists or database engineers are often \emph{noisy}.
+Entries might be spelled incorrectly and inconsistencies are to be expected. \\
+
+Here goes a nice example explaining table \ref{tab:example-afd-necessity}
+\emph{Approximate FDs (AFDs)} relax the strict definition of FDs and introduce an error-measure.  
+
+\begin{table}[h]
+	\centering
+	\begin{tabular}{lcc}
+		\toprule
+		& \multicolumn{2}{c}{Data} \\ \cmidrule(lr){2-3}
+    First name & Last name & ZIP \\
+		\midrule
+    Alice & Smith & 19139 \\
+		Pencil & 1 & big \\
+		Marker & 4 &  \\
+    Fountain Pen & 43 & green \\
+		\bottomrule
+	\end{tabular}
+	\caption{AFD example I have to work out.}
+	\label{tab:example-afd-necessity}
+\end{table}
+
+The error measure for 
