@@ -1,11 +1,16 @@
-import re
-def read_fds(result_path):
-    # Reads a metanome result-file at location result_path.
-    # Returns a dictionary with funtionally determined column as key and
-    # arrays of functionally determining column-combinations as values.
+def read_fds(fd_path):
+    """  Returns a dictionary with FDs
+
+    Functionally determined column serve as keys and arrays of functionally
+    determining column-combinations as values.
+
+    Keyword arguments:
+    fd_path -- file-path to a metanome result of a FD detection algorithm
+    """
+    import re
     fd_dict = dict()
     save_fds = False
-    with open(result_path) as f:
+    with open(fd_path) as f:
         for line in f:
             if save_fds:
                 line = re.sub('\n', '', line)
@@ -25,5 +30,110 @@ def read_fds(result_path):
 
     return fd_dict
 
-result_path = 'performance-measure/results/HyFD-1.2-SNAPSHOT.jar2019-04-24T163826_fds'
-fds = read_fds(result_path)
+def fd_imputer(df_test, impute_column, fd_dict):
+    """ Imputes a column of a dataframe using a dict of FDs.
+
+    Keyword arguments:
+    df_test -- dataframe where a column shall be imputed
+    impute_column -- column to be imputed
+    fd_dict -- dictionary of FDs with determined column as key and arrays of
+    determining column-combination as value
+    """
+
+def ml_imputer(df_train, df_test, impute_column):
+    """ Imputes a column using DataWigs SimpleImputer
+
+    Keyword arguments:
+    df_train -- dataframe containing the train set
+    df_test -- dataframe containing the test set
+    impute_column -- position (int) of column to be imputed, starting at 0
+    """
+    from datawig import SimpleImputer
+    from sklearn.metrics import f1_score
+
+    columns = list(df_train.columns)
+
+    # SimpleImputer expects dataframes to have headers
+    impute_column = str(impute_column)
+    input_columns = [str(col) for col in columns if col != impute_column]
+    df_train.columns = [str(i) for i in range(0,len(df_train.columns))]
+    df_test.columns = [str(i) for i in range(0, len(df_test.columns))]
+
+    imputer = SimpleImputer(
+        input_columns=input_columns,
+        output_column=impute_column,
+        output_path='imputer_model/'
+    )
+
+    imputer.fit(train_df=df_train)
+    predictions = imputer.predict(df_test)
+    print(predictions)
+    f1 = f1_score(predictions[impute_column], predictions[impute_column+'_imputed'])
+
+    print(classification_report(predictions[impute_column],
+                                predictions[impute_column+'_imputed']))
+
+
+def save_df_split(data_title, df, splits_path, metanome_data_path, split_ratio):
+    """ Splits and saves a dataframe to the harddrive.
+
+    Keyword arguments:
+    data_title -- a string naming the data
+    df -- a pandas data frame
+    splits_path -- file-path to folder where splits should be saved
+    split_ratios -- list of two floats <= 1, train/test set ratio, e.g. [0.8, 0.2]
+    metanome_data_path -- path to folder where metanome reads its data
+    """
+    import os
+    from datawig.utils import random_split
+
+    train_path = splits_path+'train/'
+    test_path = splits_path+'test/'
+
+    if not os.path.exists(train_path):
+        os.mkdir(train_path)
+    if not os.path.exists(test_path):
+        os.mkdir(test_path)
+
+    df_train, df_test = random_split(df, split_ratios=split_ratio)
+
+    try:
+        df.to_csv(splits_path+data_title+'.csv', header=None)
+        print('Dataset successfully written to '+splits_path+data_title)
+    except:
+        print('Encountered an error while writing dataset'+data_title+'to harddrive')
+    try:
+        df_train.to_csv(train_path+data_title+'_train.csv' , header=None)
+        print('Train set successfully written to '+train_path+data_title+'_train')
+        try:
+            os.system('cp '+train_path+data_title+'_train.csv '+metanome_data_path)
+            print('Copied successfully train-dataset to '+metanome_data_path)
+        except:
+            print('Could not copy train-set to metanome data path.')
+    except:
+        print('Encountered an error while writing '+data_title+'_train to harddrive.')
+    try:
+        df_test.to_csv(test_path+data_title+'_test.csv', header=None)
+        print('Test set successfully written to '+test_path+data_title+'_test')
+    except:
+        print('Encountered an error while writing '+data_title+'_train to harddrive.')
+
+
+import pandas as pd
+
+DATA_PATH = 'MLFD_fd_detection/backend/WEB-INF/classes/inputData/adult.csv'
+SPLITS_PATH = 'data/'
+METANOME_DATA_PATH = 'MLFD_fd_detection/backend/WEB-INF/classes/inputData/'
+FD_PATH = 'MLFD_fd_detection/results/HyFD-1.2-SNAPSHOT.jar2019-05-07T082200_fds'
+DATA_TITLE = 'adult'
+
+## split-workflow
+#df = pd.read_csv(DATA_PATH, sep=';', header=None)
+#save_df_split(DATA_TITLE, df, SPLITS_PATH, METANOME_DATA_PATH, [0.8, 0.2])
+
+## ml_imputer-workflow
+df_train = pd.read_csv(SPLITS_PATH+'test/'+DATA_TITLE+'_test.csv', header=None)
+df_test = pd.read_csv(SPLITS_PATH+'train/'+DATA_TITLE+'_train.csv', header=None)
+fds = read_fds(FD_PATH)
+
+print(ml_imputer(df_train, df_test, 5))

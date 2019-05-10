@@ -10,4 +10,8 @@
 *.bcf
 
 # metanome binaries
-performance-measure/
+performance/
+data/*
+presentation/
+MLFD_fd_detection/
+imputer_model/
