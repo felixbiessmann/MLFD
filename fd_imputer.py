@@ -125,8 +125,8 @@ FD_PATH = 'MLFD_fd_detection/results/HyFD-1.2-SNAPSHOT.jar2019-05-07T082200_fds'
 DATA_TITLE = 'adult'
 
 ## split-workflow
-#df = pd.read_csv(DATA_PATH, sep=';', header=None)
-#save_df_split(DATA_TITLE, df, SPLITS_PATH, METANOME_DATA_PATH, [0.8, 0.2])
+df = pd.read_csv(DATA_PATH, sep=';', header=None)
+save_df_split(DATA_TITLE, df, SPLITS_PATH, METANOME_DATA_PATH, [0.8, 0.2])
 
 ## ml_imputer-workflow
 df_train = pd.read_csv(SPLITS_PATH+'test/'+DATA_TITLE+'_test.csv', header=None)
