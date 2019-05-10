@@ -70,9 +70,6 @@ def ml_imputer(df_train, df_test, impute_column):
     print(predictions)
     f1 = f1_score(predictions[impute_column], predictions[impute_column+'_imputed'])
 
-    print(classification_report(predictions[impute_column],
-                                predictions[impute_column+'_imputed']))
-
 
 def save_df_split(data_title, df, splits_path, metanome_data_path, split_ratio):
     """ Splits and saves a dataframe to the harddrive.
@@ -122,7 +119,7 @@ def save_df_split(data_title, df, splits_path, metanome_data_path, split_ratio):
 import pandas as pd
 
 DATA_PATH = 'MLFD_fd_detection/backend/WEB-INF/classes/inputData/adult.csv'
-SPLITS_PATH = 'data/'
+SPLITS_PATH = 'MLFD_fd_detection/data/'
 METANOME_DATA_PATH = 'MLFD_fd_detection/backend/WEB-INF/classes/inputData/'
 FD_PATH = 'MLFD_fd_detection/results/HyFD-1.2-SNAPSHOT.jar2019-05-07T082200_fds'
 DATA_TITLE = 'adult'
