@@ -5,9 +5,9 @@
 In order to give a definition of FDs, some concepts stemming from relational database theory need to be introduced beforehand.
 
 \subsection{Relational Database Theory}
-A \emph{relation scheme}\footnote{also called \emph{relational schema} in literature\cite[p.21]{ABE19}} \boldsymbol{R} is a finite set of \emph{attribute names} $\{A_1, A_2, \dots, A_n\}$, where to each attribute name $A_i$ corresponds a set $D_i$, called \emph{domain} of $A_i$, $1 \leq i \leq n$. \\
+A \emph{relation scheme}\footnote{also called \emph{relational schema} in literature\cite[p.21]{ABE19} } $\boldsymbol{R}$ is a finite set of \emph{attribute names} $\{A_1, A_2, \dots, A_n\}$, where to each attribute name $A_i$ corresponds a set $D_i$, called \emph{domain} of $A_i$, $1 \leq i \leq n$. \\
 
-Let $\boldsymbol{D} = D_1 \cup D_2 \cup \dots \cup D_n$, then a \emph{relation} $r$ on relation scheme \boldsymbol{R} is a finite set of mappings $\{t_1, t_2, \dots, t_p\}$ from \boldsymbol{R} to $\boldsymbol{D}$:
+Let $\boldsymbol{D} = D_1 \cup D_2 \cup \dots \cup D_n$, then a \emph{relation} $r$ on relation scheme $\boldsymbol{R}$ is a finite set of mappings $\{t_1, t_2, \dots, t_p\}$ from $\boldsymbol{R}$ to $\boldsymbol{D}$:
 \begin{align}
   &t_i: \boldsymbol{R} \to \boldsymbol{D},
 \end{align}
@@ -17,7 +17,7 @@ where we call those mappings \emph{tuples} under the constraint that \cite[p.2]{
 \end{align}
 
 \subsection{Definition of a Functional Dependency}
-Consider a relation $r$ on scheme \boldsymbol{R} with subset $X \subseteq \boldsymbol{R}$ and a single attribute $A_i \in \boldsymbol{R}$.
+Consider a relation $r$ on scheme $\boldsymbol{R}$ with subset $X \subseteq \boldsymbol{R}$ and a single attribute $A_i \in \boldsymbol{R}$.
 A FD $X \to A$ is said to be \emph{valid} in $r$, if and only if
 \begin{align}\label{eq:fd-condition}
   t_i[X] = t_j[X] \Rightarrow t_i[A] = t_j[A]
@@ -58,4 +58,28 @@ To still capture meta-information, a different dependency-measure than given in 
 	\label{tab:example-afd-necessity}
 \end{table}
 
-The error measure for 
+The error measure for this is not trivial at all. While F1-measures can be established for non-categorical cases, comparing results for different data-types tricky.
+
+\subsection{FD Imputer}
+
+
+\begin{algorithm}[H]
+ \DontPrintSemicolon
+ \SetAlgoLined
+ \KwResult{Imputed column of a relational database}
+ \KwData{Relational database}
+ \BlankLine
+
+ Split relational database in test-set and train-set\;
+ Detect FDs in train-set\;
+ \For{row in test-set}{
+  Find row in train-set with equal LHS combination\;
+  \If{matching LHS combination found}{
+   impute with RHS from train-set\;
+   }
+   \If{No matching LHS combination found in train-set}{
+   impute with NaN\;
+  }
+}
+ \caption{An imputer operating on Functional Dependencies}
+\end{algorithm}

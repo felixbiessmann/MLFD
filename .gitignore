@@ -14,3 +14,7 @@ performance/
 presentation/
 MLFD_fd_detection/
 imputer_model/
+
+# python stuff
+__pycache__/
+.ipynb_checkpoints/
