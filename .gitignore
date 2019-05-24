@@ -18,3 +18,4 @@ imputer_model/
 # python stuff
 __pycache__/
 .ipynb_checkpoints/
+*.pyc
