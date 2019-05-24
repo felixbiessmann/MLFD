@@ -48,23 +48,21 @@ def select_LHS_row(impute_row, df_train, lhs, print_output=False):
     return df_train.iloc[index_of_valid_fds, :]
 
 
-def fd_imputer(df_test_row, df_train, impute_column, fd):
+def fd_imputer(df_test, df_train, impute_column, fd):
     """ Imputes a column of a dataframe using a FD.
     Returns the test-dataframe with an additional column named
     impute_column+'_imputed'.
 
     Keyword arguments:
-    df_test_row -- row of dataframe where a column shall be imputed
+    df_test -- dataframe where a column shall be imputed
     impute_column -- column to be imputed
     fd -- dictionary containing the RHS as key and a list of LHS as value
     """
     rhs = list(fd)[0]  # select the fd right hand side
     lhs = fd[rhs]  # select the fd left hand side
-    candidate_df = select_LHS_row(df_test_row, df_train, lhs)
-
-    # !!continue here
-
-    return candidate_df
+    for index, row in df_test.iterrows():
+        select_LHS_row(row, df_train, lhs, print_output=False)
+        # continue here
 
 
 def ml_imputer(df_train, df_test, impute_column):
@@ -76,7 +74,7 @@ def ml_imputer(df_train, df_test, impute_column):
     impute_column -- position (int) of column to be imputed, starting at 0
     """
     from datawig import SimpleImputer
-    from sklearn.metrics import f1_score
+    # from sklearn.metrics import f1_score
 
     columns = list(df_train.columns)
 
@@ -141,25 +139,3 @@ def save_df_split(data_title, df, splits_path, metanome_data_path,
         print('Test set successfully written to '+test_path+data_title+'_test')
     except TypeError:
         print("Something went wrong writing the splits.")
-
-
-fd = {9: [3, 4, 7, 8]}
-'''
-import pandas as pd
-
-DATA_PATH = 'MLFD_fd_detection/backend/WEB-INF/classes/inputData/adult.csv'
-SPLITS_PATH = 'MLFD_fd_detection/data/'
-METANOME_DATA_PATH = 'MLFD_fd_detection/backend/WEB-INF/classes/inputData/'
-FD_PATH = 'MLFD_fd_detection/results/HyFD-1.2-SNAPSHOT.jar2019-05-07T082200_fds'
-DATA_TITLE = 'adult'
-
-## split-workflow
-df = pd.read_csv(DATA_PATH, sep=';', header=None)
-save_df_split(DATA_TITLE, df, SPLITS_PATH, METANOME_DATA_PATH, [0.8, 0.2])
-
-## ml_imputer-workflow
-df_train = pd.read_csv(SPLITS_PATH+'test/'+DATA_TITLE+'_test.csv', header=None)
-df_test = pd.read_csv(SPLITS_PATH+'train/'+DATA_TITLE+'_train.csv', header=None)
-fds = read_fds(FD_PATH)
-
-print(ml_imputer(df_train, df_test, 5))'''
