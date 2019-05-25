@@ -32,37 +32,29 @@ def read_fds(fd_path):
     return fd_dict
 
 
-def select_LHS_row(impute_row, df_train, lhs, print_output=False):
-    """ Searches for a LHS column_combination in df_train.
-    Returns a dataframe containing all matching rows.
-
-    impute_row: row from the test-set to be imputed
-    df_train: train-set for which FDs were detected
-    lhs: list of one fd left hand side
-    """
-    df_lhs = df_train.iloc[:, lhs]  # select all lhs-cols
-    impute_row_lhs = impute_row.iloc[lhs]
-    index_of_valid_fds = df_lhs[df_lhs == impute_row_lhs].dropna().index
-    if print_output:
-        print(df_train.iloc[index_of_valid_fds, :])
-    return df_train.iloc[index_of_valid_fds, :]
-
-
-def fd_imputer(df_test, df_train, impute_column, fd):
+def fd_imputer(df_test, df_train, fd):
     """ Imputes a column of a dataframe using a FD.
-    Returns the test-dataframe with an additional column named
-    impute_column+'_imputed'.
+    Returns a dataframe with an additional column named
+    rhs+'_imputed'.
 
     Keyword arguments:
     df_test -- dataframe where a column shall be imputed
-    impute_column -- column to be imputed
+    df_train -- dataframe on which fds were detected
     fd -- dictionary containing the RHS as key and a list of LHS as value
     """
+    import pandas as pd
     rhs = list(fd)[0]  # select the fd right hand side
     lhs = fd[rhs]  # select the fd left hand side
-    for index, row in df_test.iterrows():
-        select_LHS_row(row, df_train, lhs, print_output=False)
-        # continue here
+    relevant_cols = lhs.copy()
+    relevant_cols.append(rhs)
+
+    """ reset_index() and set_index() is a hacky way to save df_test's index
+    which is normally lost due to pd.merge(). """
+    df_imputed = pd.merge(df_train.iloc[:, relevant_cols],
+                          df_test.iloc[:, :].reset_index(),
+                          on=lhs,
+                          suffixes=('_imputed', '')).set_index('index')
+    return df_imputed
 
 
 def ml_imputer(df_train, df_test, impute_column):
