@@ -35,7 +35,9 @@ def read_fds(fd_path):
 def fd_imputer(df_test, df_train, fd):
     """ Imputes a column of a dataframe using a FD.
     Returns a dataframe with an additional column named
-    rhs+'_imputed'.
+    rhs+'_imputed'. Only returns rows for which an imputation has been
+    successfully performed. The returned dataframe's index is the one
+    used by df_test.
 
     Keyword arguments:
     df_test -- dataframe where a column shall be imputed
@@ -48,13 +50,27 @@ def fd_imputer(df_test, df_train, fd):
     relevant_cols = lhs.copy()
     relevant_cols.append(rhs)
 
+    """ By dropping duplicates in the train set before merging dataframes
+    memory usage is heavily reduced"""
+    df_train_reduced = df_train.iloc[:, relevant_cols].drop_duplicates(
+        subset=relevant_cols,
+        keep='first',
+        inplace=False)
+
     """ reset_index() and set_index() is a hacky way to save df_test's index
     which is normally lost due to pd.merge(). """
-    df_imputed = pd.merge(df_train.iloc[:, relevant_cols],
-                          df_test.iloc[:, :].reset_index(),
+    df_imputed = pd.merge(df_train_reduced,
+                          df_test.iloc[:, relevant_cols].reset_index(),
                           on=lhs,
                           suffixes=('_imputed', '')).set_index('index')
-    return df_imputed
+
+    df_test_imputed = pd.merge(df_test,
+                               df_imputed.loc[:, str(rhs)+'_imputed'],
+                               left_index=True,
+                               right_index=True,
+                               how='left')
+
+    return df_test_imputed
 
 
 def ml_imputer(df_train, df_test, impute_column):

@@ -18,7 +18,9 @@ class TestFdImputer(unittest.TestCase):
             self.df_test, self.df_train, self.fd).index[0],
             0)
         self.assertEqual(fd_imputer.fd_imputer(
-            self.df_test, self.df_train, self.fd).iloc[0, 2],
+            self.df_test,
+            self.df_train,
+            self.fd).loc[:, '2_imputed'].dropna()[0],
             4)
 
 
