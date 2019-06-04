@@ -82,15 +82,14 @@ def ml_imputer(df_train, df_test, impute_column):
     impute_column -- position (int) of column to be imputed, starting at 0
     """
     from datawig import SimpleImputer
-    # from sklearn.metrics import f1_score
 
     columns = list(df_train.columns)
 
     # SimpleImputer expects dataframes to have headers
     impute_column = str(impute_column)
     input_columns = [str(col) for col in columns if col != impute_column]
-    df_train.columns = [str(i) for i in range(0, len(df_train.columns))]
-    df_test.columns = [str(i) for i in range(0, len(df_test.columns))]
+    df_train.columns = [str(i) for i in df_train.columns]
+    df_test.columns = [str(i) for i in df_test.columns]
 
     imputer = SimpleImputer(
         input_columns=input_columns,
@@ -100,9 +99,6 @@ def ml_imputer(df_train, df_test, impute_column):
 
     imputer.fit(train_df=df_train)
     predictions = imputer.predict(df_test)
-    '''f1 = f1_score(predictions[impute_column], predictions[impute_column+'_imputed'].astype(int),
-    average='weighted')
-    print(f1)'''
     return predictions
 
 
