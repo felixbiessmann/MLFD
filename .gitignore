@@ -1,3 +1,6 @@
+# vim swap
+.swp
+
 # latex-compilation byproducts
 *.aux
 *.fdb_latexmk
@@ -18,3 +21,4 @@ imputer_model/
 # python stuff
 __pycache__/
 .ipynb_checkpoints/
+*.pyc
