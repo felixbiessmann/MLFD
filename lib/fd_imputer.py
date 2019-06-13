@@ -85,7 +85,7 @@ def ml_imputer(df_train, df_test, impute_column):
 
     columns = list(df_train.columns)
 
-    # SimpleImputer expects dataframes to have headers
+    # SimpleImputer expects dataframes to have headers.
     impute_column = str(impute_column)
     input_columns = [str(col) for col in columns if col != impute_column]
     df_train.columns = [str(i) for i in df_train.columns]
@@ -97,7 +97,10 @@ def ml_imputer(df_train, df_test, impute_column):
         output_path='imputer_model/'
     )
 
-    imputer.fit(train_df=df_train)
+    # num_epochs and patience were set to increase performance.
+    # They seem to provide reasonable results on adult.csv.
+    imputer.fit(train_df=df_train, num_epochs=10, patience=3)
+
     predictions = imputer.predict(df_test)
     return predictions
 
