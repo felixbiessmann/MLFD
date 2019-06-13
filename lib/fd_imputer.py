@@ -32,37 +32,45 @@ def read_fds(fd_path):
     return fd_dict
 
 
-def select_LHS_row(impute_row, df_train, lhs, print_output=False):
-    """ Searches for a LHS column_combination in df_train.
-    Returns a dataframe containing all matching rows.
-
-    impute_row: row from the test-set to be imputed
-    df_train: train-set for which FDs were detected
-    lhs: list of one fd left hand side
-    """
-    df_lhs = df_train.iloc[:, lhs]  # select all lhs-cols
-    impute_row_lhs = impute_row.iloc[lhs]
-    index_of_valid_fds = df_lhs[df_lhs == impute_row_lhs].dropna().index
-    if print_output:
-        print(df_train.iloc[index_of_valid_fds, :])
-    return df_train.iloc[index_of_valid_fds, :]
-
-
-def fd_imputer(df_test, df_train, impute_column, fd):
+def fd_imputer(df_test, df_train, fd):
     """ Imputes a column of a dataframe using a FD.
-    Returns the test-dataframe with an additional column named
-    impute_column+'_imputed'.
+    Returns a dataframe with an additional column named
+    rhs+'_imputed'. Only returns rows for which an imputation has been
+    successfully performed. The returned dataframe's index is the one
+    used by df_test.
 
     Keyword arguments:
     df_test -- dataframe where a column shall be imputed
-    impute_column -- column to be imputed
+    df_train -- dataframe on which fds were detected
     fd -- dictionary containing the RHS as key and a list of LHS as value
     """
+    import pandas as pd
     rhs = list(fd)[0]  # select the fd right hand side
     lhs = fd[rhs]  # select the fd left hand side
-    for index, row in df_test.iterrows():
-        select_LHS_row(row, df_train, lhs, print_output=False)
-        # continue here
+    relevant_cols = lhs.copy()
+    relevant_cols.append(rhs)
+
+    """ By dropping duplicates in the train set before merging dataframes
+    memory usage is heavily reduced"""
+    df_train_reduced = df_train.iloc[:, relevant_cols].drop_duplicates(
+        subset=relevant_cols,
+        keep='first',
+        inplace=False)
+
+    """ reset_index() and set_index() is a hacky way to save df_test's index
+    which is normally lost due to pd.merge(). """
+    df_imputed = pd.merge(df_train_reduced,
+                          df_test.iloc[:, relevant_cols].reset_index(),
+                          on=lhs,
+                          suffixes=('_imputed', '')).set_index('index')
+
+    df_test_imputed = pd.merge(df_test,
+                               df_imputed.loc[:, str(rhs)+'_imputed'],
+                               left_index=True,
+                               right_index=True,
+                               how='left')
+
+    return df_test_imputed
 
 
 def ml_imputer(df_train, df_test, impute_column):
@@ -74,15 +82,14 @@ def ml_imputer(df_train, df_test, impute_column):
     impute_column -- position (int) of column to be imputed, starting at 0
     """
     from datawig import SimpleImputer
-    # from sklearn.metrics import f1_score
 
     columns = list(df_train.columns)
 
-    # SimpleImputer expects dataframes to have headers
+    # SimpleImputer expects dataframes to have headers.
     impute_column = str(impute_column)
     input_columns = [str(col) for col in columns if col != impute_column]
-    df_train.columns = [str(i) for i in range(0, len(df_train.columns))]
-    df_test.columns = [str(i) for i in range(0, len(df_test.columns))]
+    df_train.columns = [str(i) for i in df_train.columns]
+    df_test.columns = [str(i) for i in df_test.columns]
 
     imputer = SimpleImputer(
         input_columns=input_columns,
@@ -90,11 +97,11 @@ def ml_imputer(df_train, df_test, impute_column):
         output_path='imputer_model/'
     )
 
-    imputer.fit(train_df=df_train)
+    # num_epochs and patience were set to increase performance.
+    # They seem to provide reasonable results on adult.csv.
+    imputer.fit(train_df=df_train, num_epochs=10, patience=3)
+
     predictions = imputer.predict(df_test)
-    '''f1 = f1_score(predictions[impute_column], predictions[impute_column+'_imputed'].astype(int),
-    average='weighted')
-    print(f1)'''
     return predictions
 
 
