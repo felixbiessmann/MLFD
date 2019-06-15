@@ -73,7 +73,7 @@ def fd_imputer(df_test, df_train, fd):
     return df_test_imputed
 
 
-def ml_imputer(df_train, df_test, impute_column):
+def ml_imputer(df_train, df_test, impute_column, overfit=False):
     """ Imputes a column using DataWigs SimpleImputer
 
     Keyword arguments:
@@ -97,52 +97,69 @@ def ml_imputer(df_train, df_test, impute_column):
         output_path='imputer_model/'
     )
 
-    # num_epochs and patience were set to increase performance.
-    # They seem to provide reasonable results on adult.csv.
-    imputer.fit(train_df=df_train, num_epochs=10, patience=3)
+    if overfit:
+        imputer.fit(train_df=df_test, num_epochs=10, patience=3)
+    else:
+        imputer.fit(train_df=df_train, num_epochs=10, patience=3)
 
     predictions = imputer.predict(df_test)
     return predictions
 
 
-def save_df_split(data_title, df, splits_path, metanome_data_path,
-                  split_ratio):
+def save_df_split(data_title, df, splits_path, split_ratio):
     """ Splits and saves a dataframe to the harddrive.
 
     Keyword arguments:
     data_title -- a string naming the data
     df -- a pandas data frame
     splits_path -- file-path to folder where splits should be saved
-    split_ratios -- list of two floats <= 1, train/test set ratio,
-    e.g. [0.8, 0.2]
+    split_ratios -- list of three floats that are in sum <= 1,
+    train/test/validate set ratio, e.g. [0.8, 0.1, 0.1]
     metanome_data_path -- path to folder where metanome reads its data
     """
     import os
     from datawig.utils import random_split
 
-    train_path = splits_path+'train/'
-    test_path = splits_path+'test/'
+    ratio_train, ratio_validate, ratio_test = (split_ratio)
 
-    if not os.path.exists(train_path):
-        os.mkdir(train_path)
-    if not os.path.exists(test_path):
-        os.mkdir(test_path)
+    splits = {
+        'train': {'path': splits_path+'train/',
+                  'ratio': ratio_train},
+        'validate': {'path': splits_path+'validate/',
+                     'ratio': ratio_validate},
+        'test': {'path': splits_path+'test/',
+                 'ratio': ratio_test}
+    }
 
-    df_train, df_test = random_split(df, split_ratios=split_ratio)
+    for key in splits:
+        if not os.path.exists(splits[key]['path']):
+            os.mkdir(splits[key]['path'])
+
+    ratio_rest = splits['validate']['ratio'] + splits['test']['ratio']
+
+    ratios = [splits['train']['ratio'], ratio_rest]
+    splits['train']['df'], rest = random_split(df, split_ratios=ratios)
+
+    # calculate ratio_validate and ratio_test relative to ratio_rest
+    splits['test']['rel_ratio'] = splits['test']['ratio'] / ratio_rest
+    splits['validate']['rel_ratio'] = 1 - splits['test']['rel_ratio']
+    rel_ratios = [splits['test']['rel_ratio'],
+                  splits['validate']['rel_ratio']]
+
+    splits['validate']['df'], splits['test']['df'] = random_split(
+        rest, split_ratios=rel_ratios)
 
     try:
         df.to_csv(splits_path+data_title+'.csv', header=None)
-        print('Dataset successfully written to '+splits_path+data_title)
-        df_train.to_csv(train_path+data_title+'_train.csv', header=None)
-        print('Train set successfully written to ' +
-              train_path+data_title+'_train')
-        try:
-            os.system('cp '+train_path+data_title +
-                      '_train.csv '+metanome_data_path)
-            print('Copied successfully train-dataset to '+metanome_data_path)
-        except SyntaxError:
-            print('Could not copy train-set to metanome data path.')
-        df_test.to_csv(test_path+data_title+'_test.csv', header=None)
-        print('Test set successfully written to '+test_path+data_title+'_test')
+        print('Dataset successfully written to '+splits_path+data_title+'.csv')
     except TypeError:
-        print("Something went wrong writing the splits.")
+        print('Could not save dataframe to '+splits_path+data_title)
+
+    for key in splits:
+        try:
+            splits[key]['df'].to_csv(
+                splits[key]['path']+data_title+'_'+key+'.csv', header=None)
+            print(key+' set successfully written to ' +
+                  splits[key]['path']+data_title+'_'+key+'.csv')
+        except TypeError:
+            print("Something went wrong writing the splits.")
