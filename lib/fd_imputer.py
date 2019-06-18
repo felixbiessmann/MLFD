@@ -8,7 +8,7 @@ def read_fds(fd_path):
     fd_path -- file-path to a metanome result of a FD detection algorithm
     """
     import re
-    fd_dict = dict()
+    fd_dict = {}
     save_fds = False
     with open(fd_path) as f:
         for line in f:
@@ -18,13 +18,13 @@ def read_fds(fd_path):
 
                 # Convert to int and substract 1 to
                 # start indexing of columns at 0
-                splits[0] = [(int(x)-1) for x in splits[0].split(',')]
-                splits[1] = int(splits[1])-1
+                lhs = [(int(x)-1) for x in splits[0].split(',')]
+                rhs = int(splits[1])-1
 
-                if splits[1] in fd_dict:
-                    fd_dict[splits[1]].append(splits[0])
+                if rhs in fd_dict:
+                    fd_dict[rhs].append(lhs)
                 else:
-                    fd_dict[splits[1]] = [splits[0]]
+                    fd_dict[rhs] = [lhs]
 
             if line == '# RESULTS\n':  # Start saving FDs
                 save_fds = True
@@ -73,11 +73,12 @@ def fd_imputer(df_test, df_train, fd):
     return df_test_imputed
 
 
-def ml_imputer(df_train, df_test, impute_column, overfit=False):
+def ml_imputer(df_train, df_validate, df_test, impute_column):
     """ Imputes a column using DataWigs SimpleImputer
 
     Keyword arguments:
     df_train -- dataframe containing the train set
+    df_validate -- dataframe containing the validation dataset
     df_test -- dataframe containing the test set
     impute_column -- position (int) of column to be imputed, starting at 0
     """
@@ -90,6 +91,7 @@ def ml_imputer(df_train, df_test, impute_column, overfit=False):
     input_columns = [str(col) for col in columns if col != impute_column]
     df_train.columns = [str(i) for i in df_train.columns]
     df_test.columns = [str(i) for i in df_test.columns]
+    df_validate.columns = [str(i) for i in df_validate.columns]
 
     imputer = SimpleImputer(
         input_columns=input_columns,
@@ -97,25 +99,25 @@ def ml_imputer(df_train, df_test, impute_column, overfit=False):
         output_path='imputer_model/'
     )
 
-    if overfit:
-        imputer.fit(train_df=df_test, num_epochs=10, patience=3)
-    else:
-        imputer.fit(train_df=df_train, num_epochs=10, patience=3)
+    imputer.fit(train_df=df_train,
+                test_df=df_validate,
+                num_epochs=10,
+                patience=3)
 
     predictions = imputer.predict(df_test)
     return predictions
 
 
-def save_df_split(data_title, df, splits_path, split_ratio):
-    """ Splits and saves a dataframe to the harddrive.
+def df_split(data_title, df, split_ratio, splits_path=''):
+    """ Splits a dataframe into train-, validate- and test-subsets.
+    If a splits_path is provided, splits will be saved to the harddrive.
+    Returns a tuple (df_train, df_validate, df_test).
 
     Keyword arguments:
     data_title -- a string naming the data
     df -- a pandas data frame
     splits_path -- file-path to folder where splits should be saved
-    split_ratios -- list of three floats that are in sum <= 1,
-    train/test/validate set ratio, e.g. [0.8, 0.1, 0.1]
-    metanome_data_path -- path to folder where metanome reads its data
+    split_ratio -- train/test/validate set ratio, e.g. [0.8, 0.1, 0.1]
     """
     import os
     from datawig.utils import random_split
@@ -149,17 +151,25 @@ def save_df_split(data_title, df, splits_path, split_ratio):
     splits['validate']['df'], splits['test']['df'] = random_split(
         rest, split_ratios=rel_ratios)
 
-    try:
-        df.to_csv(splits_path+data_title+'.csv', header=None)
-        print('Dataset successfully written to '+splits_path+data_title+'.csv')
-    except TypeError:
-        print('Could not save dataframe to '+splits_path+data_title)
-
-    for key in splits:
+    if splits_path != '':
         try:
-            splits[key]['df'].to_csv(
-                splits[key]['path']+data_title+'_'+key+'.csv', header=None)
-            print(key+' set successfully written to ' +
-                  splits[key]['path']+data_title+'_'+key+'.csv')
+            df.to_csv(splits_path+data_title+'.csv', header=None, sep=',')
+            print('Dataset successfully written to '
+                  + splits_path+data_title +
+                  '.csv')
         except TypeError:
-            print("Something went wrong writing the splits.")
+            print('Could not save dataframe to '+splits_path+data_title)
+
+        for key in splits:
+            try:
+                splits[key]['df'].to_csv(
+                    splits[key]['path']+data_title+'_'+key+'.csv',
+                    index=False, header=False)
+                print(key+' set successfully written to ' +
+                      splits[key]['path']+data_title+'_'+key+'.csv')
+            except TypeError:
+                print("Something went wrong writing the splits.")
+
+    return(splits['train']['df'],
+           splits['validate']['df'],
+           splits['test']['df'])
