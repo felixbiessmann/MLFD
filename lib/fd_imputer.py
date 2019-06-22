@@ -14,6 +14,39 @@ def load_dataframes(splits_path, data_title, missing_value_token):
     return (dfs)
 
 
+def random_dependency_generator(columns, n=10):
+    """ Generates n random dependencies from a list of columns.
+
+    Returns a dictionary with rhs's as keys and associated with it lhs
+    combinations, representing a total of <= n dependencies.
+    Note that the returned lhs-combinations are neither randomly
+    distributed, nor are there exactly n dependencies returned.
+    The way rand_length is generated makes it more likely for short
+    lhs-combinations to be generated over long lhs-combinations.
+
+    Keyword attributes:
+    columns -- list of columns-names
+    n -- int, indicating how many dependencies shall be returned
+    """
+    import random
+    dependencies_dict = {}
+
+    for i in range(0, n):
+        # at least 2 columns are necessary to form a dependency
+        rand_length = random.randint(2, len(columns))
+        lhs = random.sample(columns, rand_length)
+        rhs = lhs.pop()
+        lhs.sort()
+
+        if rhs in dependencies_dict:
+            if lhs not in dependencies_dict[rhs]:
+                dependencies_dict[rhs].append(lhs)
+        else:
+            dependencies_dict[rhs] = [lhs]
+
+    return dependencies_dict
+
+
 def read_fds(fd_path):
     """  Returns a dictionary with FDs
 
@@ -226,10 +259,10 @@ def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
                 df_subset_test = df_test.iloc[:, relevant_cols]
 
             print(lhs, rhs)
-            df_imputed = fd_imputer.ml_imputer(df_subset_train,
-                                               df_subset_validate,
-                                               df_subset_test,
-                                               str(rhs))
+            df_imputed = ml_imputer(df_subset_train,
+                                    df_subset_validate,
+                                    df_subset_test,
+                                    str(rhs))
 
             y_pred = df_imputed.loc[:, str(rhs)+'_imputed']
             y_true = df_imputed.loc[:, str(rhs)]
@@ -315,7 +348,11 @@ def split_df(data_title, df, split_ratio, splits_path=''):
     splits['validate']['df'], splits['test']['df'] = random_split(
         rest, split_ratios=rel_ratios)
 
-    if splits_path != '':
+    if splits_path == '':
+        return(splits['train']['df'],
+               splits['validate']['df'],
+               splits['test']['df'])
+    else:
         try:
             df.to_csv(splits_path+data_title+'.csv', header=None, sep=',')
             print('Dataset successfully written to '
@@ -333,7 +370,3 @@ def split_df(data_title, df, split_ratio, splits_path=''):
                       splits[key]['path']+data_title+'_'+key+'.csv')
             except TypeError:
                 print("Something went wrong writing the splits.")
-
-    return(splits['train']['df'],
-           splits['validate']['df'],
-           splits['test']['df'])

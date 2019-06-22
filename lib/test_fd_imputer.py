@@ -1,8 +1,10 @@
+import itertools
 import unittest
 import pandas as pd
 import numpy as np
 import fd_imputer
 import tempfile
+import random
 
 
 class TestFdImputer(unittest.TestCase):
@@ -26,6 +28,42 @@ class TestFdImputer(unittest.TestCase):
 
         # real data from production for testing
         self.fds = fd_imputer.read_fds('test_data/test_fd.txt')
+
+    def test_random_dependency_generator(self):
+        n = random.randint(0, 800)
+        cols = list(range(0, 30))
+
+        dependencies = fd_imputer.random_dependency_generator(cols, n)
+        for rhs in dependencies:
+            lhs = dependencies[rhs]
+            lhs.sort()
+            no_lhs = len(lhs)
+            no_unique_lhs = len(list(lhs for lhs, _ in itertools.groupby(lhs)))
+            self.assertEqual(no_lhs, no_unique_lhs)
+        no_dependencies = sum([len(dependencies[rhs]) for rhs in dependencies])
+        self.assertTrue(no_dependencies <= n)
+
+    def test_run_ml_imputer_on_fd_set(self):
+        fd = self.fd
+        rhs = list(fd.keys())[0]
+        lhs = fd[rhs]
+        fd[rhs] = [fd[rhs]]
+
+        df_train, df_validate, df_test = (map(fd_imputer.index_as_first_column,
+                                              [self.df_train,
+                                               self.df_validate,
+                                               self.df_test]))
+        ml_imputer_results = fd_imputer.run_ml_imputer_on_fd_set(
+            df_train,
+            df_validate,
+            df_test,
+            fd,
+            self.continuous_cols)
+
+        self.assertIn(3, ml_imputer_results)
+        self.assertIn('lhs', ml_imputer_results[rhs][0])
+        self.assertEqual(ml_imputer_results[rhs][0]['lhs'], lhs)
+
 
     def test_run_fd_imputer_on_fd_set(self):
         df_train, df_validate = (map(fd_imputer.index_as_first_column,
