@@ -1,29 +1,87 @@
 % !Tex root = main.tex
 \newpage
 \section{Theory}
-\emph{Functional dependencies}(FDs) are a way of expressing ``a priori knowledge of restrictions or constraints on permissible sets of data''\cite[p.42]{MAI83} in relational database theory.
+\emph{Functional Dependencies}(FDs) are a way of expressing ``a priori knowledge of restrictions or constraints on permissible sets of data''\cite[p.42]{MAI83} in relational database theory.
 In order to give a definition of FDs, some concepts stemming from relational database theory need to be introduced beforehand.
 
 \subsection{Relational Database Theory}
-A \emph{relation scheme}\footnote{also called \emph{relational schema} in literature\cite[p.21]{ABE19} } $\boldsymbol{R}$ is a finite set of \emph{attribute names} $\{A_1, A_2, \dots, A_n\}$, where to each attribute name $A_i$ corresponds a set $D_i$, called \emph{domain} of $A_i$, $1 \leq i \leq n$. \\
+A \emph{relation scheme}\footnote{also called \emph{relational schema} in literature\cite[p.21]{ABE19} } \(\boldsymbol{R}\) is a finite set of \emph{attribute names} \(\{A_1, A_2, \dots, A_n\}\), where to each attribute name \(A_i\) corresponds a set \(D_i\), called \emph{domain} of \(A_i\), \(1 \leq i \leq n\). \\
 
-Let $\boldsymbol{D} = D_1 \cup D_2 \cup \dots \cup D_n$, then a \emph{relation} $r$ on relation scheme $\boldsymbol{R}$ is a finite set of mappings $\{t_1, t_2, \dots, t_p\}$ from $\boldsymbol{R}$ to $\boldsymbol{D}$:
-\begin{align}
+Let \(\boldsymbol{D} = D_1 \cup D_2 \cup \dots \cup D_n$, then a \emph{relation} \(r\) on relation scheme \(\boldsymbol{R}\) is a finite set of mappings \(\{t_1, t_2, \dots, t_p\}\) from \(\boldsymbol{R}\) to \(\boldsymbol{D}\):
+\begin{align*}
   &t_i: \boldsymbol{R} \to \boldsymbol{D},
-\end{align}
+\end{align*}
 where we call those mappings \emph{tuples} under the constraint that \cite[p.2]{MAI83}
-\begin{align}
-  t(A_i) \subseteq D_i.
-\end{align}
+\begin{align*}
+    t(A_i) \subseteq D_i.
+\end{align*}
+
+\subsection{Definition of a Relational Database}
+When real-world relational data is stored on a machine, it is stored in a relational database.
+Using the definition of a relation scheme \(R\), one can formally introduce databases and database schemes.
+Assuming that \(R\) is composes of two parts, \(S\) and \(\boldsymbol{K}\), we call \(S\) a set of attributes and \(\boldsymbol{K}\) a set of designated keys. To describe this circumstance, we write \(R = (S, \boldsymbol{K})\). \\
+
+We can now define a \emph{relational database scheme} \textbf{R} over \textbf{U} as a collection of relation schemes \(\{R_1, R_1, \dots, R_p\}\), where \(R_i = (S_i, \boldsymbol{K}_i)\), \(1 \leq i \leq p\),
+\begin{align*}
+    \bigcup^{p}_{i=1} S_i = \boldsymbol{U}.
+\end{align*}
+We demand that \(S_i \neq S_j\) if \(i \neq j\). \\
+
+A \emph{relational database} d on a \emph{database scheme} \textbf{R} is a collection of relations \(\{r_1, r_2, \dots, r_p \}\) such that for each relation scheme \(R = (S, \boldsymbol{K}\) in \textbf{R} there is a relation \(r\) in \(d\) such that \(r\) is a relation on \(S\) that satisfies every key in \(\boldsymbol{K}\). \cite[p.~94]{MAI83}
 
 \subsection{Definition of a Functional Dependency}
-Consider a relation $r$ on scheme $\boldsymbol{R}$ with subset $X \subseteq \boldsymbol{R}$ and a single attribute $A_i \in \boldsymbol{R}$.
-A FD $X \to A$ is said to be \emph{valid} in $r$, if and only if
-\begin{align}\label{eq:fd-condition}
-  t_i[X] = t_j[X] \Rightarrow t_i[A] = t_j[A]
+Consider a relation \(r\) on scheme \(\boldsymbol{R}\) with subset \(X \subseteq \boldsymbol{R}\) and a single attribute \(A_i \in \boldsymbol{R}\).
+A FD \(X \to A\) is said to be \emph{valid} in \(r\), if and only if
+\begin{align}
+    t_i[X] = t_j[X] \Rightarrow t_i[A] = t_j[A] \label{eq:fd-condition}
 \end{align}
-holds for all all pairs of distinct tuples $t_i,t_j \in r$.\cite[p.~21]{ABE19} 
-We say that $X$ \emph{functionally determines} $A$\cite[p.~43]{MAI83} and name $X$ the \emph{left side}, whilst calling $A$ the \emph{right side}.
+holds for all all pairs of distinct tuples \(t_i,t_j \in r\).\cite[p.~21]{ABE19}
+We say that \(X\) \emph{functionally determines} \(A\)\cite[p.~43]{MAI83} and name \(X\) the \emph{left side}, whilst calling \(A\) the \emph{right side}.
+
+
+\section{FDs in Application}
+FDs are primarily used in database normalization,\cite[p.~1]{CAR16} but also find application in the field of data profiling, where ``any dependency can be turned into a rule to check for errors in the data''.\cite[p.~9]{ABE19}
+
+\subsection{Normalization}
+When introducing the relational database model in his 1970 article ``A relational model of data for large shared data banks'', Edgar F. Codd formalized database normalization alongside.\cite{COD70}
+Describing what will be know to academia as \textbf{First normal form} (1NF), Codd states that ``problems treated [when normalizing databases] are those of \emph{data independence}'', aiming to protect future users of large databases ``from having to know how the data is organized in the machine''. \cite[p.~1]{COD70} \\
+
+Being designed for as efficient as possible query handling, databases at the time were structured hierarchically or navigationally.
+While this yielded good performance in times when computing time was very expensive, it came with a heavy cost of complexity:
+``Teams of programmers were needed to express queries to extract meaningful information. [...] Such databases [...] were absolutely inflexible[y]''.\cite{IBM03}
+
+Update-, insertion- and deletion anomalies can be prevented when normalizing a relational database. \cite[p.~75]{KLE11}
+
+\subsubsection{First Normal Form}
+A relation scheme $R$ is in \emph{First Normal Form} (1NF), if values in \(dom(A)\) are atomic for every attribute \(A\) in \(R\). \cite[p.~96]{MAI83}
+Consider table \ref{tab:first-normal-form} which represents two relational database schemes.
+It serves as an example of what is called \emph{atomic} and \emph{compound} data in the Relational Database model. \cite[p.~6]{COD90}
+
+\begin{table}[ht]
+    \centering
+    \ra{1.3}
+    \begin{tabular}{@{}rlllllll@{}}\toprule
+    & \multicolumn{3}{c}{compound scheme} & \phantom{abc}& \multicolumn{2}{c}{atomic scheme} \\
+    \cmidrule{2-3} \cmidrule{5-8}
+    & NAME & ADRESS && PRENAME & SURNAME & TOWN & STREET   \\ \midrule
+    1 & Alice Smith & Munich, Alicestr. && Alice & Smith & Alicestr. & Munich \\
+2 &  Peter Meyer & Munich, Peterstr. && Peter & Meyer & Munich & Peterstr. \\
+3 & Ana Parker & Munich, Anastr. && Ana & Parker & Munich & Anastr. \\
+4 & John Pick & Berlin, Johnstr. && John & Pick & Berlin & Johnstr. \\
+\bottomrule
+\end{tabular}
+\caption{The compound attributes ADRESS and NAME can be split into their atomic components TOWN and STREET as well as PRENAME and SURNAME, respectively.}
+\label{tab:first-normal-form}
+\end{table}
+While the compound scheme's attributes can be decomposed into several other attributes, whereas an atomic attribute cannot be further split into any meaningful smaller components.\\
+
+For a database it is said that the database in 1NF if every relation scheme in the database scheme is in 1NF.
+1NF is the very foundation of the Relational Model, where the only type of compound data is the relation.\cite[p.~6]{COD90}
+
+\subsubsection{Second Normal Form (2NF)}
+A relation scheme \(R\) is said to be in \emph{Secon Normal Form} (2NF) in respect to a set of FDs \(F\), if it is in 1NF and every nonprime attribute is fully dependent on every key of of \(R\).\cite[p.~99]{MAI83}
+
+\subsubsection{Third Normal Form (3NF)}
 
 \subsection{Approximate Functional Dependencies}
 In the field of data profiling an extensive body of theory and algorithms for FD detection has been created in the past decades.\cite{PAP15}
@@ -35,27 +93,28 @@ Inconsistencies are to be expected.
 Thus, functionally dependent column-combinations might not be detected as such. This may result in misleading insights when searching for FDs. \\
 
 To illustrate this, table \ref{tab:example-afd-necessity} shows an example of noisy data.
-The potential FD \textbf{Town} $\to$ \textbf{ZIP} is not captured by the definition given in equation \ref{eq:fd-condition}.
+The potential FD \textbf{Town} \(\to\) \textbf{ZIP} is not captured by the definition given in equation \ref{eq:fd-condition}.
 Due to a type-error, the potential FD is invalidated.
 To still capture meta-information, a different dependency-measure than given in equation \ref{eq:fd-condition} is needed. \\
 
 \emph{Approximate FDs} (AFDs), sometimes called \emph{Relaxed FDs}, improve the applicability of FDs, ``in that they relax one or more constraints of the canonical FDs''\cite[p.~1]{CAR16}. While there are AFDs introducing general error measures, others are defined ``aiming to solve specific problems''\cite[p.~1]{CAR16}. \\
 
-\begin{table}[h]
-	\centering
-	\begin{tabular}{lcccc}
-		\toprule
-		& \multicolumn{3}{c}{Data} \\ \cmidrule(lr){2-5}
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lcccc}
+        \toprule
+        & \multicolumn{3}{c}{Data} \\ \cmidrule(lr){2-5}
         ID & First name & Last name & Town & ZIP \\
-		\midrule
+        \midrule
         1 & Alice & Smith & Munich & 19139 \\
-        2 & Peter & Meyer & Muinch & 19139 \\
-        3 & Hannah & Parker & Munich & 19139  \\
+        \textbf{2} & \textbf{Peter}& \textbf{Meyer} &
+        \textbf{Muinch} & \textbf{19139} \\
+        3 & Ana & Parker & Munich & 19139  \\
         4 & John & Pick & Berlin & 12055 \\
-		\bottomrule
-	\end{tabular}
-    \caption{Even though the ZIP-Code functionally determines the town (and vice-versa) in the given example, a FD is not capable of displaying this fact. A type-error in the dataset with ID 2 invalidates the functional dependency.}
-	\label{tab:example-afd-necessity}
+        \bottomrule
+    \end{tabular}
+    \caption{Even though column ZIP functionally determines column Town (and vice-versa), a FD is not capable of displaying this fact - a typing error invalidates the FD.}
+    \label{tab:example-afd-necessity}
 \end{table}
 
 The error measure for this is not trivial at all. While F1-measures can be established for non-categorical cases, comparing results for different data-types tricky.
@@ -64,22 +123,22 @@ The error measure for this is not trivial at all. While F1-measures can be estab
 
 
 \begin{algorithm}[H]
- \DontPrintSemicolon
- \SetAlgoLined
- \KwResult{Imputed column of a relational database}
- \KwData{Relational database}
- \BlankLine
+    \DontPrintSemicolon
+    \SetAlgoLined
+    \KwResult{Imputed column of a relational database}
+    \KwData{Relational database}
+    \BlankLine
 
- Split relational database in test-set and train-set\;
- Detect FDs in train-set\;
- \For{row in test-set}{
-  Find row in train-set with equal LHS combination\;
-  \If{matching LHS combination found}{
-   impute with RHS from train-set\;
-   }
-   \If{No matching LHS combination found in train-set}{
-   impute with NaN\;
-  }
-}
- \caption{An imputer operating on Functional Dependencies}
+    Split relational database in test-set and train-set\;
+    Detect FDs in train-set\;
+    \For{row in test-set}{
+        Find row in train-set with equal LHS combination\;
+        \If{matching LHS combination found}{
+            impute with RHS from train-set\;
+        }
+        \If{No matching LHS combination found in train-set}{
+            impute with NaN\;
+        }
+    }
+    \caption{An imputer operating on Functional Dependencies}
 \end{algorithm}

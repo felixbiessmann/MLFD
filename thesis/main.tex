@@ -23,7 +23,7 @@
 %\usepackage[nottoc]{tocbibind}
 \usepackage{caption}
 \usepackage[automark]{scrlayer-scrpage}
-\usepackage[	
+\usepackage[
     linktocpage=true,
     bookmarksopenlevel=section]
     {hyperref}
@@ -39,13 +39,8 @@ bibencoding=utf8, natbib=true
 %++++++++++++++++++++++++++++++++++++++++++++++++++++++++++%
 \geometry{a4paper,left=30mm,right=30mm, top=3cm, bottom=3cm}
 \graphicspath{{images/}} 					% legt globalen Pfad für 													Bilddateien fest
-%\makeatletter 										% Legt fest das 														nach Chapter nicht 
-%\renewcommand{\chapter}{\par			%
-%  \thispagestyle{\chapterpagestyle}%
-%  \global\@topnum\z@							%
-%  \@afterindentfalse							%
-%  \secdef\@chapter\@schapter			%
-%}																	%
+%\makeatletter 										% Legt fest das 														nach Chapter nicht
+\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
 %\makeatother											% zwingend 													einen neue seite anfängt
 % BEGIN Settings for code-listings
 
@@ -53,7 +48,7 @@ bibencoding=utf8, natbib=true
 \definecolor{mygray}{rgb}{0.5,0.5,0.5}
 \definecolor{mymauve}{rgb}{0.58,0,0.82}
 
-\lstset{ 
+\lstset{
   backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}; should come as last argument
   basicstyle=\footnotesize,        % the size of the fonts that are used for the code
   breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
@@ -82,7 +77,7 @@ bibencoding=utf8, natbib=true
 }
 % END Settings for code-listings
 \sloppy
-\setlength{\parindent}{0mm} 
+\setlength{\parindent}{0mm}
 %+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++%
 \pagestyle{scrheadings}
 \ihead[]{\today} %- linke Kopfzeile
@@ -101,8 +96,8 @@ bibencoding=utf8, natbib=true
 \newpage
 \newpage
 \tableofcontents
-\newpage    
-\pagenumbering{arabic} 
+\newpage
+\pagenumbering{arabic}
 \linespread{1.5}
 \input{introduction.tex}
 \input{theory.tex}

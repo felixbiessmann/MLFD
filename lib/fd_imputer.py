@@ -1,3 +1,10 @@
+def check_split_for_duplicates(list_of_dfs):
+    """ Prints the number of duplicate entries in a list of dfs """
+    import pandas as pd
+    no_duplicates = sum(pd.concat(list_of_dfs).duplicated())
+    print(str(no_duplicates) + ' duplicates detected in the splittings.')
+
+
 def load_dataframes(splits_path, data_title, missing_value_token):
     import pandas as pd
     import numpy as np
@@ -208,29 +215,33 @@ def ml_imputer(df_train, df_validate, df_test, impute_column):
     impute_column -- position (int) of column to be imputed, starting at 0
     """
     from datawig import SimpleImputer
+    import tempfile
 
     columns = list(df_train.columns)
 
-    # SimpleImputer expects dataframes to have headers.
+    # SimpleImputer expects dataframes to have stringtype headers.
     impute_column = str(impute_column)
-    input_columns = [str(col) for col in columns if col != impute_column]
+
+    input_columns = [str(col) for col in columns if str(col) != impute_column]
+
     df_train.columns = [str(i) for i in df_train.columns]
     df_test.columns = [str(i) for i in df_test.columns]
     df_validate.columns = [str(i) for i in df_validate.columns]
 
-    imputer = SimpleImputer(
-        input_columns=input_columns,
-        output_column=impute_column,
-        output_path='imputer_model/'
-    )
+    with tempfile.TemporaryDirectory() as tempdirname:
+        imputer = SimpleImputer(
+            input_columns=input_columns,
+            output_column=impute_column,
+            output_path=tempdirname
+        )
 
-    imputer.fit(train_df=df_train,
-                test_df=df_validate,
-                num_epochs=10,
-                patience=3)
+        imputer.fit(train_df=df_train,
+                    test_df=df_validate,
+                    num_epochs=10,
+                    patience=3)
 
-    predictions = imputer.predict(df_test)
-    return predictions
+        predictions = imputer.predict(df_test)
+        return (predictions)
 
 
 def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
@@ -244,8 +255,9 @@ def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
         for lhs in fds[rhs]:
             relevant_cols = lhs + [rhs]
 
-            # make sure that datawig doesn't perform regression on categories
-            # also, select relevant subsets
+            # cast rhs to str to make sure that datawig doesn't perform
+            # regression on categories. Also, select relevant subsets to
+            # improve performance.
             if rhs not in continuous_cols:
                 df_subset_train = df_train.iloc[:, relevant_cols].astype(
                     {rhs: str})
@@ -354,7 +366,8 @@ def split_df(data_title, df, split_ratio, splits_path=''):
                splits['test']['df'])
     else:
         try:
-            df.to_csv(splits_path+data_title+'.csv', header=None, sep=',')
+            df.to_csv(splits_path+data_title+'.csv', header=None, sep=',',
+                      index=False)
             print('Dataset successfully written to '
                   + splits_path+data_title +
                   '.csv')
@@ -364,8 +377,8 @@ def split_df(data_title, df, split_ratio, splits_path=''):
         for key in splits:
             try:
                 splits[key]['df'].to_csv(
-                    splits[key]['path']+data_title+'_'+key+'.csv',
-                    index=False, header=False)
+                    splits[key]['path']+data_title+'_'+key+'.csv', sep=',',
+                    index=False, header=None)
                 print(key+' set successfully written to ' +
                       splits[key]['path']+data_title+'_'+key+'.csv')
             except TypeError:
