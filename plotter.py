@@ -89,8 +89,8 @@ def plot_f1_ml_overfit(data):
     ax.set(title=data.title+'.csv Classification Performance',
            xlabel='f1-score ML imputer overfitted',
            ylabel='f1-score ML imputer',
-           xlim=[0.5, 1.1],
-           ylim=[0.5, 1.1])
+           xlim=[-0.1, 1.1],
+           ylim=[-0.1, 1.1])
     return (fig, ax)
 
 
@@ -116,8 +116,8 @@ def plot_f1_random_ml_overfit(data):
     ax.set(title=data.title+'.csv Classification Performance on Random FDs',
            xlabel='f1-score ML imputer overfitted',
            ylabel='f1-score ML imputer',
-           xlim=[0.5, 1.1],
-           ylim=[0.5, 1.1])
+           xlim=[-0.1, 1.1],
+           ylim=[-0.1, 1.1])
     return (fig, ax)
 
 
@@ -172,7 +172,7 @@ def plot_f1_ml_fd(data):
 
     ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), lw=pu.plot_lw(),
             color='red')
-    ax.scatter(f1_fd, f1_ml, alpha=0.5)
+    ax.scatter(f1_fd, f1_ml)
 
     ax.set(title=data.title+'.csv Classification Performance',
            xlabel='f1-score FD imputer',
