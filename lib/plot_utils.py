@@ -60,9 +60,9 @@ def figure_setup():
     params = {'text.usetex': True,
               'figure.dpi': 200,
               'font.size': font_size(),
-              'font.serif': [],
-              'font.sans-serif': [],
-              'font.monospace': [],
+              'font.serif': 'Palatino',
+              'font.sans-serif': 'Palatino',
+              'font.monospace': 'Palatino',
               'axes.labelsize': label_size(),
               'axes.titlesize': font_size(),
               'axes.linewidth': axis_lw(),
@@ -70,6 +70,7 @@ def figure_setup():
               'xtick.labelsize': ticks_size(),
               'ytick.labelsize': ticks_size(),
               'font.family': 'serif'}
+    plt.style.use('seaborn-whitegrid')
     plt.rcParams.update(params)
 
 
