@@ -70,7 +70,7 @@ def figure_setup():
               'xtick.labelsize': ticks_size(),
               'ytick.labelsize': ticks_size(),
               'font.family': 'serif'}
-    plt.style.use('seaborn-whitegrid')
+    plt.style.use('thesis')
     plt.rcParams.update(params)
 
 

@@ -84,8 +84,8 @@ def plot_f1_ml_overfit(data):
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
 
-    ax.scatter(f1_overfit, f1_ml)
-    ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='red')
+    ax.scatter(f1_overfit, f1_ml, c='C0')
+    ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='C1')
     ax.set(title=data.title+'.csv Classification Performance',
            xlabel='f1-score ML imputer overfitted',
            ylabel='f1-score ML imputer',
@@ -111,8 +111,8 @@ def plot_f1_random_ml_overfit(data):
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
 
-    ax.scatter(f1_overfit, f1_ml)
-    ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='red')
+    ax.scatter(f1_overfit, f1_ml, c='C0')
+    ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='C1')
     ax.set(title=data.title+'.csv Classification Performance on Random FDs',
            xlabel='f1-score ML imputer overfitted',
            ylabel='f1-score ML imputer',
@@ -144,8 +144,8 @@ def plot_mse_ml_fd(data):
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
 
-    ax.scatter(list(range(0, len(rel_mse))), rel_mse)
-    ax.plot(np.linspace(-2, len(rel_mse)), [1]*50, c='red')
+    ax.scatter(list(range(0, len(rel_mse))), rel_mse, c='C0')
+    ax.plot(np.linspace(-2, len(rel_mse)), [1]*50, c='C1')
 
     ax.set(title=data.title+'.csv Mean Squared Error of two imputers',
            xlabel='FD LHS combination',
@@ -170,9 +170,9 @@ def plot_f1_ml_fd(data):
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
 
+    ax.scatter(f1_fd, f1_ml, color='C0')
     ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), lw=pu.plot_lw(),
-            color='red')
-    ax.scatter(f1_fd, f1_ml)
+            color='C1')
 
     ax.set(title=data.title+'.csv Classification Performance',
            xlabel='f1-score FD imputer',

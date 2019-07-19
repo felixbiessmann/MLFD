@@ -182,3 +182,55 @@ The error measure for this is not trivial at all. While F1-measures can be estab
     }
     \caption{An imputer operating on Functional Dependencies}
 \end{algorithm}
+
+
+\newpage
+\subsection{Machine Learning Classifier Theory}
+Once a model has been trained and validated, it needs to be tested in order to determine whether or not overfitting occured during training.
+This is usually done by measuring the model's performance on a separate dataset not involved in training, the so called test set.
+Performance is measured according to the type of data and the kind of model involved.
+To visualize the performance of a classifier, a \emph{confusion matrix} can be created.
+\begin{figure}[h]
+     \centering
+     \includegraphics[width=.8\textwidth]{images/binary-confusion-matrix.pdf}
+     \caption{Illustration of a binary confusion matrix.
+     ``Prediction'' refers to predicted labels \(y_{pred}(x)\) while ``Ground Truth'' represents the actual labels \(y(x)\).}
+     \label{fig:confusion-matrix}
+ \end{figure}
+
+The simplest case of a confusion matrix can be created when measuring the performance of a binary classifier.
+Figure~\ref{fig:confusion-matrix} shows such a binary confusion matrix.
+Here, ``Ground Truth'' describes the label \(y(x)\) of some data point \(x \in X_{test}\), where \(y \in \{0, 1\}\).
+``Prediction'' identifies the predicted labels \(y_{pred}(x)\) that the model generates after is has been executed on the test-set \(X_{test}\) prior unknown.
+
+Whenever \(y_{pred}(x) = y(x),~x \in X_{test}\) holds, the predicted label can be assigned to be either a \emph{True Positive} (TP) or a \emph{True Negative} (TN).
+The opposite holds as well, such that a falsely predicted label will be either a \emph{False Negative} (FN) or a \emph{False Positive} (FP).
+
+Using the classification introduced by the binary confusion matrix, all predicted labels \(y_{pred}\) are assigned to the four sets TP, TN, FN and FP.
+Using these four sets, we can introduce measures for classification performance.
+
+\emph{Precision} is a measure that depicts the proportion of correctly classified positive samples to the total amount of samples classified as positive.\cite[p.4]{THA18} This can be algebarically expressed as
+\begin{align}
+    Precision = \frac{|TP|}{|TP| + |FP|}
+\end{align}
+where \(|A|\) is the cardinality of a set \(A\). Precision measures how many elements classified as positive are True Positives.
+
+\emph{Recall}, also called \emph{sensitivity}, represents the
+share of positive correctly classified samples to the total amount of positive samples.\cite[p.3]{THA18} This can be formalized as
+\begin{align}
+    Recall = \frac{|TP|}{|TP| + |FN|}
+\end{align}
+Recall measures how many of the positive labelled elements were actually selected.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=.5\textwidth]{images/precision-and-recall}
+    \caption{Each predicted label \(y_{x}\) is represented by a circle. Hollow circles stand for negative labels and full circles for positive lables.  }
+    \label{fig:precision-and-recall}
+\end{figure}
+
+The harmonic mean of precision and recall is called \emph{F1-measure}:
+\begin{align}
+F1-measure = {\left(\frac{Recall^{-1} + Precision^{-1}}{2}\right)}^{-1}
+\end{align}
+
