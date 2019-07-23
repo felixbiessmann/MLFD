@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import argparse
 import matplotlib.pyplot as plt
@@ -29,7 +30,7 @@ def main(args):
     and set an -f flag with appropriate value as used in the conditional
     statement below.
 
-    Pass -s img_name.eps to export the graph to data.figures_path.
+    Pass -s img_name.pdf to export the graph to data.figures_path.
     """
     def no_valid_figure():
         print("No valid figure. Please select one from this list:")
@@ -44,7 +45,8 @@ def main(args):
 
     datasets = {'adult': ADULT,
                 'nursery': NURSERY}
-    plots = {'f1_ml_fd': plot_f1_ml_fd,
+    plots = {'f1_fd_imputer': plot_f1_fd_imputer,
+             'f1_ml_fd': plot_f1_ml_fd,
              'mse_ml_fd': plot_mse_ml_fd,
              'f1_ml_overfit': plot_f1_ml_overfit,
              'f1_random_overfit': plot_f1_random_ml_overfit}
@@ -66,6 +68,27 @@ def main(args):
     else:
         plot_fun()
 
+def plot_f1_fd_imputer(data):
+    fd_imputer_res = load_result(data.results_path+'fd_imputer_results.p')
+    res_bigger_zero = [(y['f1'], ''.join(str(y['lhs']))+r'$\rightarrow$'+str(rhs)) for rhs in fd_imputer_res
+            for y in fd_imputer_res[rhs] if ('f1' in y.keys())]
+
+    res_bigger_zero.sort(reverse=True)
+
+    f1_fd, lhs_names = zip(*res_bigger_zero[0:10])
+    f1_fd = sorted(list(f1_fd))
+    lhs_names = sorted(list(lhs_names))
+
+    pu.figure_setup()
+    fig_size = pu.get_fig_size(10, 6)
+    fig = plt.figure(figsize=list(fig_size))
+    ax = fig.add_subplot(111)
+    ax.barh(lhs_names, f1_fd)
+
+    ax.set(title='FD Imputer performance on '+data.title,
+           xlabel='F1 score',
+           xlim=[0.0, 1.0])
+    return(fig, ax)
 
 def plot_f1_ml_overfit(data):
     ml_imputer_res = load_result(
@@ -183,11 +206,13 @@ def plot_f1_ml_fd(data):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+            description=main.__doc__)
+            #'Script for plotting figures for Philipp Jung\'s Master Thesis.\n')
 
-    parser.add_argument('-s', '--save')
-    parser.add_argument('-f', '--figure')
-    parser.add_argument('-d', '--data')
+    parser.add_argument('-s', '--save', help='specify filename and -type to save the figure.')
+    parser.add_argument('-f', '--figure', help='specify a figure to plot.')
+    parser.add_argument('-d', '--data', help='specify a dataset to use results of.')
 
     args = parser.parse_args()
     main(args)

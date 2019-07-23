@@ -14,17 +14,28 @@ class TestFdImputer(unittest.TestCase):
         self.data_title = 'test'
         self.continuous_cols = [0, 1, 2, 3]
         self.fd = {3: [2, 1]}
-        self.df_validate = pd.DataFrame([[1, 2, 3], [4, 5, 9], [5, 7, 12]],
-                                        columns=[0, 1, 2])
-        self.df_train = pd.DataFrame([[1, 2, 4], [7, 8, 15], [11, 13, 24],
+        self.df_train = pd.DataFrame([[1, 2, 3], [7, 8, 15], [11, 13, 24],
                                       [np.nan, np.nan, np.nan]],
                                      columns=[0, 1, 2])
+        self.df_validate = pd.DataFrame([[1, 2, 3], [4, 5, 9], [5, 7, 12]],
+                                        columns=[0, 1, 2])
         self.df_test = pd.DataFrame([[8, 9, 17], [10, 10, 20], [20, 30, 50]],
                                     columns=[0, 1, 2])
         self.test_df = pd.concat([self.df_train,
                                   self.df_validate,
                                   self.df_test],
                                  ignore_index=True)
+
+        # distance to A, decimal code for ASCII characters, character as str
+        self.mixed_type_train = pd.DataFrame([[0.0, 65, 'A'], [1.0, 66, 'B'],
+                                              [2.0, 67, 'C'], [5.0, 70, 'F'],
+                                              [7.0, 72, 'H'], [8.0, 73, 'I']],
+                                             columns=[0, 1, 2])
+        self.mixed_type_validate = pd.DataFrame([[3.0, 68, 'D'], [4.0, 69, 'E'],
+                                                 [6.0, 71, 'G'], [7.5, 72, 'H'],
+                                                 [-3.2, 73, 'I']],
+                                              columns=[0, 1, 2])
+        self.mixed_type_fd = {2: [3]}
 
         # real data from production for testing
         self.fds = fd_imputer.read_fds('test_data/test_fd.txt')
@@ -138,6 +149,10 @@ class TestFdImputer(unittest.TestCase):
         df_train, df_validate = (map(fd_imputer.index_as_first_column,
                                      [self.df_train,
                                       self.df_validate]))
+        df_mixed_train, df_mixed_validate = (map(fd_imputer.index_as_first_column,
+                                         [self.mixed_type_train,
+                                          self.mixed_type_validate]))
+
         self.assertEqual(fd_imputer.fd_imputer(
             df_train, df_validate, self.fd).index[0],
             0)
@@ -145,7 +160,12 @@ class TestFdImputer(unittest.TestCase):
             df_train,
             df_validate,
             self.fd).loc[:, '3_imputed'].dropna()[0],
-            4)
+            3)
+        self.assertEqual(len(fd_imputer.fd_imputer(df_mixed_train,
+            df_mixed_validate,
+            self.mixed_type_fd).loc[:, '2_imputed'].dropna()),
+            2)
+
 
 
 if __name__ == '__main__':

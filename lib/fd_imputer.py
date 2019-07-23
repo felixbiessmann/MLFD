@@ -101,8 +101,8 @@ def fd_imputer(df_train, df_validate, fd):
         fd -- dictionary containing the RHS as key and a list of LHS as value
     """
     import pandas as pd
-    rhs = list(fd)[0]  # select the fd right hand side
-    lhs = fd[rhs]  # select the fd left hand side
+    rhs = list(fd)[0]
+    lhs = fd[rhs]
     relevant_cols = lhs.copy()
     relevant_cols.append(rhs)
 
@@ -113,8 +113,8 @@ def fd_imputer(df_train, df_validate, fd):
         keep='first',
         inplace=False)
 
-    """ reset_index() and set_index() is a hacky way to save df_test's index
-    which is normally lost due to pd.merge(). """
+    """ reset_index() and set_index() is a way to preserver df_test's index
+    which is normally lost due to pd.merge()."""
     df_imputed = pd.merge(df_train_reduced,
                           df_validate.iloc[:, relevant_cols].reset_index(),
                           on=lhs,

@@ -1,5 +1,4 @@
-\documentclass[a4paper,headsepline,bibliography=totoc]
-							{scrartcl}
+\documentclass[a4paper,headsepline,bibliography=totoc]{scrartcl}
 \usepackage[english]{babel}
 \usepackage{graphicx}
 \usepackage{svg}
@@ -17,11 +16,12 @@
 \usepackage{multicol}
 \usepackage{xcolor}
 \usepackage{parskip}
-\usepackage[ruled,vlined,linesnumbered]{algorithm2e} % pseudocode layout
-\usepackage{booktabs} % beautiful tables
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}  % pseudocode layout
+\usepackage{booktabs}  % beautiful tables
 \usepackage{url}
-\usepackage[section]{placeins} 		% 	Paket für erweiterte 													Positionierung von 													Gleitobjekten, Gleitobjekte 										dürfen Abschnitt nicht verlassen
-%\usepackage[nottoc]{tocbibind}
+\usepackage[section]{placeins}  % Paket für erweiterte Positionierung von Gleitobjekten,
+%Gleitobjekte dürfen Abschnitt nicht verlassen
+% \usepackage[nottoc]{tocbibind}
 \usepackage{caption}
 \usepackage[automark]{scrlayer-scrpage}
 \usepackage[
@@ -56,11 +56,10 @@ bibencoding=utf8, natbib=true
 \addbibresource{Bib.bib} % <---
 %++++++++++++++++++++++++++++++++++++++++++++++++++++++++++%
 \geometry{a4paper,left=30mm,right=30mm, top=3cm, bottom=3cm}
-\graphicspath{{images/}} 					% legt globalen Pfad für 													Bilddateien fest
-%\makeatletter 										% Legt fest das 														nach Chapter nicht
-\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
-%\makeatother											% zwingend 													einen neue seite anfängt
+\graphicspath{{images/}}% legt globalen Pfad für Bilddateien fest
+%\makeatletter % Nach Chapter fängt nicht zwingend neue seite an
 
+\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
 \sloppy
 \setlength{\parindent}{0mm}
 %+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++%

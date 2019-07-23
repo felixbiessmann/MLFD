@@ -119,9 +119,10 @@ For a database it is said that the database in 1NF if every relation scheme in t
 1NF is the very foundation of the Relational Model, where the only type of compound data is the relation.\cite[p.~6]{COD90}
 
 \subsubsection{Second Normal Form (2NF)}
-A relation scheme \(R\) is said to be in \emph{Secon Normal Form} (2NF) in respect to a set of FDs \(F\), if it is in 1NF and every nonprime attribute is fully dependent on every key of of \(R\).\cite[p.~99]{MAI83}
+A relation scheme \(R\) is said to be in \emph{second normal form} (2NF) in respect to a set of FDs \(F\), if it is in 1NF and every nonprime attribute is fully dependent on every key of of \(R\).\cite[p.~99]{MAI83} This definition can be extended for databases: A database scheme \textbf{R} is in second normal form with respect to \(F\) if every relation scheme \(R\) in \textbf{R} is in 2NF with respect to \(F\).
 
 \subsubsection{Third Normal Form (3NF)}
+
 
 \subsection{Approximate Functional Dependencies}
 In the field of data profiling an extensive body of theory and algorithms for FD detection has been created in the past decades.\cite{PAP15}
@@ -160,27 +161,28 @@ To still capture meta-information, a different dependency-measure than given in 
 The error measure for this is not trivial at all. While F1-measures can be established for non-categorical cases, comparing results for different data-types tricky.
 
 \subsection{FD Imputer}
-
-
+The FD Imputer imputes the column of a table of a relational database.
+Empirical Risk Minimization strategies are used to do this.
+The table is first split in train-set and validation-set.
+Then, FDs are detected on the train-set using HyFD.\cite{PAP16}
+Having identified all FDs on the train-set, FD Imputer can impute values of any right-hand side of a particular FD:
+This is done by executing an SQL join clause.
+FD imputer performs an inner join on all left-hand side columns, joining train-set and validation-set.
+A second left join clause concatenates the original validation-set with the column of imputed tuples stemming from the first join.
 \begin{algorithm}[H]
     \DontPrintSemicolon
     \SetAlgoLined
-    \KwResult{Imputed column of a relational database}
-    \KwData{Relational database}
+    \KwResult{Validation-subset of a relational database table with an additional column containing imputed tuples}
+    \KwData{Relational database table}
     \BlankLine
 
-    Split relational database in test-set and train-set\;
+    Split relational database table into train-set and validation-set\;
     Detect FDs in train-set\;
-    \For{row in test-set}{
-        Find row in train-set with equal LHS combination\;
-        \If{matching LHS combination found}{
-            impute with RHS from train-set\;
-        }
-        \If{No matching LHS combination found in train-set}{
-            impute with NaN\;
-        }
-    }
-    \caption{An imputer operating on Functional Dependencies}
+    ALTER TABLE train-set DROP COLUMN not in lhs\;
+    imputed-set = SELECT lhs FROM train-set INNER JOIN validation-set ON lhs\;
+    imputed-validation-set = SELECT imputed-column FROM imputed-set LEFT JOIN validation-set\;
+    return imputed-validation-set\;
+    \caption{FD Imputer}
 \end{algorithm}
 
 
