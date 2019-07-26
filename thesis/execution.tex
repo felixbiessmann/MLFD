@@ -13,26 +13,73 @@ The FD Imputer
 \subsubsection{Overfitting the ML Imputer}
 
 \subsection{Comparing ML Imputer with FD Imputer}
-When comparing the ML Imputer to the FD Imputer, it is necessary to explain the scope of such an comparison.
-Due to the definition of a FD, the FD Imputer cannot approximate numerical values.
-It allways assumes data to be classifiable.
-Meanwhile, the ML Imputer is able to perform regression, predicting a continuous label for a given input.
+As discussed in the previous section, ML Imputer and FD imputer differ fundamentally in the way they function.
+When comparing the two, metrics need to be computed bearing those differences in mind.
 
-The measure chosen to compare imputation performance on columns containing numeric values is the \emph{mean squared error} (MSE).
-To compare classification performance, the F1-measure was chosen.
+The measure chosen to compare imputation performance on columns containing continuous numeric values is the \emph{mean squared error} (MSE).
+FD Imputer cannot approximate numerical values.
+Due to the nature of the definition of a FD, Data is always assumed to be classifiable.
+Meanwhile, ML Imputer is able to perform regression, predicting a continuous label for a given input with an uncertainty.
 
+Naturally, this circumstance leads to a far superior performance of ML Imputer when imputing continuous labels.
+FD Imputer usually doesn't find any values on the train set to impute with and cannot return a meaningful result.
+Taking the above into account, rows that aren't imputed by FD Imputer are not considered when computing a performance measure on columns containing continuous values.
+
+To compare classification performance, the F1-measure is chosen.
 
 \subsection{Classification Performance}
-ML Imputer and FD Imputer were compared on two datasets, Adult\footnote{\url{https://archive.ics.uci.edu/ml/datasets/adult}} and Nursery\footnote{\url{https://archive.ics.uci.edu/ml/datasets/nursery}}.
+ML Imputer and FD Imputer were compared on two established Machine Learning datasets, Adult\footnote{\url{https://archive.ics.uci.edu/ml/datasets/adult}} and Nursery\footnote{\url{https://archive.ics.uci.edu/ml/datasets/nursery}}.
+Adult's scheme is not normalized.
+The table contains 70-something FDs.
+In contrast to this, the Nursery dataset is strongly normalized.
+It contains a mere 9 FDs, 8 of which are between the scheme's key and each attribute, respectively.
 
-Figure~\ref{fig:f1_ml_fd_adult} compares the F1-scores of both ML Imputer and FD Imputer on the Adult dataset.
-One can observe that for most FDs, the ML Imputer performs better than the FD Imputer.
+The complementary nature of these two datasets enables the observation of imputer performance in function of the degree of normalization.
+
+\subsection{FD Imputer Performance}
+FD Imputer is run for every FD found on a train subset of Adult and Nursery, respectively.
+Figure~\ref{fig:f1_fd_adult} shows the performance of FD Imputer on columns containing classifiable data.
+\begin{figure}[h]
+     \centering
+     \includegraphics[width=.8\textwidth]{../figures/adult/f1_fd_imputer_adult.pdf}
+     \caption{F1 score of the 10 most performant FDs when imputing values on a validation set.}
+     \label{fig:f1_fd_adult}
+ \end{figure}
+The two top performing FDs have a perfect F1 score of 1 each.
+An explanation for this can be found when analyzing the content of columns 4 and 5.
+Column 4 contains information about the highest educational level achieved.
+
+There are 16 different categories of educational level defined.
+Each category is assigned an integer in a range from 0 to 15.
+This integer is the content of column 5.
+Thus, the relation between column 4 and column 5 can be modeled by a bijective function between the domains of each attribute.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrrr}
+        \toprule
+        & & \multicolumn{2}{c}{Performance} &  \\ \cmidrule(lr{.25em}){2-5}
+        Dataset & F1\textsubscript{mean} & F1\textsubscript{max} & F1\textsubscript{min} & \(|\text{F1} = 0|\)\\
+        \midrule
+        adult & 0.0669 & 1.0000 & 0.0000 & 10 \\
+        nursery & 0.0000 & 0.0000 & 0.0000 & 10 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Performance of the FD Imputer.}\label{tab:fd-imputer-performance}
+\end{table}
+Other FDs lead to F1 scores \(< 0.2\), yielding substantially worse results than the top two FDs.
+It can be derived that only the two top-performing FDs hold in a general case.
+If unseen data is added to the dataset, it can thus safely be assumed that these two FDs still hold.
+
 \begin{figure}[h]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/adult/f1_ml_fd_adult}
      \caption{The figure compares the f1-score of the FD Imputer compared to the f1-score of the ML Imputer. Each point represents one FD.}
      \label{fig:f1_ml_fd_adult}
  \end{figure}
+
+Figure~\ref{fig:f1_ml_fd_adult} compares the F1-scores of both ML Imputer and FD Imputer on the Adult dataset.
+One can observe that for most FDs, the ML Imputer performs better than the FD Imputer.
 FD Imputer performance and ML Imputer performance seem to be proportional.
 If the ML imputer's F1-score is lower than 0.7, the FD Imputer's F1-score for the same FD is 0.
 However, for FD's where the ML Imputer scores are larger than 0.7, the FD Imputer scores better than 0.0.
