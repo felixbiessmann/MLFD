@@ -6,6 +6,17 @@ def check_split_for_duplicates(list_of_dfs):
 
 
 def load_dataframes(splits_path, data_title, missing_value_token):
+    """ Loads train, validate, test splits from a directory.
+    The data's missing values, which are represented in the data by
+    missing_value_token, are deleted.
+
+    Argument Keywords:
+    splits_path -- path where subdirectories with splits are located
+    data_title -- name of the dataset and it's associated splits
+    missing_value_token -- specifies how missing values are represented
+    in the dataset
+    """
+
     import pandas as pd
     import numpy as np
     df_train = pd.read_csv(splits_path+'train/' +
@@ -17,6 +28,7 @@ def load_dataframes(splits_path, data_title, missing_value_token):
 
     dfs = [df_train, df_validate, df_test]
     dfs = [df.replace(missing_value_token, np.nan) for df in dfs]
+    dfs = [df.dropna(axis=0) for df in dfs]  # drop rows with nans
 
     return (dfs)
 
@@ -129,7 +141,8 @@ def fd_imputer(df_train, df_validate, fd):
     return df_validate_imputed
 
 
-def run_fd_imputer_on_fd_set(df_train, df_validate, fds, continuous_cols=[]):
+def run_fd_imputer_on_fd_set(df_train, df_validate, fds,
+                             continuous_cols=[], debug=False):
     """ Runs fd_imputer for every fd contained in a dictionary on a split df.
 
     Executes fd_imputer() for every fd in fds. df_train and df_split should be
@@ -143,6 +156,8 @@ def run_fd_imputer_on_fd_set(df_train, df_validate, fds, continuous_cols=[]):
         the same origin df as df_train
         fds -- a dictionary with an fd's possible rhs as values and a list of
         lhs-combinations as value of fds[rhs].
+        debug -- boolean. If True, return a list of imputed dataframes instead
+        of dictionary with metrics
 
     Returns:
     A dictionary consisting of rhs's as keys with associated performance
@@ -150,9 +165,10 @@ def run_fd_imputer_on_fd_set(df_train, df_validate, fds, continuous_cols=[]):
     f1-measure for classifiable data and the mean squared error as well as
     the number of unsucessful imputations for continuous data.
     """
-    from sklearn import metrics
     fd_imputer_results = {}
 
+    if debug:
+        list_of_imputed_dfs = []
     for rhs in fds:
         rhs_results = []
 
@@ -161,58 +177,87 @@ def run_fd_imputer_on_fd_set(df_train, df_validate, fds, continuous_cols=[]):
             print(fd)
 
             df_fd_imputed = fd_imputer(df_train, df_validate, fd)
-
-            # make sure that value for missing data is of same type as
-            # row to be imputed to avoid mix of labels and continuous numbers
-            if isinstance(df_fd_imputed.iloc[0, rhs], str):
-                df_fd_imputed = df_fd_imputed.fillna('no value')
-                y_pred = df_fd_imputed.loc[:, str(rhs)+'_imputed']
-                y_true = df_fd_imputed.loc[:, rhs]
-            else:
-                df_imputed_col = df_fd_imputed.loc[:, str(rhs)+'_imputed']
-                nan_result_selector = df_imputed_col.isna()
-                nans = nan_result_selector.sum()
-
-                # ignore nans to compute MSE
-                y_pred = df_fd_imputed.loc[~nan_result_selector,
-                                           str(rhs)+'_imputed']
-                y_true = df_fd_imputed.loc[~nan_result_selector,
-                                           rhs]
-
-            if rhs in continuous_cols:
-                mse = ''
-
-                if len(y_pred) > 0:
-                    mse = metrics.mean_squared_error(y_true, y_pred)
-
-                result = {'nans': nans, 'lhs': lhs, 'mse': mse}
-            else:
-                result = {
-                    'lhs': lhs,
-                    'f1': metrics.f1_score(y_true,
-                                           y_pred,
-                                           average='weighted'),
-                    'recall': metrics.recall_score(y_true,
-                                                   y_pred,
-                                                   average='weighted'),
-                    'precision': metrics.precision_score(y_true,
-                                                         y_pred,
-                                                         average='weighted')
-                }
+            result = get_performance(df_fd_imputed, str(rhs), lhs,
+                                     continuous_cols)
             rhs_results.append(result)
+            if debug:
+                list_of_imputed_dfs.append(df_fd_imputed)
+
         fd_imputer_results[rhs] = rhs_results
 
-    return fd_imputer_results
+    if debug:
+        return list_of_imputed_dfs
+    else:
+        return fd_imputer_results
+
+
+def get_performance(df_imputed, rhs: str, lhs: list, continuous_cols: list):
+    """ Create a dictionary containing metrics to measure the perfor-
+    mance of a classifier. If the classified column contains continuous
+    values, return a dictionary with keys {'nans', 'lhs', 'mse'}.
+    'mse' is the mean squared error. If the classified column contains
+    discrete values, return a dictionary with keys {'lhs', 'f1', 'recall',
+    'precision'}.
+
+    Keyword arguments:
+    df_imputer -- dataframe. Column names are expected to be strings.
+    One column needs to be called rhs, another one rhs+'_imputed'.
+    rhs -- string, name of the column that has been imputed
+    lhs -- list of strings, lhs of the FD
+    continuous_cols -- list of strings, names of columns containing
+    continuous values
+    """
+    from sklearn import metrics
+
+    # turn everything into strings to facilitate df selection
+    rhs = str(rhs)
+    lhs = list(map(str, lhs))
+    df_imputed.columns = list(map(str, df_imputed.columns))
+    continuous_cols = list(map(str, continuous_cols))
+
+    if rhs in continuous_cols:  # ignore NaNs, count them
+        result_selector = df_imputed.loc[:, rhs+'_imputed'].isna()
+        y_true = df_imputed.loc[~result_selector, rhs]
+        y_pred = df_imputed.loc[~result_selector, rhs+'_imputed']
+        no_nans = result_selector.sum()
+    else:  # include NaNs, adjust dtype
+        if isinstance(df_imputed.loc[0, rhs], str):
+            df_imputed = df_imputed.fillna('no value')
+        else:
+            df_imputed = df_imputed.fillna(123456789)
+        y_true = df_imputed.loc[:, rhs]
+        y_pred = df_imputed.loc[:, rhs+'_imputed']
+
+    if rhs in continuous_cols:
+        mse = ''
+        if len(y_pred) > 0:
+            mse = metrics.mean_squared_error(y_true, y_pred)
+
+        result = {'nans': no_nans, 'lhs': lhs, 'mse': mse}
+    else:
+        result = {
+            'lhs': lhs,
+            'f1': metrics.f1_score(y_true,
+                                   y_pred,
+                                   average='weighted'),
+            'recall': metrics.recall_score(y_true,
+                                           y_pred,
+                                           average='weighted'),
+            'precision': metrics.precision_score(y_true,
+                                                 y_pred,
+                                                 average='weighted')
+        }
+    return result
 
 
 def ml_imputer(df_train, df_validate, df_test, impute_column):
     """ Imputes a column using DataWigs SimpleImputer
 
     Keyword arguments:
-    df_train -- dataframe containing the train set
-    df_validate -- dataframe containing the validation dataset
-    df_test -- dataframe containing the test set
-    impute_column -- position (int) of column to be imputed, starting at 0
+    df_train - - dataframe containing the train set
+    df_validate - - dataframe containing the validation dataset
+    df_test - - dataframe containing the test set
+    impute_column - - position(int) of column to be imputed, starting at 0
     """
     from datawig import SimpleImputer
     import tempfile
@@ -248,7 +293,6 @@ def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
                              continuous_cols=[]):
     """ This needs documentation
     """
-    from sklearn import metrics
     ml_imputer_results = {}
     for rhs in fds:
         rhs_results = []
@@ -276,27 +320,7 @@ def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
                                     df_subset_test,
                                     str(rhs))
 
-            y_pred = df_imputed.loc[:, str(rhs)+'_imputed']
-            y_true = df_imputed.loc[:, str(rhs)]
-
-            if rhs in continuous_cols:
-                result = {
-                    'lhs': lhs,
-                    'mse': metrics.mean_squared_error(y_true, y_pred)
-                }
-            else:
-                result = {
-                    'lhs': lhs,
-                    'f1': metrics.f1_score(y_true,
-                                           y_pred,
-                                           average='weighted'),
-                    'recall': metrics.recall_score(y_true,
-                                                   y_pred,
-                                                   average='weighted'),
-                    'precision': metrics.precision_score(y_true,
-                                                         y_pred,
-                                                         average='weighted')
-                }
+            result = get_performance(df_imputed, rhs, lhs, continuous_cols)
             rhs_results.append(result)
         ml_imputer_results[rhs] = rhs_results
     return ml_imputer_results
@@ -309,17 +333,17 @@ def index_as_first_column(df):
 
 
 def split_df(data_title, df, split_ratio, splits_path=''):
-    """ Splits a dataframe into train-, validate- and test-subsets.
+    """ Splits a dataframe into train-, validate - and test-subsets.
     If a splits_path is provided, splits will be saved to the harddrive.
 
-    Returns a tuple (df_train, df_validate, df_test) if the splits_path
+    Returns a tuple(df_train, df_validate, df_test) if the splits_path
     is an empty string.
 
     Keyword arguments:
-    data_title -- a string naming the data
-    df -- a pandas data frame
-    splits_path -- file-path to folder where splits should be saved
-    split_ratio -- train/test/validate set ratio, e.g. [0.8, 0.1, 0.1]
+    data_title - - a string naming the data
+    df - - a pandas data frame
+    splits_path - - file-path to folder where splits should be saved
+    split_ratio - - train/test/validate set ratio, e.g. [0.8, 0.1, 0.1]
     """
     import os
     from datawig.utils import random_split

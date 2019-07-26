@@ -30,7 +30,7 @@ def generate_random_fds(data, n=10, save=True):
     if sure == 'y':
         df_train, df_validate, df_test = fd.load_dataframes(data.splits_path,
                                                             data.title,
-                                                            np.nan)
+                                                            'noValueSetHere123156456')
         rand_fds = fd.random_dependency_generator(
             list(df_test.columns), n)
         pickle.dump(rand_fds, open(data.random_fd_path, "wb"))
@@ -40,7 +40,7 @@ def generate_random_fds(data, n=10, save=True):
 def compute_rand_overfit_ml_imputer(data, no_dependencies=10, save=False):
     df_train, df_validate, df_test = fd.load_dataframes(data.splits_path,
                                                         data.title,
-                                                        np.nan)
+                                                        'noValueSetHere123156456')
     df_overfit_train = pd.concat([df_train, df_validate])
     fd.check_split_for_duplicates([df_overfit_train, df_test])
 
@@ -64,7 +64,7 @@ def compute_rand_overfit_ml_imputer(data, no_dependencies=10, save=False):
 def compute_random_ml_imputer(data, no_dependencies=10, save=False):
     df_train, df_validate, df_test = fd.load_dataframes(data.splits_path,
                                                         data.title,
-                                                        np.nan)
+                                                        'noValueSetHere123156456')
     fd.check_split_for_duplicates([df_train, df_validate, df_test])
     random_dep = pickle.load(open(data.random_fd_path, 'rb'))
 
@@ -86,7 +86,7 @@ def compute_random_ml_imputer(data, no_dependencies=10, save=False):
 def compute_overfit_ml_imputer(data, save=False):
     df_train, df_validate, df_test = fd.load_dataframes(data.splits_path,
                                                         data.title,
-                                                        np.nan)
+                                                        'noValueSetHere123156456')
     df_overfit_train = pd.concat([df_train, df_validate])
     fd.check_split_for_duplicates([df_overfit_train, df_test])
     fds = fd.read_fds(data.fd_path)
@@ -108,7 +108,7 @@ def compute_overfit_ml_imputer(data, save=False):
 def compute_ml_imputer(data, save=False):
     df_train, df_validate, df_test = fd.load_dataframes(data.splits_path,
                                                         data.title,
-                                                        np.nan)
+                                                        'noValueSetHere123156456')
     fd.check_split_for_duplicates([df_train, df_validate, df_test])
     fds = fd.read_fds(data.fd_path)
 
@@ -136,7 +136,7 @@ def compute_fd_imputer(data, save=False):
     """
     df_train, df_validate, df_test = fd.load_dataframes(data.splits_path,
                                                         data.title,
-                                                        np.nan)
+                                                        'noValueSetHere123156456')
     fd.check_split_for_duplicates([df_train, df_validate, df_test])
     fds = fd.read_fds(data.fd_path)
     print(fds)

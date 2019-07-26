@@ -68,16 +68,19 @@ def main(args):
     else:
         plot_fun()
 
+
 def plot_f1_fd_imputer(data):
     fd_imputer_res = load_result(data.results_path+'fd_imputer_results.p')
-    res_bigger_zero = [(y['f1'], ''.join(str(y['lhs']))+r'$\rightarrow$'+str(rhs)) for rhs in fd_imputer_res
-            for y in fd_imputer_res[rhs] if ('f1' in y.keys())]
+    res_bigger_zero = [(y['f1'],
+                        ''.join(str(y['lhs'])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(rhs))
+                       for rhs in fd_imputer_res
+                       for y in fd_imputer_res[rhs]
+                       if ('f1' in y.keys())]
 
-    res_bigger_zero.sort(reverse=True)
+    res_bigger_zero.sort()
+    print(res_bigger_zero)
 
-    f1_fd, lhs_names = zip(*res_bigger_zero[0:10])
-    f1_fd = sorted(list(f1_fd))
-    lhs_names = sorted(list(lhs_names))
+    f1_fd, lhs_names = zip(*res_bigger_zero[-10:])
 
     pu.figure_setup()
     fig_size = pu.get_fig_size(10, 6)
@@ -90,11 +93,12 @@ def plot_f1_fd_imputer(data):
            xlim=[0.0, 1.0])
     return(fig, ax)
 
+
 def plot_f1_ml_overfit(data):
     ml_imputer_res = load_result(
-            data.results_path+"ml_imputer_results.p")
+        data.results_path+"ml_imputer_results.p")
     overf_ml_imputer_res = load_result(
-            data.results_path+"overfitted_ml_results.p")
+        data.results_path+"overfitted_ml_results.p")
 
     f1_ml = [y['f1'] for x in ml_imputer_res for y in ml_imputer_res[x]
              if 'f1' in y.keys()]
@@ -146,9 +150,9 @@ def plot_f1_random_ml_overfit(data):
 
 def plot_mse_ml_fd(data):
     fd_imputer_results = load_result(
-            data.results_path+"fd_imputer_results.p")
+        data.results_path+"fd_imputer_results.p")
     ml_imputer_results = load_result(
-            data.results_path+"ml_imputer_results.p")
+        data.results_path+"ml_imputer_results.p")
 
     mse_fd = [y['mse'] for x in fd_imputer_results
               for y in fd_imputer_results[x] if 'mse' in y.keys()]
@@ -179,9 +183,9 @@ def plot_mse_ml_fd(data):
 
 def plot_f1_ml_fd(data):
     fd_imputer_results = load_result(
-            data.results_path+"fd_imputer_results.p")
+        data.results_path+"fd_imputer_results.p")
     ml_imputer_results = load_result(
-            data.results_path+"ml_imputer_results.p")
+        data.results_path+"ml_imputer_results.p")
 
     f1_fd = [y['f1'] for x in fd_imputer_results
              for y in fd_imputer_results[x] if 'f1' in y.keys()]
@@ -207,12 +211,14 @@ def plot_f1_ml_fd(data):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-            description=main.__doc__)
-            #'Script for plotting figures for Philipp Jung\'s Master Thesis.\n')
+        description=main.__doc__)
+    # 'Script for plotting figures for Philipp Jung\'s Master Thesis.\n')
 
-    parser.add_argument('-s', '--save', help='specify filename and -type to save the figure.')
+    parser.add_argument(
+        '-s', '--save', help='specify filename and -type to save the figure.')
     parser.add_argument('-f', '--figure', help='specify a figure to plot.')
-    parser.add_argument('-d', '--data', help='specify a dataset to use results of.')
+    parser.add_argument(
+        '-d', '--data', help='specify a dataset to use results of.')
 
     args = parser.parse_args()
     main(args)
