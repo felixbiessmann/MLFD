@@ -46,6 +46,7 @@ def main(args):
     datasets = {'adult': ADULT,
                 'nursery': NURSERY}
     plots = {'f1_fd_imputer': plot_f1_fd_imputer,
+             'f1_ml_imputer': plot_f1_ml_imputer,
              'f1_ml_fd': plot_f1_ml_fd,
              'mse_ml_fd': plot_mse_ml_fd,
              'f1_ml_overfit': plot_f1_ml_overfit,
@@ -88,7 +89,32 @@ def plot_f1_fd_imputer(data):
     ax = fig.add_subplot(111)
     ax.barh(lhs_names, f1_fd)
 
-    ax.set(title='FD Imputer performance on '+data.title,
+    ax.set(title='ML Imputer performance on '+data.title,
+           xlabel='F1 score',
+           xlim=[0.0, 1.0])
+    return(fig, ax)
+
+
+def plot_f1_ml_imputer(data):
+    ml_imputer_res = load_result(data.results_path+'ml_imputer_results.p')
+    res_bigger_zero = [(y['f1'],
+                        ''.join(str(y['lhs'])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(rhs))
+                       for rhs in ml_imputer_res
+                       for y in ml_imputer_res[rhs]
+                       if ('f1' in y.keys())]
+
+    res_bigger_zero.sort()
+    print(res_bigger_zero)
+
+    f1_fd, lhs_names = zip(*res_bigger_zero[-10:])
+
+    pu.figure_setup()
+    fig_size = pu.get_fig_size(10, 6)
+    fig = plt.figure(figsize=list(fig_size))
+    ax = fig.add_subplot(111)
+    ax.barh(lhs_names, f1_fd)
+
+    ax.set(title='ML Imputer performance on '+data.title,
            xlabel='F1 score',
            xlim=[0.0, 1.0])
     return(fig, ax)
