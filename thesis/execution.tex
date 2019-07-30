@@ -53,20 +53,20 @@ The last column named ``\# (F1 = 0)'' provides the number of FDs that scored a F
 The results displayed in table~\ref{tab:fd-imputer-performance} show how strongly the FD Imputer's performance depends on the dataset considered.
 On a dataset as normalized as nursery, FD Imputer cannot leverage FDs to impute unknown entries.
 
-\subsection{ML Imputer}
-ML Imputer is run with the same set of FDs as FD Imputer.
+\subsection{Datawig Imputer}
+Datawig Imputer is run with the same set of FDs as FD Imputer.
 The 10 best performing FDs' F1 scores are displayed in figure~\ref{fig:f1_ml_adult}.
 \begin{figure}[h]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/adult/f1_ml_imputer_adult.pdf}
-     \caption{The figure compares the f1-score of the FD Imputer compared to the f1-score of the ML Imputer. Each point represents one FD.}
+     \caption{The figure compares the f1-score of the FD Imputer compared to the f1-score of the Datawig Imputer. Each point represents one FD.}
      \label{fig:f1_ml_adult}
  \end{figure}
-The two top scoring FDs are the same for FD Imputer and ML Imputer.
+The two top scoring FDs are the same for FD Imputer and Datawig Imputer.
 The third most performant FD is a relation between row ID and nationality.
-Since there is no appearent dependency between row ID and nationality, it is safe to assume that ML Imputer always guesses the most frequent nationality, US-American, for no matter what row ID.
+Since there is no appearent dependency between row ID and nationality, it is safe to assume that Datawig Imputer always guesses the most frequent nationality, US-American, for no matter what row ID.
 
-This shows that ML Imputer is capable of learning Conditional Dependencies.
+This shows that Datawig Imputer is capable of learning Conditional Dependencies.
 
 \begin{table}[ht]
     \centering
@@ -80,36 +80,41 @@ This shows that ML Imputer is capable of learning Conditional Dependencies.
         nursery & 11 & 11 & 0.4531 & 0.9915 & 0.1138 & 0 \\
         \bottomrule
     \end{tabular}
-    \caption{Performance of the ML Imputer.}\label{tab:ml-imputer-performance}
+    \caption{Performance of the Datawig Imputer.}\label{tab:ml-imputer-performance}
 \end{table}
 
-\subsection{Overfitting the ML Imputer}
+Table~\ref{tab:ml-imputer-performance} shows a generally higher performance of Datawig Imputer compared to FD Imputer.
+There are no FDs for which Datawig Imputer scores 0.
+This can be explained by to Datawig Imputer's behavior of always returning some imputation value, even if certainty is very low.
+This is contrasted by FD Imputer, which frequently returns no imputation value at all.
 
-\subsection{Comparing ML Imputer with FD Imputer}
-As discussed in the previous section, ML Imputer and FD imputer differ fundamentally in the way they function.
+\subsection{Overfitting the Datawig Imputer}
+
+\subsection{Comparing Datawig Imputer with FD Imputer}
+As discussed in the previous section, Datawig Imputer and FD imputer differ fundamentally in the way they function.
 When comparing the two, metrics need to be computed bearing those differences in mind.
 
 FD Imputer cannot approximate numerical values.
 Due to the nature of the definition of a FD, Data is always assumed to be classifiable.
-Meanwhile, ML Imputer is able to perform regression, predicting a continuous label for a given input with an uncertainty.
+Meanwhile, Datawig Imputer is able to perform regression, predicting a continuous label for a given input with an uncertainty.
 
-Naturally, this circumstance leads to a far superior performance of ML Imputer when imputing continuous labels.
+Naturally, this circumstance leads to a far superior performance of Datawig Imputer when imputing continuous labels.
 FD Imputer usually doesn't find any values on the train set to impute with and cannot return a meaningful result.
 Taking the above into account, rows that aren't imputed by FD Imputer are not considered when computing a performance measure on columns containing continuous values.
 
 \begin{figure}[h]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/adult/f1_ml_fd_adult}
-     \caption{The figure compares the f1-score of the FD Imputer compared to the f1-score of the ML Imputer. Each point represents one FD.}
+     \caption{The figure compares the f1-score of the FD Imputer compared to the f1-score of the Datawig Imputer. Each point represents one FD.}
      \label{fig:f1_ml_fd_adult}
  \end{figure}
 
-Figure~\ref{fig:f1_ml_fd_adult} compares the F1-scores of both ML Imputer and FD Imputer on the Adult dataset.
-One can observe that for most FDs, the ML Imputer performs better than the FD Imputer.
-FD Imputer performance and ML Imputer performance seem to be proportional.
+Figure~\ref{fig:f1_ml_fd_adult} compares the F1-scores of both Datawig Imputer and FD Imputer on the Adult dataset.
+One can observe that for most FDs, the Datawig Imputer performs better than the FD Imputer.
+FD Imputer performance and Datawig Imputer performance seem to be proportional.
 If the ML imputer's F1-score is lower than 0.7, the FD Imputer's F1-score for the same FD is 0.
-However, for FD's where the ML Imputer scores are larger than 0.7, the FD Imputer scores better than 0.0.
-Interestingly, there are two FDs for which the FD Imputer performs equally good or better than the ML Imputer.
+However, for FD's where the Datawig Imputer scores are larger than 0.7, the FD Imputer scores better than 0.0.
+Interestingly, there are two FDs for which the FD Imputer performs equally good or better than the Datawig Imputer.
 
 The same comparison as
  \begin{figure}[h]
@@ -120,7 +125,7 @@ The same comparison as
 \end{figure}
 
 \subsection{Classification Performance}
-ML Imputer and FD Imputer were compared on two established Machine Learning datasets, Adult\footnote{\url{https://archive.ics.uci.edu/ml/datasets/adult}} and Nursery\footnote{\url{https://archive.ics.uci.edu/ml/datasets/nursery}}.
+Datawig Imputer and FD Imputer were compared on two established Machine Learning datasets, Adult\footnote{\url{https://archive.ics.uci.edu/ml/datasets/adult}} and Nursery\footnote{\url{https://archive.ics.uci.edu/ml/datasets/nursery}}.
 Adult's scheme is not normalized.
 The table contains 70-something FDs.
 In contrast to this, the Nursery dataset is strongly normalized.

@@ -236,3 +236,20 @@ The harmonic mean of precision and recall is called \emph{F1-measure}:
 F1-measure = {\left(\frac{Recall^{-1} + Precision^{-1}}{2}\right)}^{-1}
 \end{align}
 
+\subsection{Datawig Imputer}
+Datawig Imputer is an imputation method based on \emph{supervised learning}.
+In supervised learning, observations are a set of tuples \( \{\left(\mathbold{x}_1, y_1\right),\left(\mathbold{x}_2, y_2\right), \dots \} \).
+We call \( \mathbold{x}_i \in \mathbb{F}\) \emph{feature-vector} in a \emph{feature-space} \( \mathbb{F} \subseteq \mathbb{R}^{n} \) and \( y_i \in S \) \emph{output-attributes} or \emph{labels}.\cite[p.19]{DUD00}
+
+Datawig Imputer solves a classification problem.
+A function
+\begin{align}
+    f: \mathbb{F} \rightarrow S
+\end{align}
+is being approximated, where \( \mathbb{F} \) is the feature-space and \( S = \{a_1, a_2, \dots, a_M \} \) is a set of attributes.
+
+Datawig Imputer assumes that the column to be imputed, the so-called \emph{label comumn}, contains data that can be transform to obtain attributes \( a_1, \dots, a_M \).\cite[p.2]{BIE18}
+All columns on a database table that are \emph{not} the label column are called \emph{feature columns}.
+These feature columns are what Datawig Imputer will transform to obtain feature-vectors.
+
+
