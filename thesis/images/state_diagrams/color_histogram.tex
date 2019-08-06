@@ -1,0 +1,18 @@
+\documentclass[preview]{standalone}
+\usepackage{array}
+
+% Used for displaying hashtables and arrays
+\newenvironment{hashtable}[1][]
+  {\begin{tabular}[#1]{
+     @{}
+     > {\small} r <{\normalsize~\rlap{\fbox{\strut~~}}$~~\rightarrow$~}
+     @{} l @{}}}
+  {\end{tabular}}
+
+\begin{document}
+\begin{hashtable}
+    0 & \texttt{blue} \\
+    1 & \texttt{red} \\
+    2 &  \texttt{yellow} \\
+\end{hashtable}
+\end{document}

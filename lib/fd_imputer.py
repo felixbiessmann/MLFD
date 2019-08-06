@@ -1,8 +1,9 @@
 def check_split_for_duplicates(list_of_dfs):
-    """ Prints the number of duplicate entries in a list of dfs """
+    """ Prints and returns number of duplicate entries in a list of dfs """
     import pandas as pd
     no_duplicates = sum(pd.concat(list_of_dfs).duplicated())
     print(str(no_duplicates) + ' duplicates detected in the splittings.')
+    return no_duplicates
 
 
 def load_dataframes(splits_path, data_title, missing_value_token):

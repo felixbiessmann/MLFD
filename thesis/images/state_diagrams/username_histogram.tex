@@ -1,0 +1,32 @@
+\documentclass[preview]{standalone}
+\usepackage{array}
+
+% Used for displaying hashtables and arrays
+\newenvironment{hashtable}[1][]
+  {\begin{tabular}[#1]{
+     @{}
+     > {\small} r <{\normalsize~\rlap{\fbox{\strut~~}}$~~\rightarrow$~}
+     @{} l @{}}}
+  {\end{tabular}}
+
+\begin{document}
+\begin{hashtable}
+    0 & \texttt{I} \\
+    1 & \texttt{t} \\
+    2 & \texttt{a} \\
+    3 & \texttt{l} \\
+    4 & \texttt{y} \\
+    5 & \texttt{P} \\
+    6 & \texttt{e} \\
+    7 & \texttt{A} \\
+    8 & \texttt{s} \\
+    9 & \texttt{i} \\
+    10 & \texttt{o} \\
+    11 & \texttt{u} \\
+    12 & \texttt{p} \\
+    13 & \texttt{r} \\
+    14 & \texttt{m} \\
+    15 & \texttt{6} \\
+    16 & \texttt{3}
+\end{hashtable}
+\end{document}

@@ -59,7 +59,7 @@ We say that \(X\) \emph{functionally determines} \(A\)\cite[p.~43]{MAI83} and na
     \begin{tabular}{rlllr}
         \toprule
         & \multicolumn{3}{c}{left hand side} & \multicolumn{1}{c}{right hand side} \\ \cmidrule(lr{.25em}){1-4} \cmidrule(l{4.75em}){4-5}
-        ID & FIRST NAME & LAST NAME & TOWN & ZIP \\
+        \textsc{Id} & \textsc{Prename} & \textsc{Surname} & \textsc{Town} & \textsc{Zip} \\
         \midrule
         1 & Alice & Smith & Munich & 19139 \\
         2 & Peter& Meyer & Munich & 19139 \\
@@ -72,13 +72,13 @@ We say that \(X\) \emph{functionally determines} \(A\)\cite[p.~43]{MAI83} and na
 \end{table}
 
 Considering table~\ref{tab:fd-example}, one can see that every tuple in the \emph{left hand side} subset of the relation uniquely determines the \emph{right hand side}.
-For the given example we say that ID, FIRST NAME, LAST NAME, TOWN \emph{functionally determines} ZIP, or \{ID, FIRST NAME, LAST NAME, TOWN\} \( \rightarrow \) ZIP.~\cite[p.~43]{MAI83}
+For the given example we say that \textsc{Id}, \textsc{Prenameame}, \textsc{Surname}, \textsc{Town} \emph{functionally determines} \textsc{Zip}, or \{\textsc{Id}, \textsc{Prename}, \textsc{Surname}, \textsc{Town}\} \( \rightarrow \) \textsc{Zip}.~\cite[p.~43]{MAI83}
 
 If inspected closely, one can discover even more FDs in table~\ref{tab:fd-example}.
-For example, TOWN~\( \rightarrow \)~ZIP and ID~\( \rightarrow \)~ZIP.
-Since TOWN and ID are subsets of \{ID,~FIRST~NAME,~LAST~NAME,~TOWN\}, we call \{ID,~FIRST~NAME,~LAST~NAME,~TOWN\} \emph{non-minimal}.
+For example, \textsc{Town}~\( \rightarrow \)~\textsc{Zip} and \textsc{Id}~\( \rightarrow \)~\textsc{Zip}.
+Since \textsc{Town} and \textsc{Id} are subsets of \{\textsc{Id},~\textsc{Prename},~\textsc{Surname},~\textsc{Town}\}, we call \{\textsc{Id},~\textsc{Prename},~\textsc{Surname},~\textsc{Town}\} \emph{non-minimal}.
 A FD X~\( \rightarrow \)~A is \emph{minimal}, if no subset of X functionally determines A.~\cite[p.~2]{PAP15}
-Thus, ID~\( \rightarrow \)~ZIP and TOWN~\( \rightarrow \)~ZIP are \emph{minimal FDs}.
+Thus, \textsc{Id}~\( \rightarrow \)~\textsc{Zip} and \textsc{Town}~\( \rightarrow \)~\textsc{Zip} are \emph{minimal FDs}.
 
 \section{FDs in Application}
 FDs are primarily used in database normalization,\cite[p.~1]{CAR16} but also find application in the field of data profiling, where ``any dependency can be turned into a rule to check for errors in the data''.\cite[p.~9]{ABE19}
@@ -102,16 +102,16 @@ It serves as an example of what is called \emph{atomic} and \emph{compound} data
     \centering
     \ra{1.3}
     \begin{tabular}{@{}rlllllll@{}}\toprule
-    & \multicolumn{3}{c}{compound scheme} & \phantom{abc}& \multicolumn{2}{c}{atomic scheme} \\
+    & \multicolumn{3}{c}{Compound Scheme} & \phantom{abc}& \multicolumn{2}{c}{Atomic Scheme} \\
     \cmidrule{2-3} \cmidrule{5-8}
-    & NAME & ADRESS && PRENAME & SURNAME & TOWN & STREET   \\ \midrule
+    & \textsc{Name} & \textsc{Adress} && \textsc{Prename} & \textsc{Surname} & \textsc{Town} & \textsc{Street}   \\ \midrule
     1 & Alice Smith & Munich, Alicestr. && Alice & Smith & Alicestr. & Munich \\
 2 &  Peter Meyer & Munich, Peterstr. && Peter & Meyer & Munich & Peterstr. \\
 3 & Ana Parker & Munich, Anastr. && Ana & Parker & Munich & Anastr. \\
 4 & John Pick & Berlin, Johnstr. && John & Pick & Berlin & Johnstr. \\
 \bottomrule
 \end{tabular}
-\caption{The compound attributes ADRESS and NAME can be split into their atomic components TOWN and STREET as well as PRENAME and SURNAME, respectively.}\label{tab:first-normal-form}
+\caption{The compound attributes \textsc{Adress} and \textsc{Name} can be split into their atomic components \textsc{Town} and \textsc{Street} as well as \textsc{Prename} and \textsc{Surname}, respectively.}\label{tab:first-normal-form}
 \end{table}
 While the compound scheme's attributes can be decomposed into several other attributes, whereas an atomic attribute cannot be further split into any meaningful smaller components.
 
@@ -134,7 +134,7 @@ Inconsistencies are to be expected.
 Thus, functionally dependent column-combinations might not be detected as such. This may result in misleading insights when searching for FDs.
 
 To illustrate this, table \ref{tab:example-afd-necessity} shows an example of noisy data.
-The potential FD \textbf{Town} \(\to\) \textbf{ZIP} is not captured by the definition given in equation \ref{eq:fd-condition}.
+The potential FD \textsc{Town} \(\to\) \textsc{\textsc{Zip}} is not captured by the definition given in equation \ref{eq:fd-condition}.
 Due to a type-error, the potential FD is invalidated.
 To still capture meta-information, a different dependency-measure than given in equation \ref{eq:fd-condition} is needed.
 
@@ -145,7 +145,7 @@ To still capture meta-information, a different dependency-measure than given in 
     \begin{tabular}{lcccc}
         \toprule
         & \multicolumn{3}{c}{Data} \\ \cmidrule(lr){2-5}
-        ID & First name & Last name & Town & ZIP \\
+        \textsc{Id} & First name & Last name & Town & \textsc{Zip} \\
         \midrule
         1 & Alice & Smith & Munich & 19139 \\
         \textbf{2} & \textbf{Peter}& \textbf{Meyer} &
@@ -154,7 +154,7 @@ To still capture meta-information, a different dependency-measure than given in 
         4 & John & Pick & Berlin & 12055 \\
         \bottomrule
     \end{tabular}
-    \caption{Even though column ZIP functionally determines column Town (and vice-versa), a FD is not capable of displaying this fact - a typing error invalidates the FD.}
+    \caption{Even though column \textsc{Zip} functionally determines column \textsc{Town} (and vice-versa), a FD is not capable of displaying this fact~-~a typing error invalidates the FD.}
     \label{tab:example-afd-necessity}
 \end{table}
 
@@ -252,4 +252,43 @@ Datawig Imputer assumes that the column to be imputed, the so-called \emph{label
 All columns on a database table that are \emph{not} the label column are called \emph{feature columns}.
 These feature columns are what Datawig Imputer will transform to obtain feature-vectors.
 
+The transformation performed to obtain learnable data assign to the \texttt{string} data of each column \( c \) a numerical representation \( x^c \).
+These functions are called \emph{encoders}.
+Datawig Imputer separates data into two categories: \emph{categorical data} and \emph{sequential data}.
+Different encoders are chosen to transform \emph{categorical data} and \emph{sequential data}.
+
+Categorical data are data that consist of \emph{categorical variables}.
+``A categorical variable places a case into one of serveral groups of categories,'' define Moore et al.~\cite[p.~4]{MOO11}.
+An example-column \( c_{cat} \) containing categorical variables can be representend by the following set of colors:
+\begin{align}\label{eq:c-cat}
+    c_{cat} = \{ \texttt{blue},~\texttt{red},~\texttt{yellow},~\texttt{blue},~\texttt{blue},~\texttt{red} \}
+\end{align}
+Datawig Imputer creates a histogram of column \( c \) and uses the histogram's index \( x^c \in \{1, 2, \dots, M_c \} \) to generate a numerical representation.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=.3\textwidth]{images/state_diagrams/color_histogram}
+    \caption{State diagram showing the histogram established by Datawig Imputer to encode example~\ref{eq:c-cat}}
+    \label{fig:state-diagram-color}
+\end{figure}
+Thus the encoded column \( c_{cat} \) would have the following form:
+\begin{align}
+    c_{cat}^{c} = \{ 0, 1, 2, 0, 0, 1\}
+\end{align}
+
+Sequential data is data where the sequece in which individual datapoints are stored in contains information.
+An example for sequential data would be a column containing non-categorical strings, like Usernames:
+\begin{align}
+    c_{seq} = \{ \texttt{ItalyPaleAle},~\texttt{sisou},~\texttt{primos63} \}
+\end{align}
+The numerical representation \( c_{seq}^{c} \in \{ 0, 1, 2, \dots, A_c \}^{S_c} \) of the sequential column ``is a vector of length \( S_c \), where \( S_c \) denotes the length of the sequence or \texttt{string} in column \( c_{seq} \).''\cite[p.2020]{BIE18}
+\( A_c \) denotes the cardinality of the set of all unique characters observed in \( c \).
+
+The histogram created to encode \( c_{seq} \) can be seen in figure \ref{fig:state-diagram-username}.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=.1\textwidth]{images/state_diagrams/username_histogram}
+    \caption{State diagram showing the histogram established by Datawig Imputer to encode \( c_{seq} \).}
+    \label{fig:state-diagram-username}
+\end{figure}
+For \( c_{seq} \), the cardinality of the set of all unique characters is 17.
 
