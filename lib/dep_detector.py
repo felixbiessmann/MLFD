@@ -5,7 +5,7 @@ import anytree as tree
 import random
 
 
-class dep_optimizer():
+class Dep_optimizer():
     """
     Finds dependencies on a dataset using multi-label
     classification.
@@ -25,6 +25,7 @@ class dep_optimizer():
         self.data = data
         self.method = method
         self.save = save
+        self.top_down_convergence = False
 
     def load_data(self):
         """ Loads train/validate/test splits. Sets class-attributes
@@ -58,6 +59,9 @@ class dep_optimizer():
     def run_top_down(self):
         self.load_data()
         self.init_roots()
+        while not self.top_down_convergence:
+            pass
+            self.top_down_convergence = True
 
     def get_top_down_candidates(self):
         """ Generates dependency-candidates based on
@@ -65,22 +69,53 @@ class dep_optimizer():
         maximal lhs at level 1. With each additional level,
         columns are dropped until a minimal lhs is reached. """
         # create level 1
-        if self.roots[self.roots.keys[0]].children == ():
+        if self.roots[list(self.roots.keys())[0]].children == ():
             for root in self.roots:
                 tree.Node([c for c in self.columns if c != root],
                           parent=self.roots[root], score=None)
         # create level N
         else:
-            pass
+            for root in self.roots:
+                n = [node for node in tree.LevelOrderGroupIter(self.roots[root])]
+                most_recent_nodes = n[-1]
+                for node in most_recent_nodes:
+                    if node.score > 0.9:
+                        pot_lhs = node.name
+                        for col in pot_lhs:
+                            tree.Node([c for c in pot_lhs if c != col],
+                                      parent=node, score=None)
+
+    def passes_threshold(node):
+        """ Checks whether a node's score is high enough to be further
+        investigated for dependencies """
+        pass
+        # Same problem as with get_newest_children. Need better OOP
+        # if node.score > 0.9:
+        #     return True
+        # else:
+        #     return False
 
     def generate_scores(self):
         """ Randomly generates scores for a tree. It is required
         that all levels but the newest level contain scores. """
         for root in self.roots:
-            n = [node for node in tree.LevelOrderIter(self.roots[root])]
-            most_recent_node = n[-1]
-            most_recent_node.score = random.random()
+            n = [node for node in tree.LevelOrderGroupIter(self.roots[root])]
+            most_recent_nodes = n[-1]
+            for node in most_recent_nodes:
+                if node.score is None:
+                    node.score = random.random()
 
+    def get_newest_children(root_node, *kwargs):
+        """ Returns the node(s) that is/are the most recent child
+        or children of a tree """
+        pass
+        # this doesn't work, the root_node object I pass with
+        # self.roots[index] are not anytree-Nodes, but Dep_optimizer
+        # objects.
+        # print(root_node)
+        # n = [node for node in tree.LevelOrderIter(root_node)]
+        # most_recent_node = n[-1]
+        # return most_recent_node
 
 def bottom_up_candidates(columns, candidates=[], save=True):
     """ Returns dict of FD candidates with rhs as key and
