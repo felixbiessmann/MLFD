@@ -292,7 +292,24 @@ def ml_imputer(df_train, df_validate, df_test, impute_column):
 
 def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
                              continuous_cols=[]):
-    """ This needs documentation
+
+    """ Runs ml_imputer for every fd contained in a dictionary on a split df.
+
+    Executes fd_imputer() for every fd in fds. df_train and df_split should be
+    created using split_df(). continuous_cols is used to distinguish between
+    columns containing continuous_cols numbers and classifiable objects.
+
+    Keyword arguments:
+        df_train -- a df on which fds have been detected.
+        df_validate -- a df on which no fds have been detected.
+        fds -- a dictionary with an fd's possible rhs as values and a list of
+        lhs-combinations as value of fds[rhs].
+
+    Returns:
+    A dictionary consisting of rhs's as keys with associated performance
+    metrics for each lhs. Performance metrics are precision, recall and
+    f1-measure for classifiable data and the mean squared error as well as
+    the number of unsucessful imputations for continuous data.
     """
     ml_imputer_results = {}
     for rhs in fds:

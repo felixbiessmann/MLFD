@@ -2,18 +2,8 @@ import argparse
 import pickle
 import pandas as pd
 import lib.fd_imputer as fd
-import lib.dep_detector as detector
+import lib.dep_detector as dep
 from constants import ADULT, NURSERY, METANOME_DATA_PATH
-
-
-def detect(data, save=True):
-    df_train, df_validate, df_test = fd.load_dataframes(
-        data.splits_path,
-        data.title,
-        data.missing_value_token)
-    columns = list(df_validate.columns)
-    cand_dict = detector.handle_candidates(columns, {}, save=True)
-    detector.dep_detector(df_train, df_validate, df_test, cand_dict)
 
 
 def split_dataset(data, save=True):
@@ -143,13 +133,33 @@ def compute_ml_imputer(data, save=False):
         return ml_imputer_results
 
 
+def compute_dep_detector(data, save=False):
+    """ Find dependencies on a relational database table using a ML
+    classifier (Datawig).
+
+    Keyword Arguments:
+    data -- a dataset object from constants.py to perform computation upon
+    save -- boolean, either save the whole DepOptimizer object to
+    data.results_path or return it.
+    """
+    dep_optimizer = dep.DepOptimizer(data)
+    dep_optimizer.run_top_down(dry_run=False)
+    if save:
+        pickle.dump(dep_optimizer, open(
+            data.results_path + "dep_detector_object", "wb"))
+        print('dep_detector_object successfully exported to '
+              + data.results_path)
+    else:
+        return dep_optimizer
+
+
 def compute_fd_imputer(data, save=False):
     """Compute the performance of the fd_imputer on a dataset.
 
     Keyword Arguments:
     data -- a dataset object from constants.py to perform computation upon
     save -- boolean, either save the result-dictionary to data.results_path
-    or to return it.
+    or return it.
     """
     df_train, df_validate, df_test = fd.load_dataframes(
             data.splits_path,
