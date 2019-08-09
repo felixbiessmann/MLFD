@@ -1,4 +1,5 @@
 import lib.fd_imputer as fd
+import pandas as pd
 import anytree as tree
 import random
 
@@ -16,12 +17,15 @@ class RootNode(tree.NodeMixin):
     score -- empty string, to be homogenous with other Nodes
     is_continuous -- boolean, True if column contains continuous values, False
     if values are classifiable
+    threshold - threshold that child-nodes are compared to when searching for
+    dependencies. Either MSE or f1-score, depending on is_continuous.
     """
 
-    def __init__(self, name, is_continuous: bool):
+    def __init__(self, name, is_continuous: bool, threshold):
         self.name = name
         self.score = ''
         self.is_continuous = is_continuous
+        self.threshold = ''
 
     def __str__(self):
         return(str(self.name))
@@ -36,17 +40,22 @@ class DepOptimizer():
     """
     Finds dependencies on a dataset using multi-label
     classification.
+
+    Argument Keywords:
+    data -- data object from constants
+    f1_threshold -- float in [0, 1]. Potential dependencies need at least this
+    f1 score to be recognized
     """
 
-    def __init__(self, data, method='top_down'):
+    def __init__(self, data, f1_threshold=0.8):
         """
         Keyword Arguments:
         data : Dataset object from constants.py
             the dataset for which dependencies will be searched
         """
         self.data = data
-        self.method = method
         self.top_down_convergence = False
+        self.f1_threshold = f1_threshold
 
     def load_data(self):
         """ Loads train/validate/test splits. Sets class-attributes
@@ -78,7 +87,14 @@ class DepOptimizer():
             is_cont = False
             if col in self.data.continuous:
                 is_cont = True
-            self.roots[col] = RootNode(name=col, is_continuous=is_cont)
+            if is_cont:  # threshold is a MSE
+                d = pd.concat([self.df_train, self.df_validate, self.df_test])
+                thresh = d.loc[:, col.name].mean()*0.2  # this is bad
+            if not is_cont:
+                thresh = self.f1_threshold
+            self.roots[col] = RootNode(name=col,
+                                       is_continuous=is_cont,
+                                       threshold=thresh)
 
     def print_trees(self):
         """ Prints tree of each root. """
@@ -151,96 +167,3 @@ class DepOptimizer():
             for node in most_recent_nodes:
                 if node.score is None:
                     node.score = random.random()
-
-
-def bottom_up_candidates(columns, candidates=[], save=True):
-    """ Returns dict of FD candidates with rhs as key and
-    a list of lists with list of lhs-columns and f1-score
-    as entries.
-
-    Keywords:
-    columns -- list of columns to detect dependencies on
-    save -- boolean, saves results """
-    # No level of results available, create level 0
-    if candidates == []:
-        candidates.append({})
-        for pot_rhs in columns:
-            candidates[0][pot_rhs] = []
-            for pot_lhs in columns:
-                if pot_lhs != pot_rhs:
-                    candidates[0][pot_rhs].append([[pot_lhs], ''])
-
-    # there is already one level of results available
-    elif len(candidates) == 1:
-        pass
-
-    # there are already results in candiates
-    elif len(candidates) > 1:
-        for pot_rhs in candidates[-1]:
-            for result_pair in candidates[-1][pot_rhs]:
-                pass
-
-    return candidates
-
-
-def top_down_candidates(columns, candidates=[], save=True):
-    """ Returns dict of FD candidates with rhs as key and a list
-    of lists with list of lhs-columns and f1-score as entries.
-
-    Starts with big lhs combination and shrinks them down to minimal
-    ones.
-
-    Keywords:
-    columns -- list of columns to detect dependencies on
-    candidates -- list containing generations of dictionaries with FD
-    candidates as keys and list of f1-score and lhs-candidates as columns
-    save -- boolean, save the result as pickled dict """
-
-
-def dep_detector(df_train, df_test, df_validate, candidates):
-    """ Returns performance of potential FDs from dict candidates on
-    a dataset.
-
-    Keywords:
-    data -- data-object
-    candidates -- dict with potential rhs as key and list
-    of pot_lhs as values """
-    df_train, df_validate, df_test = fd.load_dataframes(
-        data.splits_path,
-        data.title,
-        data.missing_value_token)
-    fd.check_split_for_duplicates([df_train, df_validate, df_test])
-    continuous_cols = data.continuous
-
-    for pot_rhs, list_pot_lhs in candidates.items():
-        for key, pot_lhs in enumerate(list_pot_lhs):
-            relevant_cols = pot_lhs[0] + [pot_rhs]
-            print(relevant_cols)
-
-            if pot_rhs not in continuous_cols:
-                train = df_train.iloc[:, relevant_cols].astype(
-                    {pot_rhs: str})
-                validate = df_validate.iloc[:, relevant_cols].astype(
-                    {pot_rhs: str})
-                test = df_test.iloc[:, relevant_cols].astype(
-                    {pot_rhs: str})
-            else:
-                train = df_train.iloc[:, relevant_cols]
-                validate = df_validate.iloc[:, relevant_cols]
-                test = df_test.iloc[:, relevant_cols]
-
-            df_imputed = fd.ml_imputer(train,
-                                       validate,
-                                       test,
-                                       pot_rhs)
-
-            result = fd.get_performance(df_imputed,
-                                        pot_rhs,
-                                        pot_lhs[0],
-                                        continuous_cols)
-            if 'f1' in result.keys():
-                candidates[pot_rhs][key][1] = result['f1']
-            else:
-                candidates[pot_rhs][key][1] = result['mse']
-
-    print(candidates)
