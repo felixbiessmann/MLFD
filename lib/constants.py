@@ -1,5 +1,5 @@
 import os
-root = os.path.dirname(os.path.abspath(__file__))
+root = os.path.dirname(os.path.abspath(__file__))+'/..'
 
 METANOME_DATA_PATH = root+'/MLFD_fd_detection/backend/WEB-INF/classes/inputData/'
 

@@ -2,7 +2,7 @@ import itertools
 import unittest
 import pandas as pd
 import numpy as np
-import fd_imputer as fd
+import lib.fd_imputer as fd
 import tempfile
 import random
 
@@ -39,10 +39,10 @@ class TestFdImputer(unittest.TestCase):
         self.mixed_continuous = []
 
         # real data from production for testing
-        self.fds = fd.read_fds('test_data/test_fd.txt')
+        self.fds = fd.read_fds('lib/test_data/test_fd.txt')
 
     def test_get_performance(self):
-        " run test on adult.csv data"
+        """ run test on adult.csv data """
         df_train, df_validate, df_test = fd.load_dataframes(
             '/home/phil/Desktop/MLFD/MLFD_fd_detection/data/',
             'adult',

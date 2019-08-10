@@ -1,13 +1,12 @@
 import os
-import sys
 import time
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 import lib.plot_utils as pu
-from constants import ADULT, NURSERY
-from constants import METANOME_DATA_PATH
+from lib.constants import ADULT, NURSERY
+from lib.constants import METANOME_DATA_PATH
 
 
 def load_result(path_to_pickle):

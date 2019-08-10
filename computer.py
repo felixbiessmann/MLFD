@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 import lib.fd_imputer as fd
 import lib.dep_detector as dep
-from constants import ADULT, NURSERY, METANOME_DATA_PATH
+from lib.constants import ADULT, NURSERY, METANOME_DATA_PATH
 
 
 def split_dataset(data, save=True):
@@ -207,7 +207,7 @@ def main(args):
               'random_overfit_ml_imputer': compute_rand_overfit_ml_imputer,
               'split': split_dataset,
               'rand_fds': generate_random_fds,
-              'detect': detect}
+              'detect': compute_dep_detector}
 
     data = datasets.get(args.data, no_valid_data)
     if data != 0:

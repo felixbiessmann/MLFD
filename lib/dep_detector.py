@@ -21,19 +21,25 @@ class RootNode(tree.NodeMixin):
     dependencies. Either MSE or f1-score, depending on is_continuous.
     """
 
-    def __init__(self, name, is_continuous: bool, threshold):
+    def __init__(self, name, is_continuous: bool, threshold=None):
         self.name = name
-        self.score = ''
+        self.score = None
         self.is_continuous = is_continuous
-        self.threshold = ''
+        self.threshold = threshold
 
     def __str__(self):
         return(str(self.name))
 
     def get_newest_children(self):
+        """ Returns tuple containing all nodes thaat are the most recent
+        children on the tree. This also means due to the structure of
+        the tree that they are on the deepest level of the tree.
+        If there are no children, the method returns an empty tuple."""
         node_level_list = [node for node in tree.LevelOrderGroupIter(self)]
-        most_recent_node = node_level_list[-1]
-        return most_recent_node
+        most_recent_branch = node_level_list[-1]
+        if most_recent_branch[0].is_root:
+            return ()
+        return most_recent_branch
 
 
 class DepOptimizer():
@@ -89,7 +95,7 @@ class DepOptimizer():
                 is_cont = True
             if is_cont:  # threshold is a MSE
                 d = pd.concat([self.df_train, self.df_validate, self.df_test])
-                thresh = d.loc[:, col.name].mean()*0.2  # this is bad
+                thresh = d.loc[:, col].mean()*0.2  # this is bad
             if not is_cont:
                 thresh = self.f1_threshold
             self.roots[col] = RootNode(name=col,
