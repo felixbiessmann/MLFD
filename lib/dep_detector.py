@@ -1,6 +1,7 @@
 import lib.fd_imputer as fd
-import pandas as pd
 import anytree as tree
+import pandas as pd
+import numpy as np
 import random
 
 
@@ -115,10 +116,13 @@ class DepOptimizer():
         self.load_data()
         self.init_roots()
         steps = 0
+        score_fun = self.run_ml_imputer
+        if dry_run:
+            score_fun = self.generate_scores
         while not self.top_down_convergence:
             steps += 1
             self.get_top_down_candidates()
-            self.generate_scores()
+            score_fun()
             print('step {}'.format(steps))
         print('Found minimal dependencies in {0} steps.'.format(steps))
         self.print_trees()
@@ -140,12 +144,23 @@ class DepOptimizer():
             for root in self.roots.values():
                 most_recent_nodes = root.get_newest_children()
                 for node in most_recent_nodes:
-                    if (node.score > 0.8) and (len(node.name) > 1):
-                        self.top_down_convergence = False
-                        pot_lhs = node.name
-                        for col in pot_lhs:
-                            tree.Node([c for c in pot_lhs if c != col],
-                                      parent=node, score=None)
+                    if root.is_continuous:
+                        if (node.score < root.threshold) and (len(node.name) > 1):
+                            self.top_down_convergence = False
+                            pot_lhs = node.name
+                            for col in pot_lhs:
+                                tree.Node(
+                                    [c for c in pot_lhs if c != col],
+                                    parent=node, score=None)
+
+                    elif not root.is_continuous:
+                        if (node.score > root.threshold) and (len(node.name) > 1):
+                            self.top_down_convergence = False
+                            pot_lhs = node.name
+                            for col in pot_lhs:
+                                tree.Node(
+                                    [c for c in pot_lhs if c != col],
+                                    parent=node, score=None)
 
     def run_ml_imputer(self):
         """ Runs Datawig imputer on all nodes on the deepest levels on all
@@ -154,22 +169,31 @@ class DepOptimizer():
         for root in self.roots.values():
             most_recent_nodes = root.get_newest_children()
             for node in most_recent_nodes:
-                dependency = {root.name: [node.name]}
-                res = fd.run_ml_imputer_on_fd_set(self.df_train,
-                                                  self.df_validate,
-                                                  self.df_test,
-                                                  dependency,
-                                                  self.data.continuous)
-                if root.is_continuous:
-                    node.score = res[root.name][0]['mse']
-                else:
-                    node.score = res[root.name][0]['f1']
+                if node.score is None:
+                    print(str(node.name) + ' for RHS ' + str(root.name))
+                    dependency = {root.name: [node.name]}
+                    res = fd.run_ml_imputer_on_fd_set(self.df_train,
+                                                      self.df_validate,
+                                                      self.df_test,
+                                                      dependency,
+                                                      self.data.continuous)
+                    if root.is_continuous:
+                        node.score = res[root.name][0]['mse']
+                    else:
+                        node.score = res[root.name][0]['f1']
 
     def generate_scores(self):
         """ Randomly generates scores for nodes on the deepest levels on all
         trees. """
         for root in self.roots.values():
             most_recent_nodes = root.get_newest_children()
-            for node in most_recent_nodes:
-                if node.score is None:
-                    node.score = random.random()
+            if not root.is_continuous:
+                for node in most_recent_nodes:
+                    if node.score is None:
+                        node.score = random.random()
+            elif root.is_continuous:
+                for node in most_recent_nodes:
+                    if node.score is None:
+                        rng = np.random.normal(root.threshold*1.2,
+                                               root.threshold*0.25)
+                        node.score = rng
