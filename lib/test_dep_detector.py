@@ -42,8 +42,18 @@ class TestDepDetector(unittest.TestCase):
             self.assertNotIn(root, initial_children[0].name)
             self.assertIsNone(initial_children[0].score)
 
-    def test_get_children(self):
-        pass
+    def test_run_top_down(self):
+        self.Detector.run_top_down(dry_run=True)
+
+        max_depth = 0
+        for root in self.Detector.roots.values():
+            node_depth = root.get_newest_children()[0].depth
+            if max_depth < node_depth:
+                max_depth = node_depth
+
+        reasonable_depth = len(self.Detector.columns) / 3
+        self.assertTrue(max_depth > reasonable_depth)
+
 
 if __name__ == '__main__':
     unittest.main()
