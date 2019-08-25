@@ -274,20 +274,19 @@ def ml_imputer(df_train, df_validate, df_test, impute_column):
     df_test.columns = [str(i) for i in df_test.columns]
     df_validate.columns = [str(i) for i in df_validate.columns]
 
-    with tempfile.TemporaryDirectory() as tempdirname:
-        imputer = SimpleImputer(
-            input_columns=input_columns,
-            output_column=impute_column,
-            output_path=tempdirname
-        )
+    imputer = SimpleImputer(
+        input_columns=input_columns,
+        output_column=impute_column,
+        output_path='imputer_model/'
+    )
 
-        imputer.fit(train_df=df_train,
-                    test_df=df_validate,
-                    num_epochs=10,
-                    patience=3)
+    imputer.fit(train_df=df_train,
+                test_df=df_validate,
+                num_epochs=10,
+                patience=3)
 
-        predictions = imputer.predict(df_test)
-        return (predictions)
+    predictions = imputer.predict(df_test)
+    return (predictions)
 
 
 def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,

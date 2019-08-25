@@ -5,14 +5,19 @@ METANOME_DATA_PATH = root+'/MLFD_fd_detection/backend/WEB-INF/classes/inputData/
 
 
 class Dataset:
-    def __init__(self, title, figures_path, results_path, fd_path, continuous,
-                 random_fd_path, original_separator, missing_value_token):
+    def __init__(self, title, fd_path, continuous,
+                 original_separator, missing_value_token):
         self.title = title
-        self.figures_path = figures_path
-        self.results_path = results_path
-        self.fd_path = fd_path
+        self.figures_path = '{0}{1}{2}/'.format(root,
+                                                '/figures/',
+                                                title)
+        self.results_path = '{0}{1}{2}/'.format(root,
+                                                '/figures/results/',
+                                                title)
+        self.fd_path = root+'/MLFD_fd_detection/results/'+fd_path
         self.continuous = continuous
-        self.random_fd_path = random_fd_path
+        self.random_fd_path = '{0}{1}'.format(self.results_path,
+                                              'random_fds.p')
         self.data_path = root+'/MLFD_fd_detection/data/'+title+'.csv'
         self.splits_path = root+'/MLFD_fd_detection/data/'
         self.original_separator = original_separator
@@ -22,19 +27,73 @@ class Dataset:
 
 
 ADULT = Dataset(title='adult',
-                figures_path=root+'/figures/adult/',
-                results_path=root+'/figures/results/adult/',
-                fd_path=root+'/MLFD_fd_detection/results/HyFD-1.2-SNAPSHOT.jar2019-07-06T091216_fds',
+                fd_path='HyFD-1.2-SNAPSHOT.jar2019-07-06T091216_fds',
                 continuous=[0, 1, 3, 11, 12, 13],
-                random_fd_path=root+'/figures/results/adult/random_fds.p',
                 original_separator=';',
                 missing_value_token='noValueSetHere123156456')
 
 NURSERY = Dataset(title='nursery',
-                  figures_path=root+'/figures/nursery/',
-                  results_path=root+'/figures/results/nursery/',
-                  fd_path=root+'/MLFD_fd_detection/results/HyFD-1.2-SNAPSHOT.jar2019-07-04T182440_fds',
+                  fd_path='HyFD-1.2-SNAPSHOT.jar2019-07-04T182440_fds',
                   continuous=[0],
-                  random_fd_path=root+'/figures/results/nursery/random_fds.p',
                   original_separator=',',
                   missing_value_token='')
+
+ABALONE = Dataset(title='abalone',
+                  original_separator=',',
+                  fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T084553_fds',
+                  continuous=[0, 2, 3, 4, 5, 6, 7, 8],
+                  missing_value_token='')
+
+BALANCESCALE = Dataset(title='balance-scale',
+                       original_separator=',',
+                       fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T084712_fds',
+                       continuous=[0],
+                       missing_value_token='')
+
+BREASTCANCER = Dataset(title='breast-cancer-wisconsin',
+                       original_separator=',',
+                       fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T084747_fds',
+                       continuous=[0, 1],
+                       missing_value_token='?')
+
+BRIDGES = Dataset(title='bridges',
+                  original_separator=',',
+                  fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T090753_fds',
+                  continuous=[0],
+                  missing_value_token='?')
+
+CHESS = Dataset(title='chess',
+                original_separator=',',
+                fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T084928_fds',
+                continuous=[0],
+                missing_value_token='')
+
+ECHOCARDIOGRAM = Dataset(title='echocardiogram',
+                         original_separator=',',
+                         fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T085015_fds',
+                         continuous=[0, 1, 3, 5, 6, 7, 8, 9, 10],
+                         missing_value_token='?')
+
+HEPATITIS = Dataset(title='hepatitis',
+                    original_separator=',',
+                    fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T090716_fds',
+                    continuous=[0, 15, 18],
+                    missing_value_token='?')
+
+HORSE = Dataset(title='horse',
+                original_separator=';',
+                fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T085141_fds',
+                continuous=[0, 3, 4, 5, 6, 16, 19, 20, 22],
+                missing_value_token='?')
+
+IRIS = Dataset(title='iris',
+               original_separator=',',
+               fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T085225_fds',
+               continuous=[0, 1, 2, 3, 4],
+               missing_value_token='')
+
+LETTER = Dataset(title='letter',
+                 original_separator=',',
+                 fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T085300_fds',
+                 continuous=[0],  # this is hard to decide
+                 missing_value_token='')

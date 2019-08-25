@@ -11,7 +11,6 @@ class TestDepDetector(unittest.TestCase):
     def test_RootNode(self):
         r = dep.RootNode(name='test_root_node', is_continuous=True)
         self.assertIsNone(r.score)
-        self.assertIsNone(r.threshold)
         self.assertEqual(r.get_newest_children(), ())
 
     def test_load_data_and_init_roots(self):
@@ -28,7 +27,7 @@ class TestDepDetector(unittest.TestCase):
         self.assertEqual(len(self.Detector.columns),
                          len(self.Detector.roots))
         for root in self.Detector.roots.values():
-            self.assertIsNone(root.score)
+            self.assertIsNotNone(root.score)
             self.assertEqual(root.get_newest_children(),
                              ())
 
@@ -51,7 +50,7 @@ class TestDepDetector(unittest.TestCase):
             if max_depth < node_depth:
                 max_depth = node_depth
 
-        reasonable_depth = len(self.Detector.columns) / 3
+        reasonable_depth = len(self.Detector.columns) / 6
         self.assertTrue(max_depth > reasonable_depth)
 
 

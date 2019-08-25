@@ -1,10 +1,14 @@
 % !Tex root = main.tex
 \newpage
 \section{Discussion}
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
-tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
-vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
-no sea takimata sanctus est Lorem ipsum dolor sit amet.
+The experiments conducted in the previous section explored the characteristics of FDs.
+When applied for database scheme normalization, FDs serve a well-defined purpose.
+However, when it comes to obtaining insights about non-static data, FDs seem to provide little insights about what to expect from new rows that might be added in the future.
+
+FDs do not seem fit for obtaining human-readable information about a (relational) database that is being used in a deployed application.
+FDs show no resistance to noisy data due to the static nature of their definition.
+In the field of data profiling, it was proposed that ``any dependency can be turned into a rule to check for errors in the data''.\cite[p.~9]{ABE19}
+This does not seem to be the case in general, but only in a noise-free, static environment.
 
 \subsection{Begriffsdiskussion}
 Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod

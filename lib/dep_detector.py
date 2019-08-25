@@ -15,18 +15,16 @@ class RootNode(tree.NodeMixin):
 
     Attributes:
     name -- potential rhs column name
-    score -- empty string, to be homogenous with other Nodes
+    score -- threshold that child-nodes are compared to when searching for
+    dependencies. Either MSE or f1-score, depending on is_continuous.
     is_continuous -- boolean, True if column contains continuous values, False
     if values are classifiable
-    threshold - threshold that child-nodes are compared to when searching for
-    dependencies. Either MSE or f1-score, depending on is_continuous.
     """
 
     def __init__(self, name, is_continuous: bool, threshold=None):
         self.name = name
-        self.score = None
+        self.score = threshold
         self.is_continuous = is_continuous
-        self.threshold = threshold
 
     def __str__(self):
         return(str(self.name))
@@ -145,7 +143,7 @@ class DepOptimizer():
                 most_recent_nodes = root.get_newest_children()
                 for node in most_recent_nodes:
                     if root.is_continuous:
-                        if (node.score < root.threshold) and (len(node.name) > 1):
+                        if (node.score < node.parent.score) and (len(node.name) > 1):
                             self.top_down_convergence = False
                             pot_lhs = node.name
                             for col in pot_lhs:
@@ -154,7 +152,8 @@ class DepOptimizer():
                                     parent=node, score=None)
 
                     elif not root.is_continuous:
-                        if (node.score > root.threshold) and (len(node.name) > 1):
+                        if (node.score > node.parent.score*0.98) \
+                                and (len(node.name) > 1):
                             self.top_down_convergence = False
                             pot_lhs = node.name
                             for col in pot_lhs:
@@ -194,6 +193,6 @@ class DepOptimizer():
             elif root.is_continuous:
                 for node in most_recent_nodes:
                     if node.score is None:
-                        rng = np.random.normal(root.threshold*1.2,
-                                               root.threshold*0.25)
+                        rng = np.random.normal(node.parent.score*1.2,
+                                               node.parent.score*0.25)
                         node.score = rng
