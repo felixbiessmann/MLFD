@@ -9,9 +9,9 @@ class TestDepDetector(unittest.TestCase):
         self.Detector = dep.DepOptimizer(c.NURSERY)
 
     def test_RootNode(self):
-        r = dep.RootNode(name='test_root_node', is_continuous=True)
+        r = dep.RootNode(name='test_root_node', columns=[], is_continuous=True)
         self.assertIsNone(r.score)
-        self.assertEqual(r.get_newest_children(), ())
+        self.assertNotEqual(r.get_newest_children(), ())
 
     def test_load_data_and_init_roots(self):
         self.Detector.load_data()
@@ -28,21 +28,23 @@ class TestDepDetector(unittest.TestCase):
                          len(self.Detector.roots))
         for root in self.Detector.roots.values():
             self.assertIsNotNone(root.score)
-            self.assertEqual(root.get_newest_children(),
-                             ())
+            self.assertNotEqual(root.get_newest_children(),
+                                ())
 
     def test_get_initial_children(self):
         self.Detector.load_data()
         self.Detector.init_roots()
-        self.Detector.get_top_down_candidates()
         for root in self.Detector.roots.values():
+            root.generate_scores()
             initial_children = root.get_newest_children()
             self.assertEqual(1, len(initial_children))
             self.assertNotIn(root, initial_children[0].name)
-            self.assertIsNone(initial_children[0].score)
+            self.assertIsNotNone(initial_children[0].score)
 
     def test_run_top_down(self):
-        self.Detector.run_top_down(dry_run=True)
+        self.Detector.load_data()
+        self.Detector.init_roots()
+        self.Detector.run_top_down(self.Detector.roots.values(), dry_run=True)
 
         max_depth = 0
         for root in self.Detector.roots.values():
