@@ -41,6 +41,12 @@ class TestDepDetector(unittest.TestCase):
             self.assertNotIn(root, initial_children[0].name)
             self.assertIsNotNone(initial_children[0].score)
 
+    def test_search_all_columns(self):
+        self.Detector.search_all_columns(True)
+
+        for root in self.Detector.roots.values():
+            self.assertIsNotNone(root.get_newest_children()[0].score)
+
     def test_run_top_down(self):
         self.Detector.load_data()
         self.Detector.init_roots()

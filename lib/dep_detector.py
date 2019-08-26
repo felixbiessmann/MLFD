@@ -182,12 +182,12 @@ class DepOptimizer():
         self.init_roots()
         self.run_top_down(self.roots.values(), dry_run)
 
-    def search_particular_columns(self, columns, dry_run=False):
+    def search_particular_columns(self, root_nodes, dry_run=False):
         """ Searches some columns of the original database table for
         dependencies. """
         self.load_data()
         self.init_roots()
-        self.run_top_down(columns, dry_run)
+        self.run_top_down(root_nodes, dry_run)
 
     def run_top_down(self, roots, dry_run=False):
         """ Runs Top-Down approach. """
