@@ -21,18 +21,33 @@ class RootNode(tree.NodeMixin):
     if values are classifiable
     """
 
-    def __init__(self, name, columns, is_continuous: bool, threshold=None):
+    def __init__(self, name, columns, train, validate, test,
+                 continuous, is_continuous: bool, threshold=None):
         self.name = name
         self.score = threshold
         self.is_continuous = is_continuous
         self.columns = columns
         self.top_down_convergence = False
+
+        self.df_train = train
+        self.df_validate = validate
+        self.df_test = test
+        self.continuous = continuous
+
+        self.known_scores = {}
+
         # init first child-Node
         tree.Node([c for c in self.columns if c != self.name],
-                              parent=self, score=None)
+                  parent=self, score=None)
 
     def __str__(self):
         return(str(self.name))
+
+    def print_tree(self):
+        """ Prints tree of the root. """
+        for pre, _, node in tree.RenderTree(self):
+            treestr = u"%s%s" % (pre, node.name)
+            print(treestr.ljust(8), node.score)
 
     def get_newest_children(self):
         """ Returns tuple containing all nodes thaat are the most recent
@@ -45,9 +60,64 @@ class RootNode(tree.NodeMixin):
             return ()
         return most_recent_branch
 
-    def get_top_down_candidates(self):
-        """ Generates dependency-candidates based on
-        previous results. The top-down approach starts with a
+    def run_top_down(self, strategy='greedy', dry_run=False):
+        """ Runs Top-Down approach. Generates scores, if dry_run is
+        True. Uses either a greedy strategy or a complete strategy
+        to find dependencies."""
+        score_fun = self.run_ml_imputer
+        if dry_run:
+            score_fun = self.generate_scores
+        if strategy == 'greedy':
+            candidates_generator = self.get_greedy_candidates
+        elif strategy == 'complete':
+            candidates_generator = self.get_complete_candidates
+        else:
+            raise ValueError('''Indicate a valid stretegy for
+                    dependency detection - either greeedy or
+                    complete''')
+        steps = 0
+        self.top_down_convergence = False
+        while not self.top_down_convergence:
+            steps += 1
+            score_fun()
+            candidates_generator()
+            print('step {}'.format(steps))
+        print('Found minimal dependencies in {0} steps.'.format(steps))
+        self.print_tree()
+
+    def get_greedy_candidates(self):
+        """ Generates depdendency-candidates based on a greedy strategy.
+        This strategy tries to find _one_ minimal lhs that performs
+        strongly to save computation time.
+        Neither is the lhs found a minimal lhs, nor are all relevant lhs
+        detected.
+        """
+        self.top_down_convergence = True
+        most_recent_nodes = self.get_newest_children()
+        for node in most_recent_nodes:
+            highscore = 0
+            highscore_node = None
+            if self.is_continuous:
+                if (node.score <= highscore) and (len(node.name) > 1):
+                    highscore = node.score
+                    highscore_node = node
+
+            elif not self.is_continuous:
+                if (node.score >= highscore) and (len(node.name) > 1):
+                    highscore = node.score
+                    highscore_node = node
+
+        if highscore_node is not None:
+            self.top_down_convergence = False
+            pot_lhs = highscore_node.name
+            for col in pot_lhs:
+                tree.Node(
+                    [c for c in pot_lhs if c != col],
+                    parent=highscore_node, score=None)
+
+    def get_complete_candidates(self):
+        """ Generates dependency-candidates based on a strategy trying to
+        find all dependencie. The top-down approach starts with a
         maximal lhs at level 1. With each additional level,
         columns are dropped until a minimal lhs is reached. """
         self.top_down_convergence = True
@@ -78,18 +148,23 @@ class RootNode(tree.NodeMixin):
         the node's name the potential lhs."""
         most_recent_nodes = self.get_newest_children()
         for node in most_recent_nodes:
+            print(str(node.name) + ' for RHS ' + str(self.name))
+            # search for known scores
+            node.score = self.known_scores.get(tuple(node.name), None)
             if node.score is None:
-                print(str(node.name) + ' for RHS ' + str(self.name))
                 dependency = {self.name: [node.name]}
                 res = fd.run_ml_imputer_on_fd_set(self.df_train,
                                                   self.df_validate,
                                                   self.df_test,
                                                   dependency,
-                                                  self.data.continuous)
+                                                  self.continuous)
                 if self.is_continuous:
                     node.score = res[self.name][0]['mse']
                 else:
                     node.score = res[self.name][0]['f1']
+
+                # add score to dict
+                self.known_scores[tuple(node.name)] = node.score
 
     def generate_scores(self):
         """ Randomly generates scores for nodes on the deepest levels on all
@@ -164,6 +239,10 @@ class DepOptimizer():
             if not is_cont:
                 thresh = self.f1_threshold
             self.roots[col] = RootNode(name=col,
+                                       train=self.df_train,
+                                       validate=self.df_validate,
+                                       test=self.df_test,
+                                       continuous=self.data.continuous,
                                        columns=self.columns,
                                        is_continuous=is_cont,
                                        threshold=thresh)
@@ -171,36 +250,12 @@ class DepOptimizer():
     def print_trees(self):
         """ Prints tree of each root. """
         for root in self.roots.values():
-            for pre, _, node in tree.RenderTree(root):
-                treestr = u"%s%s" % (pre, node.name)
-                print(treestr.ljust(8), node.score)
+            root.print_tree()
 
-    def search_all_columns(self, dry_run=False):
+    def search_all_columns(self, strategy='greedy', dry_run=False):
         """ Searches all columns of the original database table for
         dependencies. """
         self.load_data()
         self.init_roots()
-        self.run_top_down(self.roots.values(), dry_run)
-
-    def search_particular_columns(self, root_nodes, dry_run=False):
-        """ Searches some columns of the original database table for
-        dependencies. """
-        self.load_data()
-        self.init_roots()
-        self.run_top_down(root_nodes, dry_run)
-
-    def run_top_down(self, roots, dry_run=False):
-        """ Runs Top-Down approach. """
-        for root in roots:
-            score_fun = root.run_ml_imputer
-            if dry_run:
-                score_fun = root.generate_scores
-            steps = 0
-            root.top_down_convergence = False
-            while not root.top_down_convergence:
-                steps += 1
-                score_fun()
-                root.get_top_down_candidates()
-                print('step {}'.format(steps))
-            print('Found minimal dependencies in {0} steps.'.format(steps))
-            self.print_trees()
+        for root in self.roots.values():
+            root.run_top_down(strategy, dry_run)
