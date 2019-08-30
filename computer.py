@@ -141,7 +141,7 @@ def compute_ml_imputer(data, save=False):
         return ml_imputer_results
 
 
-def compute_dep_detector(data, save=False):
+def compute_complete_dep_detector(data, save=False):
     """ Find dependencies on a relational database table using a ML
     classifier (Datawig).
 
@@ -152,14 +152,38 @@ def compute_dep_detector(data, save=False):
     """
     start = timeit.default_timer()
     dep_optimizer = dep.DepOptimizer(data, f1_threshold=0.9)
-    dep_optimizer.run_top_down(dry_run=False)
+    dep_optimizer.search_dependencies(strategy='complete', dry_run=False)
     end = timeit.default_timer()
     t = end - start
-    print('Time: '+t)
+    print('Time: '+str(t))
     result = {'time': t,
               'dep_optimizer': dep_optimizer}
     if save:
-        path = data.results_path + "dep_detector_object.p"
+        path = data.results_path + "dep_detector_complete_object.p"
+        save_pickle(result, path)
+    else:
+        return result
+
+
+def compute_greedy_dep_detector(data, save=False):
+    """ Find dependencies on a relational database table using a ML
+    classifier (Datawig).
+
+    Keyword Arguments:
+    data -- a dataset object from constants.py to perform computation upon
+    save -- boolean, either save the whole DepOptimizer object to
+    data.results_path or return it.
+    """
+    start = timeit.default_timer()
+    dep_optimizer = dep.DepOptimizer(data, f1_threshold=0.9)
+    dep_optimizer.search_dependencies(strategy='greedy', dry_run=False)
+    end = timeit.default_timer()
+    t = end - start
+    print('Time: '+str(t))
+    result = {'time': t,
+              'dep_optimizer': dep_optimizer}
+    if save:
+        path = data.results_path + "dep_detector_greedy_object.p"
         save_pickle(result, path)
     else:
         return result
@@ -233,7 +257,8 @@ def main(args):
               'random_overfit_ml_imputer': compute_rand_overfit_ml_imputer,
               'split': split_dataset,
               'rand_fds': generate_random_fds,
-              'detect': compute_dep_detector}
+              'complete_detect': compute_complete_dep_detector,
+              'greedy_detect': compute_greedy_dep_detector}
 
     data = datasets.get(args.data, no_valid_data)
     if callable(data):  # no valid dataname

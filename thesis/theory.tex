@@ -80,10 +80,12 @@ Since \textsc{Town} and \textsc{Id} are subsets of \{\textsc{Id},~\textsc{Prenam
 A FD X~\( \rightarrow \)~A is \emph{minimal}, if no subset of X functionally determines A.~\cite[p.~2]{PAP15}
 Thus, \textsc{Id}~\( \rightarrow \)~\textsc{Zip} and \textsc{Town}~\( \rightarrow \)~\textsc{Zip} are \emph{minimal FDs}.
 
-\section{FDs in Application}
-FDs are primarily used in database normalization.\cite[p.~1]{CAR16} In 1970, E. F. Codd defined the \emph{relational model}\cite{COD70} and pioneered many important concepts in database theory. In the following section, selected sections of Codd's work will be introduced to establish the theoretical background necessary for undestanding functional dependencies.
+\subsection{FDs in Application}
+FDs are primarily used in database normalization.\cite[p.~1]{CAR16}
+In 1970, E. F. Codd defined the \emph{relational model}\cite{COD70} and pioneered many important concepts in database theory.
+In the following section, selected sections of Codd's work will be introduced to establish the theoretical background necessary for undestanding functional dependencies.
 
-\subsection{Normalization}
+\subsubsection{Normalization}
 When introducing the relational database model in his 1970 article ``A relational model of data for large shared data banks'', Edgar F. Codd formalized database normalization alongside.\cite{COD70}
 Describing what will be know to academia as \textbf{First normal form} (1NF), Codd states that ``problems treated [when normalizing databases] are those of \emph{data independence}'', aiming to protect future users of large databases ``from having to know how the data is organized in the machine''. \cite[p.~1]{COD70}
 
@@ -93,7 +95,7 @@ While this yielded good performance in times when computing time was very expens
 
 Update-, insertion- and deletion anomalies can be prevented when normalizing a relational database. \cite[p.~75]{KLE11}
 
-\subsubsection{First Normal Form}
+\paragraph{First Normal Form}
 A relation scheme $R$ is in \emph{First Normal Form} (1NF), if values in \(dom(A)\) are atomic for every attribute \(A\) in \(R\). \cite[p.~96]{MAI83}
 Consider table~\ref{tab:first-normal-form} which represents two relational database schemes.
 It serves as an example of what is called \emph{atomic} and \emph{compound} data in the Relational Database model. \cite[p.~6]{COD90}
@@ -118,49 +120,12 @@ While the compound scheme's attributes can be decomposed into several other attr
 For a database it is said that the database in 1NF if every relation scheme in the database scheme is in 1NF.
 1NF is the very foundation of the Relational Model, where the only type of compound data is the relation.\cite[p.~6]{COD90}
 
-\subsubsection{Second Normal Form (2NF)}
+\paragraph{Second Normal Form (2NF)}
 A relation scheme \(R\) is said to be in \emph{second normal form} (2NF) in respect to a set of FDs \(F\), if it is in 1NF and every nonprime attribute is fully dependent on every key of of \(R\).\cite[p.~99]{MAI83} This definition can be extended for databases: A database scheme \textbf{R} is in second normal form with respect to \(F\) if every relation scheme \(R\) in \textbf{R} is in 2NF with respect to \(F\).
 
-\subsubsection{Third Normal Form (3NF)}
+\paragraph{Third Normal Form (3NF)}
 
-
-\subsection{Approximate Functional Dependencies}
-In the field of data profiling an extensive body of theory and algorithms for FD detection has been created in the past decades.\cite{PAP15}
-These mainly consider FDs as defined in formula \ref{eq:fd-condition}.
-Howevever, the strict detection of FDs yields results that are solely applicable in a strictly controlled environment.
-Real-world datasets faced by data-scientists or database engineers are often \emph{noisy}.
-Entries might be corrupted by missing data, wrongly entered entries or incomplete datasets.
-Inconsistencies are to be expected.
-Thus, functionally dependent column-combinations might not be detected as such. This may result in misleading insights when searching for FDs.
-
-To illustrate this, table \ref{tab:example-afd-necessity} shows an example of noisy data.
-The potential FD \textsc{Town} \(\to\) \textsc{\textsc{Zip}} is not captured by the definition given in equation \ref{eq:fd-condition}.
-Due to a type-error, the potential FD is invalidated.
-To still capture meta-information, a different dependency-measure than given in equation \ref{eq:fd-condition} is needed.
-
-\emph{Approximate FDs} (AFDs), sometimes called \emph{Relaxed FDs}, improve the applicability of FDs, ``in that they relax one or more constraints of the canonical FDs''\cite[p.~1]{CAR16}. While there are AFDs introducing general error measures, others are defined ``aiming to solve specific problems''\cite[p.~1]{CAR16}.
-
-\begin{table}[ht]
-    \centering
-    \begin{tabular}{lcccc}
-        \toprule
-        & \multicolumn{3}{c}{Data} \\ \cmidrule(lr){2-5}
-        \textsc{Id} & First name & Last name & Town & \textsc{Zip} \\
-        \midrule
-        1 & Alice & Smith & Munich & 19139 \\
-        \textbf{2} & \textbf{Peter}& \textbf{Meyer} &
-        \textbf{Muinch} & \textbf{19139} \\
-        3 & Ana & Parker & Munich & 19139  \\
-        4 & John & Pick & Berlin & 12055 \\
-        \bottomrule
-    \end{tabular}
-    \caption{Even though column \textsc{Zip} functionally determines column \textsc{Town} (and vice-versa), a FD is not capable of displaying this fact~-~a typing error invalidates the FD.}
-    \label{tab:example-afd-necessity}
-\end{table}
-
-The error measure for this is not trivial at all. While F1-measures can be established for non-categorical cases, comparing results for different data-types tricky.
-
-\subsection{FD Imputer}
+\subsubsection{FD Imputer}
 The FD Imputer imputes the column of a table of a relational database.
 Empirical Risk Minimization strategies are used to do this.
 The table is first split in train-set and validation-set.
@@ -184,6 +149,90 @@ A second left join clause concatenates the original validation-set with the colu
     return imputed-validation-set\;
     \caption{FD Imputer}
 \end{algorithm}
+
+\subsection{Limitations of FDs}
+In the field of dependency detection an extensive body of theory and algorithms for FD detection has been created in the past decades.\cite[p.~1]{PAP15}
+These mainly consider FDs as defined in formula~\ref{eq:fd-condition}.
+Howevever, the strict detection of FDs yields results that are solely applicable in a strictly controlled environment.
+
+Real-world datasets that researchers, data scientists or database engineers work with are often \emph{noisy}.
+This noise has many faces:
+Entries might be corrupted by missing data, wrongly entered data or incomplete data.
+Columns might contain data of different kind, where one column could contain the binary representation of an image and another column the contains of a wave-audiofile.
+In these cases, functionally dependent column-combinations might not be detected as such.
+This may result in misleading insights when searching for FDs.
+
+Researchers have faced these limitations of FDs in the past in many domains.
+This lead to the definition of many new kinds of dependencies.
+While there are RFDs introducing general error measures, others are defined ``aiming to solve specific problems''\cite[p.~147]{CAR16}.
+Since all of these \emph{new} kinds of dependencies relax the conditions in equation~\ref{eq:fd-condition}, they are called \emph{relaxed functional dependencies (RFDs)}.
+Caruccio et al.\ classified and compared 35 different RFDs~\cite[p.~151]{CAR16}.
+
+In order to classify RFDs, Carucio et al.\ state that each RFD was ``based on its underlying relaxation criteria''\cite[p.~149]{CAR16}.
+They proceed to define two such relaxation criterions.
+\emph{Attribute comparison} refers to ``the type of tuple comparison used on the LHS and RHS''.
+
+\subsubsection{FDs relaxing on the Extent}
+The term \emph{extent} is used to describe how a RFD relaxes on the subset of tuples for which the RFD is satisfied.
+
+\begin{figure}[h]
+     \centering
+     \includegraphics[width=.4\textwidth]{images/rfds-extent.pdf}
+     \caption{Venn diagram representing the extent relaxation criteria.}
+     \label{fig:rfds-extent}
+ \end{figure}
+
+RFDs implement this idea in different ways.
+In the following section, a selection of RFDs relaxing the extent of the FD will be briefly presented.
+
+\paragraph{Approximate Functional Dependency (AFD)}
+AFDs improve the applicability of FDs, by ``holding on almost every tuple''\cite[p.~151]{CAR16}.
+An To illustrate this, table~\ref{tab:example-afd-necessity} shows an example of noisy data.
+The potential FD \textsc{Town} \(\to\) \textsc{\textsc{Zip}} is not captured by the definition given in equation~\ref{eq:fd-condition}.
+Due to a type-error, the potential FD is invalidated.
+To still capture meta-information, a different dependency-measure than given in equation~\ref{eq:fd-condition} is needed.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lcccc}
+        \toprule
+        & \multicolumn{3}{c}{Data} \\ \cmidrule(lr){2-5}
+        \textsc{Id} & First name & Last name & Town & \textsc{Zip} \\
+        \midrule
+        1 & Alice & Smith & Munich & 19139 \\
+        \textbf{2} & \textbf{Peter}& \textbf{Meyer} &
+        \textbf{Muinch} & \textbf{19139} \\
+        3 & Ana & Parker & Munich & 19139  \\
+        4 & John & Pick & Berlin & 12055 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Even though column \textsc{Zip} functionally determines column \textsc{Town} (and vice-versa), a FD is not capable of displaying this fact~-~a typing error invalidates the FD.}
+    \label{tab:example-afd-necessity}
+\end{table}
+
+Tuples that do not correspond to the canonical FD are measured as fraction of the total of tuples on a relation \( r \) as follows:
+
+\begin{align}
+    \Psi(X, Y) = \frac{\min{\left(|r_1|~|~r_1 \subseteq r \text{ and } \textsc{X} \rightarrow \textsc{Y} \text{ hold in } r \setminus r_1 \right)}}{|r|}
+\end{align}
+
+Here, function \( \Psi(X, Y) \) is called \emph{coverage measure} of a RFD \textsc{X} \( \to \) \textsc{Y}.
+\( \Psi \) ``quantifies the satisfiability degree of an RFD [\dots] on \( r \)''\cite[p.~150]{CAR16} and is used in the definition of an AFD to be compared to a threshold \( \epsilon \in [0, 1] \).
+
+If \( \Psi(X, Y) \) is smaller or equal to \( \epsilon \), the AFD is said to hold on a relation \( r \).
+Applied to table~\ref{tab:example-afd-necessity}, the AFD \textsc{Town} \(\to\) \textsc{\textsc{Zip}} holds, if \( \epsilon \geq 0.25\).
+
+\paragraph{Conditional Functional Dependencies (CFDs)}
+\emph{Conditional Functional Dependencies} employ conditions to define the subset on which a dependency holds.
+Originally, those conditions exclusively allow the definition of constraints using the equality operator.\cite[p.~152]{CAR}
+Applied to table~\ref{tab:example-afd-necessity}, a CFD \textsc{Town} \(\to\) \textsc{\textsc{Zip}} holds under the condition that a) entries in column \textsc{Town} = Munich or b) entries in column \textsc{Town} = Berlin.
+
+Other RFDs based on the definition of CFDs include \emph{extended conditional functional dependencies} (ECFDs) by Bravo et al.\ that allow the disjunction-operator as well as the inequality-operator for defining conditions.\cite{BRA08}
+
+Also, Chen et al.\ defined CFD\textsuperscript{p}s, which introduce \( <, \leq, >, \geq \text{and} \neq \) for defining conditions.\cite{CHE09}
+
+\paragraph{Metric Functional Dependencies (MFDs)}
+First introduced by Koudas et al.\ in 2009, \emph{Metric Functional Dependencies} were defined to adress violations of canonical FDs due to ``small variations [\dots] in data format and interpretation''.
 
 
 \newpage
@@ -236,7 +285,7 @@ The harmonic mean of precision and recall is called \emph{F1-measure}:
 F1-measure = {\left(\frac{Recall^{-1} + Precision^{-1}}{2}\right)}^{-1}
 \end{align}
 
-\subsection{Datawig Imputer}
+\subsubsection{Datawig Imputer}
 Datawig Imputer is an imputation method based on \emph{supervised learning}.
 In supervised learning, observations are a set of tuples \( \{\left(\mathbold{x}_1, y_1\right),\left(\mathbold{x}_2, y_2\right), \dots \} \).
 We call \( \mathbold{x}_i \in \mathbb{F}\) \emph{feature-vector} in a \emph{feature-space} \( \mathbb{F} \subseteq \mathbb{R}^{n} \) and \( y_i \in S \) \emph{output-attributes} or \emph{labels}.\cite[p.19]{DUD00}
@@ -258,7 +307,7 @@ Datawig Imputer separates data into two categories: \emph{categorical data} and 
 Different encoders are chosen to transform \emph{categorical data} and \emph{sequential data}.
 
 Categorical data are data that consist of \emph{categorical variables}.
-``A categorical variable places a case into one of serveral groups of categories,'' define Moore et al.~\cite[p.~4]{MOO11}.
+``A categorical variable places a case into one of serveral groups of categories,'' define Moore et al.\~\cite[p.~4]{MOO11}.
 An example-column \( c_{cat} \) containing categorical variables can be representend by the following set of colors:
 \begin{align}\label{eq:c-cat}
     c_{cat} = \{ \texttt{blue},~\texttt{red},~\texttt{yellow},~\texttt{blue},~\texttt{blue},~\texttt{red} \}
@@ -277,18 +326,30 @@ Thus the encoded column \( c_{cat} \) would have the following form:
 
 Sequential data is data where the sequece in which individual datapoints are stored in contains information.
 An example for sequential data would be a column containing non-categorical strings, like Usernames:
+
 \begin{align}
     c_{seq} = \{ \texttt{ItalyPaleAle},~\texttt{sisou},~\texttt{primos63} \}
 \end{align}
-The numerical representation \( c_{seq}^{c} \in \{ 0, 1, 2, \dots, A_c \}^{S_c} \) of the sequential column ``is a vector of length \( S_c \), where \( S_c \) denotes the length of the sequence or \texttt{string} in column \( c_{seq} \).''\cite[p.2020]{BIE18}
-\( A_c \) denotes the cardinality of the set of all unique characters observed in \( c \).
 
-The histogram created to encode \( c_{seq} \) can be seen in figure \ref{fig:state-diagram-username}.
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=.1\textwidth]{images/state_diagrams/username_histogram}
-    \caption{State diagram showing the histogram established by Datawig Imputer to encode \( c_{seq} \).}
-    \label{fig:state-diagram-username}
-\end{figure}
-For \( c_{seq} \), the cardinality of the set of all unique characters is 17.
+The numerical representation \( c_{seq}^{c} \in \{ 0, 1, 2, \dots, A_c \}^{S_c} \) of the sequential column ``is a vector of length \( S_c \), where \( S_c \) denotes the length of the sequence or \texttt{string} in column \( c_{seq} \).''\cite[p.2020]{BIE18}
+This numerical representation is called \emph{n-gram representation}.
+For further details on the n-gram implementation, consider~\cite[p.2020]{BIE18}.
+
+Finally, the Datawig-Imputer learns to predict the label distribution from \( y \in {1, 2, \dots, D_y} \) from the feature-vector \( \mathbold{x} \).
+It therefore models \( p(y|\mathbold{x},\mathbold{\Theta}) \), the \( D_y \)~-~dimensional probability vector over all possible values in the to-be imputed comumn in function of feature-vector \( \mathbold{x} \) and \emph{learned model parameters} \( \mathbold{\Theta} \).
+Datawig uses a simple logistic regression type output layer to achieve this:
+\begin{align}
+    p(y|\mathbold{x},\mathbold{\Theta}) = \texttt{softmax}[\mathbold{Wx} + \mathbold{b}]
+\end{align}
+Here, the learned model parameters \( \mathbold{\Theta} = (\mathbold{W}, \mathbold{z}, \mathbold{b}) \) depends on the learned \emph{weights} \( \mathbold{W} \) and \emph{biases} \( \mathbold{b} \) as well as \( \mathbold{z} \), representing all parameters of the column-specific feature extraction.
+Parameters \( \mathbold{\Theta} \) are learned by minimizing cross-entropy loss between predicted and observed labels \( y \) by computing
+\begin{align}
+    \mathbold{\Theta} = \min_{\Theta} \sum\nolimits_{1}^{N} - \log(p(y|\mathbold{x}, \mathbold{\Theta}))^\top \texttt{onehot}(y).
+\end{align}
+Here, \( \log() \) represents the element-wise logarithm.
+\( \texttt{onehot}(y) \in {0, 1}^{D_y}\) stands for a one-hot encoding of one label \( y \).
+
+Training is done using standard backpropagation and stochastic gradient-descent on mini-batches.
+The exact network layout is described in the paper ``Deep Learning for Missing Value imputation in Tables with Non-Numerical Data''~\cite[p.2022]{BIE18} in full detail.
+
 

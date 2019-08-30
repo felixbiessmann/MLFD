@@ -252,7 +252,7 @@ class DepOptimizer():
         for root in self.roots.values():
             root.print_tree()
 
-    def search_all_columns(self, strategy='greedy', dry_run=False):
+    def search_dependencies(self, strategy='greedy', dry_run=False):
         """ Searches all columns of the original database table for
         dependencies. """
         self.load_data()

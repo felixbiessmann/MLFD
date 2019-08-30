@@ -124,4 +124,24 @@ The same comparison as
      \label{fig:f1_ml_fd_nursery}
 \end{figure}
 
+\subsection{Dependency detection}
+Dependencies were detected on a number of well-known datasets.
 
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrrrrrr}
+        \toprule
+        & & & & & \multicolumn{1}{c}{Greedy} & \multicolumn{1}{c}{Complete} \\
+        Dataset & Cols & Rows & \# FDs & \# FDs\textsubscript{train} & \# F1\textsubscript{LHS} $> 0.90$ & \# F1\textsubscript{LHS} $> 0.90$ \\
+        \midrule
+        adult & 16 & 32561 & 93 & 88 & 99 (100s)& 99 \\
+        nursery & 11 & 11 & 99 & 99 & 99 & 99 \\
+        abalone & 10 & 4177 & 99 & 99 & 99 & 99 \\
+        balance-scale & 6 & 625 & 99 & 99 & 99 & 99 \\
+        chess & 8 & 28056 & 99 & 99 & 99 & 99 \\
+        iris & 6 & 150 & 99 & 99 & 99 & 99 \\
+        letter & 18 & 20000 & 99 & 99 & 99 & 99 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Result of running dependency detection on selected datasets. Values in brackets are the respective algorithm's runtime in seconds.}\label{tab:dep-detection-performance}
+\end{table}
