@@ -10,7 +10,7 @@ To compare classification performance, the F1-measure is chosen.
 \subsection{FD Imputer}
 FD Imputer is run for every FD found on a train subset of Adult and Nursery, respectively.
 Figure~\ref{fig:f1_fd_adult} shows the performance of FD Imputer on columns containing classifiable data.
-\begin{figure}[h]
+\begin{figure}[ht]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/adult/f1_fd_imputer_adult.pdf}
      \caption{F1 score of the 10 most performant FDs when imputing values on a validation set.}
@@ -56,7 +56,7 @@ On a dataset as normalized as nursery, FD Imputer cannot leverage FDs to impute 
 \subsection{Datawig Imputer}
 Datawig Imputer is run with the same set of FDs as FD Imputer.
 The 10 best performing FDs' F1 scores are displayed in figure~\ref{fig:f1_ml_adult}.
-\begin{figure}[h]
+\begin{figure}[ht]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/adult/f1_ml_imputer_adult.pdf}
      \caption{The figure compares the f1-score of the FD Imputer compared to the f1-score of the Datawig Imputer. Each point represents one FD.}
@@ -102,7 +102,7 @@ Naturally, this circumstance leads to a far superior performance of Datawig Impu
 FD Imputer usually doesn't find any values on the train set to impute with and cannot return a meaningful result.
 Taking the above into account, rows that aren't imputed by FD Imputer are not considered when computing a performance measure on columns containing continuous values.
 
-\begin{figure}[h]
+\begin{figure}[ht]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/adult/f1_ml_fd_adult}
      \caption{The figure compares the f1-score of the FD Imputer compared to the f1-score of the Datawig Imputer. Each point represents one FD.}
@@ -117,7 +117,7 @@ However, for FD's where the Datawig Imputer scores are larger than 0.7, the FD I
 Interestingly, there are two FDs for which the FD Imputer performs equally good or better than the Datawig Imputer.
 
 The same comparison as
- \begin{figure}[h]
+ \begin{figure}[ht]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/nursery/f1_ml_fd_nursery}
      \caption{Some ohter caption.}

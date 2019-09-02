@@ -1,4 +1,8 @@
-\documentclass[a4paper,headsepline,bibliography=totoc]{scrartcl}
+\documentclass[a4paper,
+headsepline,
+bibliography=totoc,
+headheight=30pt,
+footheight=30pt]{scrartcl}
 \usepackage[english]{babel}
 \usepackage{graphicx}
 \usepackage{svg}
@@ -15,7 +19,6 @@
 \usepackage{epstopdf}
 \usepackage{multicol}
 \usepackage{xcolor}
-\usepackage{parskip}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}  % pseudocode layout
 \usepackage{booktabs}  % beautiful tables
 \usepackage{url}
@@ -61,7 +64,11 @@ bibencoding=utf8, natbib=true
 
 \newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
 \sloppy
-\setlength{\parindent}{0mm}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1.2em}
+\setlength{\abovedisplayskip}{12pt}
+\setlength{\belowdisplayskip}{12pt}
+\renewcommand{\baselinestretch}{1.2}
 %+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++%
 \pagestyle{scrheadings}
 \ihead[]{\today} %- linke Kopfzeile

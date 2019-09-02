@@ -2,7 +2,11 @@
 \newpage
 \section{Theory}
 \emph{Functional Dependencies}~(FDs) are a way of expressing ``a priori knowledge of restrictions or constraints on permissible sets of data''~\cite[p.~42]{MAI83} in relational database theory.
-Having been introduced in the 1970s for schema normalization of relational databases, FDs have proven to be useful in a multitude of domains. In this section, \emph{functional dependencies} and the theoretical foundation necessary to put them into context are introduced.
+Having been introduced in the 1970s for schema normalization of relational databases, FDs have proven to be useful in a multitude of domains.
+
+In this section, \emph{functional dependencies} and the theoretical foundation necessary to put them into context are introduced.
+Building on this foundation, \emph{relaxed functinal dependencies} are introduced as a way how \emph{robustness} of FDs has been increased in the past.
+Lastly, machine learning classifier theory will be discussed, introducing the \emph{Datawig} package.
 
 \subsection{Relational Database Theory}
 In order to give a definition of FDs, they need to be put in context to the domain they stem from: relational database theory. Some basic concepts will be introduced in this section.
@@ -103,14 +107,14 @@ It serves as an example of what is called \emph{atomic} and \emph{compound} data
 \begin{table}[ht]
     \centering
     \ra{1.3}
-    \begin{tabular}{@{}rlllllll@{}}\toprule
-    & \multicolumn{3}{c}{Compound Scheme} & \phantom{abc}& \multicolumn{2}{c}{Atomic Scheme} \\
+    \begin{tabular}{rlllllll}\toprule
+    & \multicolumn{3}{c}{Compound Scheme} & & \multicolumn{2}{c}{Atomic Scheme} \\
     \cmidrule{2-3} \cmidrule{5-8}
     & \textsc{Name} & \textsc{Adress} && \textsc{Prename} & \textsc{Surname} & \textsc{Town} & \textsc{Street}   \\ \midrule
-    1 & Alice Smith & Munich, Alicestr. && Alice & Smith & Alicestr. & Munich \\
-2 &  Peter Meyer & Munich, Peterstr. && Peter & Meyer & Munich & Peterstr. \\
+1 & Alice Smith & Munich, Flurstr. && Alice & Smith & Munich & Flurstr. \\
+2 & Peter Smith & Munich, Flurstr. && Peter & Smith & Munich & Flurstr. \\
 3 & Ana Parker & Munich, Anastr. && Ana & Parker & Munich & Anastr. \\
-4 & John Pick & Berlin, Johnstr. && John & Pick & Berlin & Johnstr. \\
+4 & John Pick & Berlin, Flurstr. && John & Pick & Berlin & Flurstr. \\
 \bottomrule
 \end{tabular}
 \caption{The compound attributes \textsc{Adress} and \textsc{Name} can be split into their atomic components \textsc{Town} and \textsc{Street} as well as \textsc{Prename} and \textsc{Surname}, respectively.}\label{tab:first-normal-form}
@@ -134,7 +138,7 @@ Having identified all FDs on the train-set, FD Imputer can impute values of any 
 This is done by executing an SQL join clause.
 FD imputer performs an inner join on all left-hand side columns, joining train-set and validation-set.
 A second left join clause concatenates the original validation-set with the column of imputed tuples stemming from the first join.
-\begin{algorithm}[H]
+\begin{algorithm}[ht]
     \DontPrintSemicolon
     \SetAlgoLined
     \KwResult{Validation-subset of a relational database table with an additional column containing imputed tuples}
@@ -171,11 +175,12 @@ Caruccio et al.\ classified and compared 35 different RFDs~\cite[p.~151]{CAR16}.
 In order to classify RFDs, Carucio et al.\ state that each RFD was ``based on its underlying relaxation criteria''\cite[p.~149]{CAR16}.
 They proceed to define two such relaxation criterions.
 \emph{Attribute comparison} refers to ``the type of tuple comparison used on the LHS and RHS''.
+The relaxation criterion \emph{extent} describes a relaxation of the set of tuples for which a FD is valid.
 
 \subsubsection{FDs relaxing on the Extent}
 The term \emph{extent} is used to describe how a RFD relaxes on the subset of tuples for which the RFD is satisfied.
 
-\begin{figure}[h]
+\begin{figure}[ht]
      \centering
      \includegraphics[width=.4\textwidth]{images/rfds-extent.pdf}
      \caption{Venn diagram representing the extent relaxation criteria.}
@@ -188,7 +193,7 @@ In the following section, a selection of RFDs relaxing the extent of the FD will
 \paragraph{Approximate Functional Dependency (AFD)}
 AFDs improve the applicability of FDs, by ``holding on almost every tuple''\cite[p.~151]{CAR16}.
 An To illustrate this, table~\ref{tab:example-afd-necessity} shows an example of noisy data.
-The potential FD \textsc{Town} \(\to\) \textsc{\textsc{Zip}} is not captured by the definition given in equation~\ref{eq:fd-condition}.
+The potential FD \textsc{Town} \(\to\) \textsc{Zip} is not captured by the definition given in equation~\ref{eq:fd-condition}.
 Due to a type-error, the potential FD is invalidated.
 To still capture meta-information, a different dependency-measure than given in equation~\ref{eq:fd-condition} is needed.
 
@@ -220,20 +225,60 @@ Here, function \( \Psi(X, Y) \) is called \emph{coverage measure} of a RFD \text
 \( \Psi \) ``quantifies the satisfiability degree of an RFD [\dots] on \( r \)''\cite[p.~150]{CAR16} and is used in the definition of an AFD to be compared to a threshold \( \epsilon \in [0, 1] \).
 
 If \( \Psi(X, Y) \) is smaller or equal to \( \epsilon \), the AFD is said to hold on a relation \( r \).
-Applied to table~\ref{tab:example-afd-necessity}, the AFD \textsc{Town} \(\to\) \textsc{\textsc{Zip}} holds, if \( \epsilon \geq 0.25\).
+Applied to table~\ref{tab:example-afd-necessity}, the AFD \textsc{Town} \( \to \) \textsc{Zip} holds, if \( \epsilon \geq 0.25\).
 
 \paragraph{Conditional Functional Dependencies (CFDs)}
 \emph{Conditional Functional Dependencies} employ conditions to define the subset on which a dependency holds.
-Originally, those conditions exclusively allow the definition of constraints using the equality operator.\cite[p.~152]{CAR}
-Applied to table~\ref{tab:example-afd-necessity}, a CFD \textsc{Town} \(\to\) \textsc{\textsc{Zip}} holds under the condition that a) entries in column \textsc{Town} = Munich or b) entries in column \textsc{Town} = Berlin.
+Originally, those conditions exclusively allow the definition of constraints using the equality operator.\cite[p.~152]{CAR16}
+Applied to table~\ref{tab:example-afd-necessity}, a CFD \textsc{Town} \( \to\) \textsc{Zip} holds under the condition that a) entries in column \textsc{Town} = Munich or b) entries in column \textsc{Town} = Berlin.
 
 Other RFDs based on the definition of CFDs include \emph{extended conditional functional dependencies} (ECFDs) by Bravo et al.\ that allow the disjunction-operator as well as the inequality-operator for defining conditions.\cite{BRA08}
 
 Also, Chen et al.\ defined CFD\textsuperscript{p}s, which introduce \( <, \leq, >, \geq \text{and} \neq \) for defining conditions.\cite{CHE09}
 
-\paragraph{Metric Functional Dependencies (MFDs)}
-First introduced by Koudas et al.\ in 2009, \emph{Metric Functional Dependencies} were defined to adress violations of canonical FDs due to ``small variations [\dots] in data format and interpretation''.
+\subsubsection{FDs Relaxing on the Attribute Comparison}
+Instead of specifying subsets of tuples for which a FD is valid, FDs relaxing on the attribute comparison alter the condition under which a dependency is said to be valid.
 
+\paragraph{Metric Functional Dependencies (MFDs)}
+First introduced by Koudas et al.\ in 2009, \emph{Metric Functional Dependencies} were defined to adress violations of canonical FDs due to ``small variations [\dots] in data format and interpretation''.\cite[p.~1]{KOU09}
+
+According to equation~\ref{eq:fd-condition}, a FD \textsc{Town} \( \to\) textsc{Zip} is said to be valid if
+\begin{align}
+    t[\textsc{Town}] = t'[\textsc{Town}] \Rightarrow t[\textsc{Zip}] = t'[\textsc{Zip}]
+\end{align}
+holds for all pairs of distinct tuples \( t_i, t_j \in r \), where \( r \) is a relation on scheme \( \boldsymbol{R} \).
+The definition of a MFD replaces this equation by demanding that if and only if for all pairs of distinct tuples \( t_i, t_j \in r \) the metric condition
+\begin{align}\label{eq:mfd-condition}
+    t[\textsc{Town}] = t'[\textsc{Town}] \Rightarrow d(t[\textsc{Zip}], t'[\textsc{Zip}]) \leq \delta
+\end{align}
+holds, the MFD \textsc{Town} \( \to\) \textsc{Zip} is said to be valid on \( r \).\cite[p.~2]{KOU09}
+Here, \( \delta \) is called a \emph{tolerance parameter}, indicating how far the result of a \emph{metric} \( d(t[\textsc{Y}], t'[\textsc{Y}]) \) can deviate from exact equality.
+
+One such metric \( d \) would be the absolute difference between two values, such that \( d(t[\textsc{Y}], t'[\textsc{Y}]) = | t[\textsc{Y} - t'[\textsc{Y}]| \).
+Another popular metric for measuring the difference between two sequences is the Levenshtein distance, where \( d(t[\textsc{Y}], t'[\textsc{Y}]) = \text{lev}_{t,t'}(|t|, |t'|) \) and
+\begin{align}
+    \text{lev}_{t,t'} =
+    \begin{cases}
+        \max(i,j),  & \text{if} \min(i,j)=0, \\
+        \min \begin{cases}
+            \text{lev}_{a, b}(i-1, j)+1 & \\
+            \text{lev}_{a, b}(i, j-1)+1 & \\
+            \text{lev}_{a, b}(i-1, j-1)+1_{(a_i \neq b_j)} \\
+        \end{cases} & \text{otherwise.}
+    \end{cases}
+\end{align}
+Regarding the example given in table~\ref{tab:example-afd-necessity}, the Levenshtein distance between \texttt{Munich} and \texttt{Muinch} is 2.
+Thus the MFD \textsc{Town} \( \to\) \textsc{Zip} is valid, if \( d = \text{lev} \) and \( \delta = 2 \)
+
+\paragraph{Purity Dependencies (PUDs)}
+\emph{Purity Dependencies} blabla.
+
+\subsection{Robustness}
+When Edgar F. Codd introduced the relational model in 1970, the concept of keys and thus the concept of functinal dependencies was already present.\cite[p.~70]{MAI83}
+However, in 1972 Codd separated the definition of a FD from keys, having the specific goal of normalizing a relational database scheme in mind.
+In the years to follow, different researchers started using FDs in their works to solve problems other than schema normalization on datasets without any defects.
+Simovici et al.\ defined purity dependencies, pursuing the goal of ``approximate classifications'' based on attribute combinations.\cite[p.~307]{SIM02}
+Continue here \dots
 
 \newpage
 \subsection{Machine Learning Classifier Theory}
@@ -241,7 +286,7 @@ Once a model has been trained and validated, it needs to be tested in order to d
 This is usually done by measuring the model's performance on a separate dataset not involved in training, the so called test set.
 Performance is measured according to the type of data and the kind of model involved.
 To visualize the performance of a classifier, a \emph{confusion matrix} can be created.
-\begin{figure}[h]
+\begin{figure}[ht]
      \centering
      \includegraphics[width=.8\textwidth]{images/binary-confusion-matrix.pdf}
      \caption{Illustration of a binary confusion matrix.
@@ -273,7 +318,7 @@ share of positive correctly classified samples to the total amount of positive s
 \end{align}
 Recall measures how many of the positive labelled elements were actually selected.
 
-\begin{figure}[h]
+\begin{figure}[ht]
     \centering
     \includegraphics[width=.5\textwidth]{images/precision-and-recall}
     \caption{Each predicted label \(y_{x}\) is represented by a circle. Hollow circles stand for negative labels and full circles for positive lables.  }
@@ -307,13 +352,13 @@ Datawig Imputer separates data into two categories: \emph{categorical data} and 
 Different encoders are chosen to transform \emph{categorical data} and \emph{sequential data}.
 
 Categorical data are data that consist of \emph{categorical variables}.
-``A categorical variable places a case into one of serveral groups of categories,'' define Moore et al.\~\cite[p.~4]{MOO11}.
+``A categorical variable places a case into one of serveral groups of categories,{''} define Moore et al.\cite[p.~4]{MOO11}
 An example-column \( c_{cat} \) containing categorical variables can be representend by the following set of colors:
 \begin{align}\label{eq:c-cat}
     c_{cat} = \{ \texttt{blue},~\texttt{red},~\texttt{yellow},~\texttt{blue},~\texttt{blue},~\texttt{red} \}
 \end{align}
 Datawig Imputer creates a histogram of column \( c \) and uses the histogram's index \( x^c \in \{1, 2, \dots, M_c \} \) to generate a numerical representation.
-\begin{figure}[h]
+\begin{figure}[ht]
     \centering
     \includegraphics[width=.3\textwidth]{images/state_diagrams/color_histogram}
     \caption{State diagram showing the histogram established by Datawig Imputer to encode example~\ref{eq:c-cat}}
