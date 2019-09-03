@@ -1,6 +1,7 @@
 import unittest
 import lib.dep_detector as dep
 import lib.constants as c
+import anytree as tree
 
 
 class TestDepDetector(unittest.TestCase):
@@ -47,8 +48,8 @@ class TestDepDetector(unittest.TestCase):
             self.assertNotIn(root, initial_children[0].name)
             self.assertIsNotNone(initial_children[0].score)
 
-    def test_search_all_columns(self):
-        self.Detector.search_all_columns('complete', True)
+    def test_search_dependencies(self):
+        self.Detector.search_dependencies('complete', True)
 
         for root in self.Detector.roots.values():
             self.assertIsNotNone(root.get_newest_children()[0].score)
@@ -96,6 +97,52 @@ class TestDepDetector(unittest.TestCase):
         root.get_complete_candidates()
         self.assertEqual(len(root.get_newest_children()),
                          (no_roots-1) * (no_roots-2))
+
+    def test_get_min_dep(self):
+        self.Detector.search_dependencies('complete', True)
+        self.Detector.get_minimal_dependencies()
+
+    def test_get_continuous_min_dep(self):
+        root = dep.RootNode(0, [0, 1, 2, 3], '', '', '', [],
+                            is_continuous=True, threshold=10)
+        root.search_strategy = 'greedy'
+        a = root.children[0]
+        a.score = 9
+        b = tree.Node([1, 2], score=99, parent=a)
+        c = tree.Node([2, 3], score=8, parent=a)
+        d = tree.Node([2], score=1, parent=c)
+        e = tree.Node([3], score=99, parent=c)
+
+        self.assertEqual(dep.get_continuous_min_dep(root),
+                         {tuple(d.name): d.score})
+        d.score = 99
+        self.assertEqual(dep.get_continuous_min_dep(root),
+                         {tuple(c.name): c.score})
+
+        root.search_strategy = 'complete'
+        b.score = 8
+        d.score = 1
+        self.assertEqual(dep.get_continuous_min_dep(root),
+                         {tuple(b.name): b.score,
+                          tuple(d.name): d.score})
+
+    def test_get_non_continuous_min_dep(self):
+        root = dep.RootNode(0, [0, 1, 2, 3], '', '', '', [],
+                            is_continuous=True, threshold=0.9)
+        root.search_strategy = 'greedy'
+        a = root.children[0]
+        a.score = 0.94
+        b = tree.Node([1, 2], score=0.93, parent=a)
+        c = tree.Node([2, 3], score=0.93, parent=a)
+        d = tree.Node([2], score=0.80, parent=c)
+        e = tree.Node([3], score=1, parent=c)
+
+        self.assertEqual(dep.get_non_continuous_min_dep(root),
+                         {tuple(e.name): e.score})
+        d.score = 0.92
+        self.assertEqual(dep.get_non_continuous_min_dep(root),
+                         {tuple(e.name): e.score,
+                          tuple(d.name): d.score})
 
 
 if __name__ == '__main__':

@@ -5,6 +5,74 @@ import numpy as np
 import random
 
 
+def get_continuous_min_dep(root):
+    """ Finds minimal LHS combinations on a tree of a continuous
+    RHS. All node.name on the tree need to be lists for this function
+    to work properly, excluding the root.
+
+    Keyword Arguments:
+    root -- root of a tree where minimal LHS combinations are to be
+    searched. all children's names need to be a list.
+    strategy -- 'greedy' or 'complete'. Strategy with which tree has been
+    created. """
+    candidates = {}
+    if root.search_strategy == 'complete':
+        for node in tree.LevelOrderIter(root.children[0]):
+            if node.score <= node.parent.score*0.98:
+                candidates[tuple(node.name)] = node.score
+                parent = node.parent
+                if not parent.is_root:
+                    try:
+                        del candidates[tuple(node.parent.name)]
+                    except KeyError:
+                        pass
+    elif root.search_strategy == 'greedy':
+        parent_is_minimal = True
+        newest_children = root.get_newest_children()
+        for child in newest_children:
+            if child.score <= 0.98*child.parent.score:
+                candidates[tuple(child.name)] = child.score
+                parent_is_minimal = False
+        if parent_is_minimal:
+            parent = newest_children[0].parent
+            candidates[tuple(parent.name)] = parent.score
+    return candidates
+
+
+def get_non_continuous_min_dep(root):
+    """ Finds minimal LHS combinations on a tree of a non-continuous
+    RHS. All node.name on the tree need to be lists for this function
+    to work properly, excluding the root.
+
+    Keyword Arguments:
+    root -- root of a tree where minimal LHS combinations are to be
+    searched. all children's names need to be a list.
+    strategy -- 'greedy' or 'complete'. Strategy with which tree has been
+    created. """
+    candidates = {}
+    if root.search_strategy == 'complete':
+        for node in tree.LevelOrderIter(root.children[0]):
+            if node.score >= node.parent.score*0.98:
+                candidates[tuple(node.name)] = node.score
+                parent = node.parent
+                if not parent.is_root:
+                    try:
+                        del candidates[tuple(node.parent.name)]
+                    except KeyError:
+                        pass
+    elif root.search_strategy == 'greedy':
+        parent_is_minimal = True
+        newest_children = root.get_newest_children()
+        for child in newest_children:
+            if child.score >= 0.98*child.parent.score:
+                candidates[tuple(child.name)] = child.score
+                parent_is_minimal = False
+        parent = newest_children[0].parent
+        if parent_is_minimal and (not parent.is_root):
+            candidates[tuple(parent.name)] = parent.score
+    return candidates
+
+
 class RootNode(tree.NodeMixin):
     """
     Root node class for dependency search-trees.
@@ -34,6 +102,7 @@ class RootNode(tree.NodeMixin):
         self.df_test = test
         self.continuous = continuous
 
+        self.search_strategy = ''  # greedy or complete
         self.known_scores = {}
 
         # init first child-Node
@@ -64,6 +133,7 @@ class RootNode(tree.NodeMixin):
         """ Runs Top-Down approach. Generates scores, if dry_run is
         True. Uses either a greedy strategy or a complete strategy
         to find dependencies."""
+        self.search_strategy = strategy
         score_fun = self.run_ml_imputer
         if dry_run:
             score_fun = self.generate_scores
@@ -94,17 +164,15 @@ class RootNode(tree.NodeMixin):
         """
         self.top_down_convergence = True
         most_recent_nodes = self.get_newest_children()
+        highscore = most_recent_nodes[0].parent.score
+        highscore_node = None
         for node in most_recent_nodes:
-            highscore = 0
-            highscore_node = None
             if self.is_continuous:
                 if (node.score <= highscore) and (len(node.name) > 1):
-                    highscore = node.score
                     highscore_node = node
 
             elif not self.is_continuous:
                 if (node.score >= highscore) and (len(node.name) > 1):
-                    highscore = node.score
                     highscore_node = node
 
         if highscore_node is not None:
@@ -180,6 +248,26 @@ class RootNode(tree.NodeMixin):
                     rng = np.random.normal(node.parent.score*1.2,
                                            node.parent.score*0.25)
                     node.score = rng
+
+    def extract_minimal_deps(self):
+        """ Finds all minimal LHS combinations and returns them in a dict.
+
+        Keyword Arguments:
+        f1_threshold -- float in [0, 1]. Defaults to the root node's threshold.
+        Can be used to find minimal dependencies for a stricter threshold than
+        originally searched with. If f1_threshold < self.score, raise error
+        since searching for minimal dependencies with lower precision than
+        creating the tree with is pointless.
+        """
+        if not self.is_continuous:
+            self.min_lhs = get_non_continuous_min_dep(self)
+        else:
+            self.min_lhs = get_continuous_min_dep(self)
+        print('\nLHS combinations for RHS {}:'.format(self.name))
+        for lhs in self.min_lhs:
+            print('{} with score {:5.4f}'.format(list(lhs),
+                                                 self.min_lhs[lhs]))
+        return self.min_lhs
 
 
 class DepOptimizer():
@@ -259,3 +347,9 @@ class DepOptimizer():
         self.init_roots()
         for root in self.roots.values():
             root.run_top_down(strategy, dry_run)
+
+    def get_minimal_dependencies(self):
+        """ Yields and prints the minimal LHS combinations for all
+        root nodes"""
+        for root in self.roots.values():
+            root.extract_minimal_deps()
