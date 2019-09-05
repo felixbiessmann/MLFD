@@ -54,6 +54,34 @@ def generate_random_fds(data, n=10, save=True):
         print('random FDs successfully written.')
 
 
+def compute_dep_detector_lhs_stability(data, column, save=False):
+    """ Trains SimpleImputer with a range from 3-15 training-cycles and
+    stores the results of """
+    df_train, df_validate, df_test = fd.load_dataframes(
+        data.splits_path,
+        data.title,
+        data.missing_value_token)
+    fd.check_split_for_duplicates([df_train, df_validate, df_test])
+
+    Optimizer = dep.DepOptimizer(data)
+    Optimizer.load_data()
+    Optimizer.init_roots()
+    col = Optimizer.roots[int(column)]
+    minimal_lhs = {}
+    for no_cycles in range(3, 16):
+        print('training for {} cycles'.format(no_cycles))
+        col.known_scores = {}
+        col.cycles = no_cycles
+        col.run_top_down(strategy='complete', dry_run=False)
+        minimal_lhs[no_cycles] = col.extract_minimal_deps()
+
+    if save:
+        p = data.results_path + "dep_detector_lhs_stability.p"
+        save_pickle(minimal_lhs, p)
+    else:
+        return minimal_lhs
+
+
 def compute_rand_overfit_ml_imputer(data, no_dependencies=10, save=False):
     df_train, df_validate, df_test = fd.load_dataframes(
         data.splits_path,
@@ -258,14 +286,18 @@ def main(args):
               'split': split_dataset,
               'rand_fds': generate_random_fds,
               'complete_detect': compute_complete_dep_detector,
-              'greedy_detect': compute_greedy_dep_detector}
+              'greedy_detect': compute_greedy_dep_detector,
+              'dep_lhs_stability': compute_dep_detector_lhs_stability}
 
     data = datasets.get(args.data, no_valid_data)
     if callable(data):  # no valid dataname
         data()
     else:
         calc_fun = models.get(args.model, no_valid_model)
-        calc_fun(data, save=True)
+        if args.model != 'dep_lhs_stability':  # ugly but works
+            calc_fun(data, save=True)
+        else:
+            calc_fun(data, column=args.column, save=True)
 
 
 if __name__ == '__main__':
@@ -273,6 +305,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-m', '--model')
     parser.add_argument('-d', '--data')
+    parser.add_argument('-c', '--column')
 
     args = parser.parse_args()
     main(args)

@@ -251,7 +251,7 @@ def get_performance(df_imputed, rhs: str, lhs: list, continuous_cols: list):
     return result
 
 
-def ml_imputer(df_train, df_validate, df_test, impute_column):
+def ml_imputer(df_train, df_validate, df_test, impute_column, epochs=10):
     """ Imputes a column using DataWigs SimpleImputer
 
     Keyword arguments:
@@ -259,9 +259,9 @@ def ml_imputer(df_train, df_validate, df_test, impute_column):
     df_validate - - dataframe containing the validation dataset
     df_test - - dataframe containing the test set
     impute_column - - position(int) of column to be imputed, starting at 0
+    epochs - - int, number of training_epochs to use with SimpleImputer.fit
     """
     from datawig import SimpleImputer
-    import tempfile
 
     columns = list(df_train.columns)
 
@@ -282,7 +282,7 @@ def ml_imputer(df_train, df_validate, df_test, impute_column):
 
     imputer.fit(train_df=df_train,
                 test_df=df_validate,
-                num_epochs=10,
+                num_epochs=epochs,
                 patience=3)
 
     predictions = imputer.predict(df_test)
@@ -290,7 +290,7 @@ def ml_imputer(df_train, df_validate, df_test, impute_column):
 
 
 def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
-                             continuous_cols=[]):
+                             continuous_cols=[], cycles=10):
 
     """ Runs ml_imputer for every fd contained in a dictionary on a split df.
 
@@ -335,7 +335,8 @@ def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
             df_imputed = ml_imputer(df_subset_train,
                                     df_subset_validate,
                                     df_subset_test,
-                                    str(rhs))
+                                    str(rhs),
+                                    cycles)
 
             result = get_performance(df_imputed, rhs, lhs, continuous_cols)
             rhs_results.append(result)

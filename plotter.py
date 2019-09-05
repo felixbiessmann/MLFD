@@ -2,11 +2,11 @@ import os
 import time
 import argparse
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 import pickle
 import lib.plot_utils as pu
-from lib.constants import ADULT, NURSERY
-from lib.constants import METANOME_DATA_PATH
+import lib.constants as c
 
 
 def load_result(path_to_pickle):
@@ -42,8 +42,16 @@ def main(args):
             print(key)
         return 0
 
-    datasets = {'adult': ADULT,
-                'nursery': NURSERY}
+    datasets = {
+        c.ADULT.title: c.ADULT,
+        c.NURSERY.title: c.NURSERY,
+        c.ABALONE.title: c.ABALONE,
+        c.BALANCESCALE.title: c.BALANCESCALE,
+        c.BREASTCANCER.title: c.BREASTCANCER,
+        c.CHESS.title: c.CHESS,
+        c.IRIS.title: c.IRIS,
+        c.LETTER.title: c.LETTER
+    }
     plots = {'f1_fd_imputer': plot_f1_fd_imputer,
              'f1_ml_imputer': plot_f1_ml_imputer,
              'f1_ml_fd': plot_f1_ml_fd,
@@ -67,6 +75,43 @@ def main(args):
             plt.show()
     else:
         plot_fun()
+
+
+def plot_dep_detector_lhs_stability(data):
+    """ Plots the dependency of lhs-stability on the amount of training-cycles
+    Datawig is trained with for the fifth column of the iris dataset as RHS."""
+    minimal_lhs_dict = load_result(data.results_path+'dep_detector_lhs_stability.p')
+    cycle_lhs = {}
+    last_cycle = 0  # search highest no of cycles
+    for cycle in minimal_lhs_dict:
+        cycle_lhs[cycle] = [lhs for lhs in minimal_lhs_dict[cycle]]
+        if cycle > last_cycle:
+            last_cycle = cycle
+            final_lhs = cycle_lhs[cycle]
+
+    distances = {}
+    for cycle in cycle_lhs:
+        distance = 0
+        for lhs in cycle_lhs[cycle]:
+            if lhs not in final_lhs:
+                distance += 1
+        distances[cycle] = int(distance)
+
+    cycles, dist = list(distances.keys()), list(distances.values())
+    print(dist)
+    print(cycles)
+    pu.figure_setup()
+    fig_size = pu.get_fig_size(10, 5)
+    fig = plt.figure(figsize=list(fig_size))
+    ax = fig.add_subplot(111)
+    ax.plot(cycles, dist)
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+    ax.set(title='''Stability-Analysis of minimal LHS-combinations on Dataset
+    '''+data.title,
+           xlabel='Number of Training-Cycles',
+           ylabel='Undetected minimal LHS-Combinations')
+    return(fig, ax)
 
 
 def plot_f1_fd_imputer(data):

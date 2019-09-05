@@ -87,10 +87,20 @@ class RootNode(tree.NodeMixin):
     dependencies. Either MSE or f1-score, depending on is_continuous.
     is_continuous -- boolean, True if column contains continuous values, False
     if values are classifiable
+    search_strategy -- string, either "greedy" or "complete". Determines the
+    search-strategy used for detecting dependencies. Use "complete" to find all
+    dependencies on the tree and "greedy" to find one high-performing
+    dependency.
+    known_scores -- dict, stores all ml_imputer() results for particular LHS
+    combinations. Strongly improves performance when searching for depdencies.
+    training_cycles -- int, number of training cycles run by Datawig when
+    training models. Lower number worsens model performance but reduces
+    training time strongly.
     """
 
     def __init__(self, name, columns, train, validate, test,
-                 continuous, is_continuous: bool, threshold=None):
+                 continuous, is_continuous: bool, threshold=None,
+                 training_cycles=10):
         self.name = name
         self.score = threshold
         self.is_continuous = is_continuous
@@ -103,6 +113,8 @@ class RootNode(tree.NodeMixin):
         self.continuous = continuous
 
         self.search_strategy = ''  # greedy or complete
+        self.cycles = training_cycles
+
         self.known_scores = {}
 
         # init first child-Node
@@ -225,7 +237,8 @@ class RootNode(tree.NodeMixin):
                                                   self.df_validate,
                                                   self.df_test,
                                                   dependency,
-                                                  self.continuous)
+                                                  self.continuous,
+                                                  self.cycles)
                 if self.is_continuous:
                     node.score = res[self.name][0]['mse']
                 else:
@@ -281,7 +294,7 @@ class DepOptimizer():
     f1 score to be recognized
     """
 
-    def __init__(self, data, f1_threshold=0.8):
+    def __init__(self, data, f1_threshold=0.9):
         """
         Keyword Arguments:
         data : Dataset object from constants.py
