@@ -11,7 +11,7 @@ Lastly, machine learning classifier theory will be discussed, introducing the \e
 \subsection{Relational Database Theory}
 In order to give a definition of FDs, they need to be put in context to the domain they stem from: relational database theory. Some basic concepts will be introduced in this section.
 
-\subsubsection{Relation Scheme}
+\subsubsection{Relation Scheme, Relation and Tuples}
 A \emph{relation scheme}\footnote{also called \emph{relational schema} in literature\cite[p.21]{ABE19} } \(\boldsymbol{R}\) is a finite set of \emph{attribute names} \(\{A_1,~A_2,~\dots,~A_n\}\), where to each attribute name \(A_i\) corresponds a set \(D_i\), called \emph{domain} of \(A_i\), \(1 \leq i \leq n\).
 Let \(\boldsymbol{D}~=~D_1 \cup D_2 \cup \dots \cup D_n$, then a \emph{relation} \(r\) on relation scheme \(\boldsymbol{R}\) is a finite set of mappings \(\{t_1, t_2, \dots, t_p\}\) from \(\boldsymbol{R}\) to \(\boldsymbol{D}\):
 \begin{align*}
@@ -129,31 +129,6 @@ A relation scheme \(R\) is said to be in \emph{second normal form} (2NF) in resp
 
 \paragraph{Third Normal Form (3NF)}
 
-\subsubsection{FD Imputer}
-The FD Imputer imputes the column of a table of a relational database.
-Empirical Risk Minimization strategies are used to do this.
-The table is first split in train-set and validation-set.
-Then, FDs are detected on the train-set using HyFD.\cite{PAP16}
-Having identified all FDs on the train-set, FD Imputer can impute values of any right-hand side of a particular FD:
-This is done by executing an SQL join clause.
-FD imputer performs an inner join on all left-hand side columns, joining train-set and validation-set.
-A second left join clause concatenates the original validation-set with the column of imputed tuples stemming from the first join.
-\begin{algorithm}[ht]
-    \DontPrintSemicolon
-    \SetAlgoLined
-    \KwResult{Validation-subset of a relational database table with an additional column containing imputed tuples}
-    \KwData{Relational database table}
-    \BlankLine
-
-    Split relational database table into train-set and validation-set\;
-    Detect FDs in train-set\;
-    ALTER TABLE train-set DROP COLUMN not in lhs\;
-    imputed-set = SELECT lhs FROM train-set INNER JOIN validation-set ON lhs\;
-    imputed-validation-set = SELECT imputed-column FROM imputed-set LEFT JOIN validation-set\;
-    return imputed-validation-set\;
-    \caption{FD Imputer}
-\end{algorithm}
-
 \subsection{Limitations of FDs}
 In the field of dependency detection an extensive body of theory and algorithms for FD detection has been created in the past decades.\cite[p.~1]{PAP15}
 These mainly consider FDs as defined in formula~\ref{eq:fd-condition}.
@@ -256,7 +231,7 @@ Here, \( \delta \) is called a \emph{tolerance parameter}, indicating how far th
 
 One such metric \( d \) would be the absolute difference between two values, such that \( d(t[\textsc{Y}], t'[\textsc{Y}]) = | t[\textsc{Y} - t'[\textsc{Y}]| \).
 Another popular metric for measuring the difference between two sequences is the Levenshtein distance, where \( d(t[\textsc{Y}], t'[\textsc{Y}]) = \text{lev}_{t,t'}(|t|, |t'|) \) and
-\begin{align}
+\begin{align*}
     \text{lev}_{t,t'} =
     \begin{cases}
         \max(i,j),  & \text{if} \min(i,j)=0, \\
@@ -266,19 +241,112 @@ Another popular metric for measuring the difference between two sequences is the
             \text{lev}_{a, b}(i-1, j-1)+1_{(a_i \neq b_j)} \\
         \end{cases} & \text{otherwise.}
     \end{cases}
-\end{align}
+\end{align*}
 Regarding the example given in table~\ref{tab:example-afd-necessity}, the Levenshtein distance between \texttt{Munich} and \texttt{Muinch} is 2.
-Thus the MFD \textsc{Town} \( \to\) \textsc{Zip} is valid, if \( d = \text{lev} \) and \( \delta = 2 \)
+Thus the MFD \textsc{Town} \( \to\) \textsc{Zip} is valid, if \( d = \text{lev} \) and \( \delta = 2 \).
 
 \paragraph{Purity Dependencies (PUDs)}
-\emph{Purity Dependencies} blabla.
+\emph{Purity Dependencies} Lorem ipsum
 
-\subsection{Robustness}
+\subsection{Robustness of FDs}
 When Edgar F. Codd introduced the relational model in 1970, the concept of keys and thus the concept of functinal dependencies was already present.\cite[p.~70]{MAI83}
-However, in 1972 Codd separated the definition of a FD from keys, having the specific goal of normalizing a relational database scheme in mind.
-In the years to follow, different researchers started using FDs in their works to solve problems other than schema normalization on datasets without any defects.
-Simovici et al.\ defined purity dependencies, pursuing the goal of ``approximate classifications'' based on attribute combinations.\cite[p.~307]{SIM02}
-Continue here \dots
+However, in 1972 Codd separated the definition of a FD from keys, persuing the specific goal of normalizing a relational database scheme.
+In the years to follow, different researchers started using FDs in their works to solve problems other than schema normalization.
+
+Koudas et at., when introducing the MFD, write that the definition of FDs was ``not \emph{robust}\footnote{Highlighting added by the author.} enough to capture functional relationships on data obtained from merging heterogenous sources [\dots]''.\cite[p.~1]{KOU09}
+However, they do not provide a way of measuring robustness.
+
+Bleifuß et al.\cite[p.~3]{BLE16} define \emph{Correctness} of a set of RFDs \( Out \) compared to a set of FDs \( Gold \) on the same relational instance \( r \) as follows:
+\begin{align*}
+    \text{Correctness} = \frac{|Out \cap Gold^{+}|}{|Out|}
+\end{align*}
+\( Gold^{+} \) represents the transitive closure of \( Gold \), meaning that it includes all non-minimal FDs implied by \( Gold \).
+However, this definition is only meaningful for AFDs, which try to minimc FDs as closely as possible.
+
+As far as the author of this work knows, there is no method for measuring \emph{robustness} of FDs established.
+Drawing inspiration from Machine Learning theory, we propose the application of cross-validation techniques to functional dependencies in order to measure robustness, as it has been described by Koudas et al.\, in a meaningful way.
+
+\subsubsection{Measuring Robustness}
+Let \( r = \{ t_1, t_2, \dots, t_p \}\) be a a relation on a relation scheme \( \boldsymbol{R} \).
+Then \( p \in \mathbb{N} \) is the number of tuples in \( r \).
+We then introduce a split-ratio \( s \in (0, 1) \) and split \( r \) into two subsets:
+\begin{align*}
+    r_{train} &= \{ t_1, t_2, \dots, t_{s \cdot p} \} \\
+    r_{test} &= \{ t_{(s \cdot p) + 1}, t_{(s \cdot p) + 2}, \dots, t_{p} \}
+\end{align*}
+If \( s \cdot p \) is not a natural number, we round accordingly.
+We call \( r_{train} \) the \emph{train set} and \( r_{test} \) the \emph{test set}.
+
+In a next step, FDs are detected on the train set using the HyFD algorithm.\cite{PAP16}
+The algorithm we call \emph{FD Imputer} is then used for measuring robustness of each FD detected on the train set.
+
+\paragraph{FD Imputer} FD Imputer iterates through each tuple in the test set and searches for a tuple in the train set with the exact same left hand side.
+If one or more such tuples in the train set are found, FD Imputer randomly selects one of these tuples and saves the right hand side of that tuple.
+We call this right hand side value \emph{imputation} of the right hand side value on the train set.
+
+This is done for all tuples in the train set.
+In one last step, FD Imputer compares the imputations with the actual right hand side values in the train set.
+This allows a classification of the imputations --- one can now calculate the F1-measure for each FD.
+
+
+\begin{table}[ht]
+    \begin{subtable}[c]{0.9\textwidth}
+        \centering
+        \begin{tabular}{llll}
+            \textsc{A} & \textsc{B} & \textsc{C} & \textsc{D} \\
+        \toprule
+        Blue & Car & Portugal & Lisbon \\
+        Yellow & Car & Portugal & Lisbon  \\
+        Green & Bus & Spain & Madrid  \\
+        Grey & Car & Portugal & Lisbon  \\
+        \bottomrule
+        \end{tabular}
+        \subcaption{Original relation \( r \).}
+    \end{subtable}
+    \begin{subtable}[c]{0.45\textwidth}
+        \centering
+        \begin{tabular}{llll}
+            \textsc{A} & \textsc{B} & \textsc{C} & \textsc{D}  \\
+        \toprule
+            Green & Bus & Portugal & Lisbon \\
+            Yellow & Car & Portugal & Lisbon \\
+        \bottomrule
+        \end{tabular}
+        \subcaption{Train set \( r_{train} \).}
+    \end{subtable}
+    \begin{subtable}[c]{0.45\textwidth}
+        \centering
+        \begin{tabular}{llll}
+        \textsc{A} & \textsc{B} & \textsc{C} & \textsc{D} \\
+        \toprule
+        Yellow & Bus & Spain & Madrid \\
+        Blue & Bus & Portugal & Lisbon \\
+        \bottomrule
+        \end{tabular}
+        \subcaption{Test set \( r_{train} \).}
+    \end{subtable}
+    \caption{The relation \( r \) is split into train- and test sets. The FD \textsc{C} \( \ \to \) \textsc{D}, when used for finding a right hand side value on \( r_{test} \), will correctly return `Lisbon'. However, FD \textsc{A} \( \to \) \textsc{D} for example will lead to FD Imputer yielding `Madrid', which is an incorrect imputation.}
+\end{table}
+
+This is done by executing an SQL join clause.
+FD imputer performs an inner join on all left-hand side columns, joining train-set and validation-set.
+A second left join clause concatenates the original validation-set with the column of imputed tuples stemming from the first join.
+\begin{algorithm}[ht]
+    \DontPrintSemicolon
+    \SetAlgoLined
+    \KwResult{Validation-subset of a relational database table with an additional column containing imputed tuples}
+    \KwData{Relational database table}
+    \BlankLine
+
+    Split relational database table into train-set and validation-set\;
+    Detect FDs in train-set\;
+    ALTER TABLE train-set DROP COLUMN not in lhs\;
+    imputed-set = SELECT lhs FROM train-set INNER JOIN validation-set ON lhs\;
+    imputed-validation-set = SELECT imputed-column FROM imputed-set LEFT JOIN validation-set\;
+    return imputed-validation-set\;
+    \caption{FD Imputer}
+\end{algorithm}
+
 
 \newpage
 \subsection{Machine Learning Classifier Theory}
