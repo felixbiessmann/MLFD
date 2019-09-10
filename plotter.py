@@ -57,7 +57,8 @@ def main(args):
              'f1_ml_fd': plot_f1_ml_fd,
              'mse_ml_fd': plot_mse_ml_fd,
              'f1_ml_overfit': plot_f1_ml_overfit,
-             'f1_random_overfit': plot_f1_random_ml_overfit}
+             'f1_random_overfit': plot_f1_random_ml_overfit,
+             'dep_detector_lhs_stability': plot_dep_detector_lhs_stability}
 
     data = datasets.get(args.data, no_valid_data)
     if data != 0:
@@ -107,10 +108,9 @@ def plot_dep_detector_lhs_stability(data):
     ax.plot(cycles, dist)
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 
-    ax.set(title='''Stability-Analysis of minimal LHS-combinations on Dataset
-    '''+data.title,
-           xlabel='Number of Training-Cycles',
-           ylabel='Undetected minimal LHS-Combinations')
+    ax.set(title='Stability-Analysis on '+data.title.capitalize(),
+           xlabel='Training-Cycles',
+           ylabel='Undetected minimal LHSs')
     return(fig, ax)
 
 
@@ -133,8 +133,8 @@ def plot_f1_fd_imputer(data):
     ax = fig.add_subplot(111)
     ax.barh(lhs_names, f1_fd)
 
-    ax.set(title='ML Imputer performance on '+data.title,
-           xlabel='F1 score',
+    ax.set(title='ML Imputer Performance on '+data.title.capitalize(),
+           xlabel='F1-Score',
            xlim=[0.0, 1.0])
     return(fig, ax)
 
@@ -158,8 +158,8 @@ def plot_f1_ml_imputer(data):
     ax = fig.add_subplot(111)
     ax.barh(lhs_names, f1_fd)
 
-    ax.set(title='ML Imputer performance on '+data.title,
-           xlabel='F1 score',
+    ax.set(title='ML Imputer Performance on '+data.title.capitalize(),
+           xlabel='F1-Score',
            xlim=[0.0, 1.0])
     return(fig, ax)
 
@@ -183,9 +183,9 @@ def plot_f1_ml_overfit(data):
 
     ax.scatter(f1_overfit, f1_ml, c='C0')
     ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='C1')
-    ax.set(title=data.title+'.csv Classification Performance',
-           xlabel='f1-score ML imputer overfitted',
-           ylabel='f1-score ML imputer',
+    ax.set(title='Classification Performance on ' + data.title.capitalize(),
+           xlabel='F1-Score ML Imputer Overfitted',
+           ylabel='F1-Score ML Imputer',
            xlim=[-0.1, 1.1],
            ylim=[-0.1, 1.1])
     return (fig, ax)
@@ -210,9 +210,9 @@ def plot_f1_random_ml_overfit(data):
 
     ax.scatter(f1_overfit, f1_ml, c='C0')
     ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='C1')
-    ax.set(title=data.title+'.csv Classification Performance on Random FDs',
-           xlabel='f1-score ML imputer overfitted',
-           ylabel='f1-score ML imputer',
+    ax.set(title='Classification Performance on Random FDs '+data.title.capitalize(),
+           xlabel='F1-Score ML Imputer Overfitted',
+           ylabel='F1-Score ML Imputer',
            xlim=[-0.1, 1.1],
            ylim=[-0.1, 1.1])
     return (fig, ax)
@@ -244,8 +244,8 @@ def plot_mse_ml_fd(data):
     ax.scatter(list(range(0, len(rel_mse))), rel_mse, c='C0')
     ax.plot(np.linspace(-2, len(rel_mse)), [1]*50, c='C1')
 
-    ax.set(title=data.title+'.csv Mean Squared Error of two imputers',
-           xlabel='FD LHS combination',
+    ax.set(title='Mean Squared Error of Two Imputers on '+data.title.capitalize(),
+           xlabel='FD LHS Combination',
            ylabel='$MSE_{FD}$ / MSE ML',
            xlim=[-0.1, 11])
     return (fig, ax)
@@ -271,9 +271,9 @@ def plot_f1_ml_fd(data):
     ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), lw=pu.plot_lw(),
             color='C1')
 
-    ax.set(title=data.title+'.csv Classification Performance',
-           xlabel='f1-score FD imputer',
-           ylabel='f1-score ML imputer',
+    ax.set(title='Classification Performance on '+data.title.capitalize(),
+           xlabel='F1-Score FD Imputer',
+           ylabel='F1-Score ML Imputer',
            xlim=[-0.1, 1.1],
            ylim=[-0.1, 1.1])
     return(fig, ax)

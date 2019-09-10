@@ -1,15 +1,8 @@
 % !Tex root = main.tex
 \section{Introduction}
-IBM's Deep Blue chess-playing computer beat Garry Kasparov in 1997, becoming the first machine to defeat a reigning world chess-champion.\footnote{\url{https://en.wikipedia.org/wiki/Deep_Blue_(chess_computer)}}
-IBM researchers implemented alpha-beta search algorithms in parallel, brute-force searching for optimal moves.
-This approach has been iteratively refined since then, leading to modern chess-engines like \href{https://github.com/official-stockfish/Stockfish}{Stockfish}.
-
-When researchers published the performance of reinforced-learning algorithms in 2018, it became clear that learned algorithms offered superior performanced compared to conventional chess-playing algorithms.\footnote{\url{https://deepmind.com/research/alphago/alphazero-resources/}}
-This approach, based on empirical risk-minimization, has proven fruitful in domains other than artificial intelligence as well.
-
 Data-driven methods change the way computer scientists approach algorithmic problems.
 Rather than designing and implementing complex algorithms themselves, recent advances in machine learning have allowed for learned algorithms.
-While these learned structures come with their own limitations and problems, e.g.\ lack of explainability, they have proven to solve classic algorithmic problems in a more performant fashion.
+While these learned algorithm come with their own limitations and problems, e.g.\ lack of explainability, some of them have proven to solve classic algorithmic problems in a more performant fashion.
 
 Kraska et al.\ showed in their 2018 publication ``The case for Learned Index Structures'' that different index structures can be replaced by learned ones, greatly improving performance.\footnote{\url{https://arxiv.org/abs/1712.01208}}
 
@@ -20,6 +13,3 @@ One important concept in relational database theory is the idea of \emph{functio
 Functional dependencies stem from the early days of relational databases.
 Historically, they were introduced to formalize schema normalization, where a normalized schema is one where no functional dependency between two non-key columns exists.
 In the past, functional dependencies found broader interest in data analysis and data cleaning.
-
-A long history of academic research improved functional dependency search-algorithms.
-Most notably, TANE

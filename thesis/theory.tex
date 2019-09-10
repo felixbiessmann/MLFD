@@ -56,7 +56,7 @@ A FD \(X \to A\) is said to be \emph{valid} in \(r\), if and only if
     t_i[X] = t_j[X] \Rightarrow t_i[A] = t_j[A] \label{eq:fd-condition}
 \end{align}
 holds for all all pairs of distinct tuples \(t_i,t_j \in r\).\cite[p.~21]{ABE19}
-We say that \(X\) \emph{functionally determines} \(A\)\cite[p.~43]{MAI83} and name \(X\) the \emph{left hand side} (lhs), whilst calling \(A\) the \emph{right hand side} (rhs).
+We say that \(X\) \emph{functionally determines} \(A\)\cite[p.~43]{MAI83} and name \(X\) the \emph{left hand side} (LHS), whilst calling \(A\) the \emph{right hand side} (RHS).
 
 \begin{table}[ht]
     \centering
@@ -276,18 +276,7 @@ We then introduce a split-ratio \( s \in (0, 1) \) and split \( r \) into two su
 \end{align*}
 If \( s \cdot p \) is not a natural number, we round accordingly.
 We call \( r_{train} \) the \emph{train set} and \( r_{test} \) the \emph{test set}.
-
-In a next step, FDs are detected on the train set using the HyFD algorithm.\cite{PAP16}
-The algorithm we call \emph{FD Imputer} is then used for measuring robustness of each FD detected on the train set.
-
-\paragraph{FD Imputer} FD Imputer iterates through each tuple in the test set and searches for a tuple in the train set with the exact same left hand side.
-If one or more such tuples in the train set are found, FD Imputer randomly selects one of these tuples and saves the right hand side of that tuple.
-We call this right hand side value \emph{imputation} of the right hand side value on the train set.
-
-This is done for all tuples in the train set.
-In one last step, FD Imputer compares the imputations with the actual right hand side values in the train set.
-This allows a classification of the imputations --- one can now calculate the F1-measure for each FD.
-
+In table~\ref{tab:split-example-fd-imputer} such a splitting is examplified for \( s = 0.5 \) and \( p=4 \).
 
 \begin{table}[ht]
     \begin{subtable}[c]{0.9\textwidth}
@@ -325,30 +314,37 @@ This allows a classification of the imputations --- one can now calculate the F1
         \end{tabular}
         \subcaption{Test set \( r_{train} \).}
     \end{subtable}
-    \caption{The relation \( r \) is split into train- and test sets. The FD \textsc{C} \( \ \to \) \textsc{D}, when used for finding a right hand side value on \( r_{test} \), will correctly return `Lisbon'. However, FD \textsc{A} \( \to \) \textsc{D} for example will lead to FD Imputer yielding `Madrid', which is an incorrect imputation.}
+    \caption{The relation \( r \) is split into train- and test sets with a split-ratio \( s = 0.5 \). }
+    \label{tab:split-example-fd-imputer}
 \end{table}
 
-This is done by executing an SQL join clause.
-FD imputer performs an inner join on all left-hand side columns, joining train-set and validation-set.
-A second left join clause concatenates the original validation-set with the column of imputed tuples stemming from the first join.
-\begin{algorithm}[ht]
-    \DontPrintSemicolon
-    \SetAlgoLined
-    \KwResult{Validation-subset of a relational database table with an additional column containing imputed tuples}
-    \KwData{Relational database table}
-    \BlankLine
+In a next step, FDs are detected on the train set using the HyFD algorithm.\cite{PAP16}
+The algorithm we call \emph{FD Imputer} is then used for measuring robustness of each FD detected on the train set.
 
-    Split relational database table into train-set and validation-set\;
-    Detect FDs in train-set\;
-    ALTER TABLE train-set DROP COLUMN not in lhs\;
-    imputed-set = SELECT lhs FROM train-set INNER JOIN validation-set ON lhs\;
-    imputed-validation-set = SELECT imputed-column FROM imputed-set LEFT JOIN validation-set\;
-    return imputed-validation-set\;
-    \caption{FD Imputer}
-\end{algorithm}
+\paragraph{FD Imputer} FD Imputer iterates through each tuple in the test set and searches for a tuple in the train set with the exact same left hand side.
+If one or more such tuples in the train set are found, FD Imputer randomly selects one of these tuples and saves the right hand side of that tuple.
+We call this right hand side value \emph{imputation} of the right hand side value on the train set.
 
+This is done for all tuples in the train set.
+In a last step, FD Imputer compares the imputations with the actual right hand side values in the train set.
+This allows a classification of the imputations --- one can now calculate the F1-measure for each FD.
+
+Consider table~\ref{tab:split-example-fd-imputer}.
+The FD \textsc{C} \( \ \to \) \textsc{D}, when used for finding a right hand side value on \( r_{test} \), will correctly return `Lisbon'.
+However, FD \textsc{A} \( \to \) \textsc{D} for example will lead to FD Imputer yielding `Madrid', which is an incorrect imputation.
+
+Implementing FD Imputer, imputations are retrieved by executing a SQL join clause.
+FD Imputer performs an inner join on all left hand side columns, joining train-set and validation-set.
+A successive second left join clause concatenates the original validation-set with the column of imputed tuples stemming from the first join.
+
+\paragraph{Robustness as a F1-Score} The imputed values retrieved by FD Imputer can be leveraged to create a measure for robustness.
+Each imputed value is interpreted as a label and classified as in the binary classification case (see figure~\ref{fig:confusion-matrix}).
+Precision and recall are then calculated and weighted according to the number of true instances for each label.\footnote{See \href{https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html}{sklearn documentation} for \texttt{sklearn.metrics.f1\_score()} with weighted average.}
+
+Finally, this approach yields a f1-score for each FD which we call \emph{robustness}.
 
 \newpage
+
 \subsection{Machine Learning Classifier Theory}
 Once a model has been trained and validated, it needs to be tested in order to determine whether or not overfitting occured during training.
 This is usually done by measuring the model's performance on a separate dataset not involved in training, the so called test set.
