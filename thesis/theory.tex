@@ -253,7 +253,7 @@ When Edgar F. Codd introduced the relational model in 1970, the concept of keys 
 However, in 1972 Codd separated the definition of a FD from keys, persuing the specific goal of normalizing a relational database scheme.
 In the years to follow, different researchers started using FDs in their works to solve problems other than schema normalization.
 
-Koudas et at., when introducing the MFD, write that the definition of FDs was ``not \emph{robust}\footnote{Highlighting added by the author.} enough to capture functional relationships on data obtained from merging heterogenous sources [\dots]''.\cite[p.~1]{KOU09}
+Koudas et al., when introducing the MFD, write that the definition of FDs was ``not \emph{robust}\footnote{Highlighting added by the author.} enough to capture functional relationships on data obtained from merging heterogenous sources [\dots]''.\cite[p.~1]{KOU09}
 However, they do not provide a way of measuring robustness.
 
 Bleifuß et al.\cite[p.~3]{BLE16} define \emph{Correctness} of a set of RFDs \( Out \) compared to a set of FDs \( Gold \) on the same relational instance \( r \) as follows:
@@ -277,6 +277,7 @@ We then introduce a split-ratio \( s \in (0, 1) \) and split \( r \) into two su
 If \( s \cdot p \) is not a natural number, we round accordingly.
 We call \( r_{train} \) the \emph{train set} and \( r_{test} \) the \emph{test set}.
 In table~\ref{tab:split-example-fd-imputer} such a splitting is examplified for \( s = 0.5 \) and \( p=4 \).
+This approach is drawn from statistical cross-validation.
 
 \begin{table}[ht]
     \begin{subtable}[c]{0.9\textwidth}

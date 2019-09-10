@@ -4,12 +4,20 @@ Data-driven methods change the way computer scientists approach algorithmic prob
 Rather than designing and implementing complex algorithms themselves, recent advances in machine learning have allowed for learned algorithms.
 While these learned algorithm come with their own limitations and problems, e.g.\ lack of explainability, some of them have proven to solve classic algorithmic problems in a more performant fashion.
 
-Kraska et al.\ showed in their 2018 publication ``The case for Learned Index Structures'' that different index structures can be replaced by learned ones, greatly improving performance.\footnote{\url{https://arxiv.org/abs/1712.01208}}
+Kraska et al.\ showed in their 2018 publication ``The case for Learned Index Structures'' that different index structures can be replaced by learned ones, greatly improving performance.\cite{KRA18}
 
-In the field of data cleaning and data enrichment, HoloClean lead the way for machine-learning approaches in the domain of data cleaning.
-HoloClean is agnostic of the way the database to be cleaned is structured, making it versitile.
+In the field of data cleaning and data enrichment, HoloClean lead the way for machine-learning approaches in the domain of data cleaning.\cite{HEI19}
+HoloClean is agnostic of the way data is structured, making it versitile for many different domains of application.
 
-One important concept in relational database theory is the idea of \emph{functional dependencies}.
-Functional dependencies stem from the early days of relational databases.
-Historically, they were introduced to formalize schema normalization, where a normalized schema is one where no functional dependency between two non-key columns exists.
-In the past, functional dependencies found broader interest in data analysis and data cleaning.
+In this work, machine-learning techniques are applied to the field of relational database theory --- more precisely, functional dependency detection.
+
+Stemming from the early days of relational database theory, functional dependencies were introduced to formalize schema normalization.
+
+In this works' theory section, basic relational database terminology is introduced.
+The application of functional dependencies in normalization is presented.
+Furthermore, limitations of canonical functional dependencies are mentioned and relaxed functional dependencies are introduced.
+With reference to Koudas et al., functional dependencies' robustness is discussed.
+A way of measuring robustness is proposed.
+Ultimately, machine-learning classification theory necessary for understanding the basic functionality of Datawig\cite{BIE18} is discussed.
+
+Several experiments are conducted to explore machine-learning techniques working with functinoal dependencies. \textbf{continue here with description of experiments}.

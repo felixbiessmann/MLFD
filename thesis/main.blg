@@ -1,18 +1,18 @@
 [0] Config.pm:302> INFO - This is Biber 2.11
 [0] Config.pm:305> INFO - Logfile is 'main.blg'
-[31] biber:313> INFO - === Sun Sep  8, 2019, 21:19:36
-[53] Biber.pm:371> INFO - Reading 'main.bcf'
-[157] Biber.pm:857> INFO - Found 18 citekeys in bib section 0
-[182] Biber.pm:3976> INFO - Processing section 0
-[200] Biber.pm:4136> INFO - Looking for bibtex format file 'Bib.bib' for section 0
-[203] bibtex.pm:1500> INFO - LaTeX decoding ...
-[259] bibtex.pm:1316> INFO - Found BibTeX data source 'Bib.bib'
-[471] Utils.pm:193> WARN - month field 'March' in entry 'KOU09' is not an integer - this will probably not sort properly.
-[548] Utils.pm:193> WARN - BibTeX subsystem: /tmp/HhkVxbUHiy/Bib.bib_3231.utf8, line 107, warning: 4 characters of junk seen at toplevel
-[590] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[590] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[590] Biber.pm:3804> INFO - Sorting list 'anyt/global//global/global' of type 'entry' with template 'anyt' and locale 'en-US'
-[590] Biber.pm:3810> INFO - No sort tailoring available for locale 'en-US'
-[624] bbl.pm:617> INFO - Writing 'main.bbl' with encoding 'UTF-8'
-[634] bbl.pm:720> INFO - Output to main.bbl
-[635] Biber.pm:110> INFO - WARNINGS: 2
+[31] biber:313> INFO - === Tue Sep 10, 2019, 18:23:16
+[57] Biber.pm:371> INFO - Reading 'main.bcf'
+[127] Biber.pm:857> INFO - Found 20 citekeys in bib section 0
+[151] Biber.pm:3976> INFO - Processing section 0
+[166] Biber.pm:4136> INFO - Looking for bibtex format file 'Bib.bib' for section 0
+[167] bibtex.pm:1500> INFO - LaTeX decoding ...
+[205] bibtex.pm:1316> INFO - Found BibTeX data source 'Bib.bib'
+[372] Utils.pm:193> WARN - month field 'March' in entry 'KOU09' is not an integer - this will probably not sort properly.
+[427] Utils.pm:193> WARN - BibTeX subsystem: /tmp/lBCtm4ov9V/Bib.bib_27064.utf8, line 139, warning: 4 characters of junk seen at toplevel
+[463] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[463] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[463] Biber.pm:3804> INFO - Sorting list 'anyt/global//global/global' of type 'entry' with template 'anyt' and locale 'en-US'
+[463] Biber.pm:3810> INFO - No sort tailoring available for locale 'en-US'
+[501] bbl.pm:617> INFO - Writing 'main.bbl' with encoding 'UTF-8'
+[514] bbl.pm:720> INFO - Output to main.bbl
+[514] Biber.pm:110> INFO - WARNINGS: 2
