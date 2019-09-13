@@ -7,7 +7,7 @@ Clone the project and cd into the folder.
 ```
 git clone https://github.com/Larmor27/MLFD_fd_detection
 cd MLFD_fd_detection
-pip install datawig sklearn numpy pandas
+pip install datawig sklearn numpy pandas anytree
 ```
 
 If you want to perform FD-detection as well, load metanome binaries from separate repository.

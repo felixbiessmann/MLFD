@@ -289,15 +289,21 @@ def main(args):
               'greedy_detect': compute_greedy_dep_detector,
               'dep_lhs_stability': compute_dep_detector_lhs_stability}
 
-    data = datasets.get(args.data, no_valid_data)
-    if callable(data):  # no valid dataname
-        data()
+    if (args.cluster_mode):
+        for dataset in datasets.values():
+            compute_complete_dep_detector(dataset, save=True)
+            compute_greedy_dep_detector(dataset, save=True)
+
     else:
-        calc_fun = models.get(args.model, no_valid_model)
-        if args.model != 'dep_lhs_stability':  # ugly but works
-            calc_fun(data, save=True)
+        data = datasets.get(args.data, no_valid_data)
+        if callable(data):  # no valid dataname
+            data()
         else:
-            calc_fun(data, column=args.column, save=True)
+            calc_fun = models.get(args.model, no_valid_model)
+            if args.model != 'dep_lhs_stability':  # ugly but works
+                calc_fun(data, save=True)
+            else:
+                calc_fun(data, column=args.column, save=True)
 
 
 if __name__ == '__main__':
@@ -306,6 +312,7 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--model')
     parser.add_argument('-d', '--data')
     parser.add_argument('-c', '--column')
+    parser.add_argument('-cl', '--cluster_mode')
 
     args = parser.parse_args()
     main(args)

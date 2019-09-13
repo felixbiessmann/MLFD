@@ -1,52 +1,31 @@
 % !Tex root = main.tex
 \newpage
 \section{Theory}
-\emph{Functional Dependencies}~(FDs) are a way of expressing ``a priori knowledge of restrictions or constraints on permissible sets of data''~\cite[p.~42]{MAI83} in relational database theory.
-Having been introduced in the 1970s for schema normalization of relational databases, FDs have proven to be useful in a multitude of domains.
 
 In this section, \emph{functional dependencies} and the theoretical foundation necessary to put them into context are introduced.
-Building on this foundation, \emph{relaxed functinal dependencies} are introduced as a way how \emph{robustness} of FDs has been increased in the past.
+Building on this foundation, \emph{relaxed functinal dependencies} are established as a way of adapting FDs for different use-cases.
+Particularly \emph{robustness} of FDs will be discussed an a way of measuring it with cross-validation techniques will be presented.
+
 Lastly, machine learning classifier theory will be discussed, introducing the \emph{Datawig} package.
 
 \subsection{Relational Database Theory}
-In order to give a definition of FDs, they need to be put in context to the domain they stem from: relational database theory. Some basic concepts will be introduced in this section.
+\emph{Functional Dependencies} (FDs) are a way of expressing ``a priori knowledge of restrictions or constraints on permissible sets of data''~\cite[p.~42]{MAI83} in relational database theory.
+Introduced in the 1970s for schema normalization of relational databases, functional dependencies have proven to be useful in a multitude of domains.
+In order to give a definition of FDs, they need to be put in context to the domain they stem from: relational database theory.
+Some basic concepts will be introduced in this section.
 
 \subsubsection{Relation Scheme, Relation and Tuples}
-A \emph{relation scheme}\footnote{also called \emph{relational schema} in literature\cite[p.21]{ABE19} } \(\boldsymbol{R}\) is a finite set of \emph{attribute names} \(\{A_1,~A_2,~\dots,~A_n\}\), where to each attribute name \(A_i\) corresponds a set \(D_i\), called \emph{domain} of \(A_i\), \(1 \leq i \leq n\).
+A \emph{relation scheme}\footnote{also called \emph{relational schema} in literature\cite[p.21]{ABE19} } \(\boldsymbol{R}\) is a finite set of \emph{attribute names} \( \boldsymbol{R} = \{A_1,~A_2,~\dots,~A_n\}\), where to each attribute name \(A_i\) corresponds a set \(D_i\), called \emph{domain} of \(A_i\), \(1 \leq i \leq n\).
 Let \(\boldsymbol{D}~=~D_1 \cup D_2 \cup \dots \cup D_n$, then a \emph{relation} \(r\) on relation scheme \(\boldsymbol{R}\) is a finite set of mappings \(\{t_1, t_2, \dots, t_p\}\) from \(\boldsymbol{R}\) to \(\boldsymbol{D}\):
 \begin{align*}
-  &t_i: \boldsymbol{R} \to \boldsymbol{D},
+  &t_i: \boldsymbol{R} \to \boldsymbol{D}
 \end{align*}
-where we call those mappings \emph{tuples} under the constraint that~\cite[p.2]{MAI83}
+We call those mappings \emph{tuples} under the constraint that~\cite[p.2]{MAI83}
 \begin{align*}
     t(A_i) \subseteq D_i.
 \end{align*}
 In application, attribute names are commonly called \emph{column name} or \emph{column attribute}.
 One can think of them as labels of data that is stored in the respective column.
-
-
-\subsubsection{Keys}
-A \emph{key} on a relation \( r \) on a relation scheme \( R \) is a subset \( K = \{ B_1, B_2, \dots, B_m \} \) with the property that for any tuple \( t_i \in \{ t_1, t_2, \dots, t_3 \} \) the relation
-\begin{align*}
-    t_i(B_k) = t_j(B_k) \Rightarrow t_i \equiv t_j
-\end{align*}
-holds for any single \( B_k \in K \). In other words, any \( K \)-value of a tuple identifies that tuple uniquely.~\cite[p.~4]{MAI83}
-
-Having defined both \emph{relation scheme} and \emph{keys}, it is now possible to introduce the more complex concepts of relational databases and functional dependencies.
-
-
-\subsubsection{Definition of a Relational Database}
-When real-world data used by one or multiple application/s is stored on a machine according to the relational model, it is usually stored in a relational database.
-According to the definition of a relation scheme \(R\), one can formally introduce databases and database schemes:
-
-We assume that \(R\) is composed of two parts, \(S\) and \(\boldsymbol{K}\). We call \(S\) a \emph{set of attributes} and \(\boldsymbol{K}\) a \emph{set of designated keys} and describe this composition by writing \(R = (S, \boldsymbol{K})\).
-A \emph{relational database scheme} \textbf{R} over \textbf{U} can now be defined as a collection of relation schemes \(\{R_1, R_1, \dots, R_p\}\), where \(R_i = (S_i, \boldsymbol{K}_i)\), \(1 \leq i, j \leq p\),
-\begin{align*}
-    \bigcup^{p}_{i=1} S_i = \boldsymbol{U}.
-\end{align*}
-We demand that \(S_i \neq S_j\) if \(i \neq j\).
-
-A \emph{relational database} \( d \) on a \emph{database scheme} \textbf{R} is a collection of relations \( d~=~\{r_1, r_2, \dots, r_p \} \) such that for each relation scheme \(R = (S, \boldsymbol{K}) \) in \textbf{R} there is a relation \(r\) in \(d\) such that \(r\) is a relation on \(S\) that satisfies every \emph{key} in \(\boldsymbol{K}\).~\cite[p.~94]{MAI83}
 
 
 \subsubsection{Definition of a Functional Dependency}
@@ -55,8 +34,34 @@ A FD \(X \to A\) is said to be \emph{valid} in \(r\), if and only if
 \begin{align}
     t_i[X] = t_j[X] \Rightarrow t_i[A] = t_j[A] \label{eq:fd-condition}
 \end{align}
-holds for all all pairs of distinct tuples \(t_i,t_j \in r\).\cite[p.~21]{ABE19}
-We say that \(X\) \emph{functionally determines} \(A\)\cite[p.~43]{MAI83} and name \(X\) the \emph{left hand side} (LHS), whilst calling \(A\) the \emph{right hand side} (RHS).
+holds for all pairs of distinct tuples \(t_i,t_j \in r\).~\cite[p.~21]{ABE19}
+We say that \textsc{X} \emph{functionally determines} \textsc{A}~\cite[p.~43]{MAI83} and write \textsc{X}~\( \rightarrow \)~\textsc{A}.
+\(X\) is called the \emph{left hand side} (LHS) of a FD, whilst \(A\) is called the \emph{right hand side} (RHS) of the same FD.
+
+A FD \textsc{X}~\( \rightarrow \)~\textsc{Y} is called \emph{trivial}, if \( Y \subseteq X \).\cite[p.~163]{STU16}
+
+\paragraph{Logical Implication} Let \( F \) be the set of functional dependencies on \( \boldsymbol{R} \).
+\textsc{X}~\( \rightarrow  \)~\textsc{Y} is \emph{logically implied} by \( F \), or algebraically expressed
+\begin{align}
+    F \models \textsc{X} \rightarrow \textsc{Y},
+\end{align}
+if every relational instance \( r \) of \( \boldsymbol{R} \), which satisfies all dependencies in \( F \), also satisfies \textsc{X}~\( \rightarrow \)~\textsc{Y}.~\cite[p.~166]{STU16}
+
+Thus, if \( F = \{ \textsc{A} \rightarrow \textsc{B}, \textsc{A} \rightarrow \textsc{C}, \textsc{BC} \rightarrow \textsc{D} \} \), the following logical implications are true:
+\begin{align*}
+    &F \models \textsc{A} \rightarrow \textsc{B} \\
+    &F \models \textsc{A} \rightarrow \textsc{BC} \\
+    &F \models \textsc{A} \rightarrow \textsc{D}
+\end{align*}
+
+\paragraph{Transitive closure} Let \( F \) be a set of FDs.
+The \emph{transitive closure} \( F^{+} \) of \( F \) is defined by
+\begin{align}
+    F^{+} := \{ \textsc{X} \rightarrow \textsc{Y} \mid F \models \textsc{X} \rightarrow \textsc{Y} \}
+\end{align}
+
+Considering table~\ref{tab:fd-example}, one can see that every tuple in the left hand side subset of the relation uniquely determines the right hand side.
+We say that \textsc{Id}, \textsc{Prenameame}, \textsc{Surname}, \textsc{Town} \emph{functionally determines} \textsc{Zip} or write \{\textsc{Id}, \textsc{Prename}, \textsc{Surname}, \textsc{Town}\} \( \rightarrow \) \textsc{Zip}.~\cite[p.~43]{MAI83}
 
 \begin{table}[ht]
     \centering
@@ -75,34 +80,72 @@ We say that \(X\) \emph{functionally determines} \(A\)\cite[p.~43]{MAI83} and na
     \caption{Example for a FD.}\label{tab:fd-example}
 \end{table}
 
-Considering table~\ref{tab:fd-example}, one can see that every tuple in the \emph{left hand side} subset of the relation uniquely determines the \emph{right hand side}.
-For the given example we say that \textsc{Id}, \textsc{Prenameame}, \textsc{Surname}, \textsc{Town} \emph{functionally determines} \textsc{Zip}, or \{\textsc{Id}, \textsc{Prename}, \textsc{Surname}, \textsc{Town}\} \( \rightarrow \) \textsc{Zip}.~\cite[p.~43]{MAI83}
 
 If inspected closely, one can discover even more FDs in table~\ref{tab:fd-example}.
 For example, \textsc{Town}~\( \rightarrow \)~\textsc{Zip} and \textsc{Id}~\( \rightarrow \)~\textsc{Zip}.
-Since \textsc{Town} and \textsc{Id} are subsets of \{\textsc{Id},~\textsc{Prename},~\textsc{Surname},~\textsc{Town}\}, we call \{\textsc{Id},~\textsc{Prename},~\textsc{Surname},~\textsc{Town}\} \emph{non-minimal}.
+Since \textsc{Town} and \textsc{Id} are subsets of \{\textsc{Id},~\textsc{Prename},~\textsc{Surname},~\textsc{Town}\}, we call the FD \{\textsc{Id},~\textsc{Prename},~\textsc{Surname},~\textsc{Town}\} \( \rightarrow \)~\textsc{Zip} \emph{non-minimal}.
 A FD X~\( \rightarrow \)~A is \emph{minimal}, if no subset of X functionally determines A.~\cite[p.~2]{PAP15}
 Thus, \textsc{Id}~\( \rightarrow \)~\textsc{Zip} and \textsc{Town}~\( \rightarrow \)~\textsc{Zip} are \emph{minimal FDs}.
 
+\paragraph{Full Dependency} An attribute \textsc{Y} on a relation scheme \( R \) is called \( fully dependent \) on another attribute \textsc{X} on the same scheme, if \textsc{Y} is functionally determined by \textsc{X} and \textsc{X} is minimal.~\cite[p.~61]{SCH17}
+We call a \emph{determinant} a set of attributes that fully functionally determines another attribute.
+
+
+\subsubsection{Keys}
+\paragraph{Superkey}Let \( r \) be a relation on a relation scheme \( \boldsymbol{R} = \{ A_1, A_2, \dots, A_n \} \).
+Let \( K \) be a subset of R, such that
+\begin{align}
+    K = \{ A_1, A_2, \dots, A_m \} \subseteq \boldsymbol{R}
+\end{align}
+where \( m \leq n \).
+\( K \) is called \emph{superkey}, if for any tuple \( t_i \in r \) the relation
+\begin{align*}
+    t_i(A_k) = t_j(A_k) \Rightarrow t_i \equiv t_j
+\end{align*}
+holds for any single \( A_k \in K \).~\cite[p.~4]{MAI83}
+In other words, if \( K \) is a superkey, any \( K \)-value of a tuple identifies that tuple uniquely.~\cite[p.~32]{SCH17}
+
+\paragraph{Candidate key} A superkey \( K \) is called \emph{candidate key}, if it is a \emph{minimal}.~\cite[p.~32]{SCH17}
+\( K \) being minimal means that \( K \) is no longer a superkey, if any attribute \( A_k \in K \) is removed from \( K \).
+
+\paragraph{Prime Attributes} An attribute \( A \) on a relational scheme \( \boldsymbol{R} \) is called \emph{prime}, if \( A \) is part of a key of \( \boldsymbol{R} \).
+Otherwise, \( A \) is called \emph{non-prime}.
+
+\subsubsection{Definition of a Relational Database}
+When real-world data used by an application is stored on a machine according to the relational model, it is usually stored in a relational database.
+Following the definition of a relation scheme \( \boldsymbol{R} \), one can formally introduce databases and database schemes:
+
+We assume that \( \boldsymbol{R}\) is composed of two parts, \(S\) and \(\boldsymbol{K}\). We call \(S\) a \emph{set of attributes} and \(\boldsymbol{K}\) a \emph{set of designated keys} and describe this composition by writing \(R = (S, \boldsymbol{K})\).
+A \emph{relational database scheme} \( \mathcal{R} \) over \boldsymbol{U} can now be defined as a collection of relation schemes \( \mathcal{R} = \{R_1, R_1, \dots, R_p\} \), where \(R_i = (S_i, \boldsymbol{K}_i)\), \(1 \leq i, j \leq p\),
+\begin{align*}
+    \boldsymbol{U} := \bigcup^{p}_{i=1} S_i
+\end{align*}
+We demand that \(S_i \neq S_j\) if \(i \neq j\).
+
+A \emph{relational database} \( d \) on a \emph{database scheme} \( \mathcal{R} \) is a collection of relations \( d~=~\{r_1, r_2, \dots, r_p \} \) such that for each relation scheme \(R = (S, \boldsymbol{K}) \) in \( \mathcal{R} \) there is a relation \(r\) in \(d\) such that \(r\) is a relation on \(S\) that satisfies every \emph{key} in \(\boldsymbol{K}\).~\cite[p.~94]{MAI83}
+
+
 \subsection{FDs in Application}
-FDs are primarily used in database normalization.\cite[p.~1]{CAR16}
-In 1970, E. F. Codd defined the \emph{relational model}\cite{COD70} and pioneered many important concepts in database theory.
-In the following section, selected sections of Codd's work will be introduced to establish the theoretical background necessary for undestanding functional dependencies.
+FDs are primarily used in database normalization.~\cite[p.~1]{CAR16}
+In 1970, Codd defined the \emph{relational model}~\cite{COD70} and pioneered many important concepts in database theory.
+In the following paragraphs, selected sections of Codd's work will be introduced to put FDs into context.
 
 \subsubsection{Normalization}
-When introducing the relational database model in his 1970 article ``A relational model of data for large shared data banks'', Edgar F. Codd formalized database normalization alongside.\cite{COD70}
-Describing what will be know to academia as \textbf{First normal form} (1NF), Codd states that ``problems treated [when normalizing databases] are those of \emph{data independence}'', aiming to protect future users of large databases ``from having to know how the data is organized in the machine''. \cite[p.~1]{COD70}
+When introducing the relational database model in his 1970 article ``A relational model of data for large shared data banks'', Edgar F. Codd formalized database normalization alongside.~\cite{COD70}
+Describing what will be know to academia as \emph{first normal form} (1NF), Codd states that ``problems treated [when normalizing databases] are those of \emph{data independence}'', aiming to protect future users of large databases ``from having to know how the data is organized in the machine''.~\cite[p.~1]{COD70}
 
-Being designed for as efficient as possible query handling, databases at the time were structured hierarchically or navigationally.
-While this yielded good performance in times when computing time was very expensive, it came with a heavy cost of complexity:
-``Teams of programmers were needed to express queries to extract meaningful information. [\dots] Such databases [\dots] were absolutely inflexible[y]''.\cite{IBM03}
+Databases at the time were structured hierarchically or navigationally.
+This design was centered on efficiency, aiming for query handling as fast as possible.
+While this design yielded good performance in an era when computing time was cost-intensive, it came with a heavy cost of complexity:
+``Teams of programmers were needed to express queries to extract meaningful information. [\dots] Such databases [\dots] were absolutely inflexible[y]''.~\cite{IBM03}
 
-Update-, insertion- and deletion anomalies can be prevented when normalizing a relational database. \cite[p.~75]{KLE11}
+Codd's relational model shifted the focus of database architecture away from efficiency and towards a new, more user-centered design.
+Among its many benefits compared to previous database designs was
+Update-, insertion- and deletion anomalies can be prevented when normalizing a relational database.~\cite[p.~75]{KLE11}
 
-\paragraph{First Normal Form}
-A relation scheme $R$ is in \emph{First Normal Form} (1NF), if values in \(dom(A)\) are atomic for every attribute \(A\) in \(R\). \cite[p.~96]{MAI83}
+\paragraph{First Normal Form} A relation scheme $R$ is in \emph{First Normal Form} (1NF), if values in \(dom(A)\) are atomic for every attribute \(A\) in \(R\).~\cite[p.~96]{MAI83}
 Consider table~\ref{tab:first-normal-form} which represents two relational database schemes.
-It serves as an example of what is called \emph{atomic} and \emph{compound} data in the Relational Database model. \cite[p.~6]{COD90}
+It serves as an example of what is called atomic- and compound data in the Relational Database model.~\cite[p.~6]{COD90}
 
 \begin{table}[ht]
     \centering
@@ -122,12 +165,14 @@ It serves as an example of what is called \emph{atomic} and \emph{compound} data
 While the compound scheme's attributes can be decomposed into several other attributes, whereas an atomic attribute cannot be further split into any meaningful smaller components.
 
 For a database it is said that the database in 1NF if every relation scheme in the database scheme is in 1NF.
-1NF is the very foundation of the Relational Model, where the only type of compound data is the relation.\cite[p.~6]{COD90}
+1NF is the very foundation of the Relational Model, where the only type of compound data is the relation.~\cite[p.~6]{COD90}
 
-\paragraph{Second Normal Form (2NF)}
-A relation scheme \(R\) is said to be in \emph{second normal form} (2NF) in respect to a set of FDs \(F\), if it is in 1NF and every nonprime attribute is fully dependent on every key of of \(R\).\cite[p.~99]{MAI83} This definition can be extended for databases: A database scheme \textbf{R} is in second normal form with respect to \(F\) if every relation scheme \(R\) in \textbf{R} is in 2NF with respect to \(F\).
+\paragraph{Second Normal Form (2NF)} A relation scheme \(R\) is said to be in \emph{second normal form} (2NF) in respect to a set of FDs \(F\), if it is in 1NF and every nonprime attribute is fully dependent on every key of of \(R\).~\cite[p.~99]{MAI83}
+This definition can be extended for databases: A database scheme \textbf{R} is in second normal form with respect to \(F\) if every relation scheme \(R\) in \textbf{R} is in 2NF with respect to \(F\).
 
-\paragraph{Third Normal Form (3NF)}
+\paragraph{Boyce-Codd Normal Form (BCNF)}
+A relation scheme \( R \) is in \emph{Boyce-Codd Normal Form}, if every determinant in \( R \) is a candidate key.~\cite[p.~65]{SCH17}
+
 
 \subsection{Limitations of FDs}
 In the field of dependency detection an extensive body of theory and algorithms for FD detection has been created in the past decades.\cite[p.~1]{PAP15}
@@ -229,7 +274,7 @@ The definition of a MFD replaces this equation by demanding that if and only if 
 holds, the MFD \textsc{Town} \( \to\) \textsc{Zip} is said to be valid on \( r \).\cite[p.~2]{KOU09}
 Here, \( \delta \) is called a \emph{tolerance parameter}, indicating how far the result of a \emph{metric} \( d(t[\textsc{Y}], t'[\textsc{Y}]) \) can deviate from exact equality.
 
-One such metric \( d \) would be the absolute difference between two values, such that \( d(t[\textsc{Y}], t'[\textsc{Y}]) = | t[\textsc{Y} - t'[\textsc{Y}]| \).
+One such metric \( d \) would be the absolute difference between two values, such that \( d(t[\textsc{Y}], t'[\textsc{Y}]) = | t[\textsc{Y}] - t'[\textsc{Y}]| \).
 Another popular metric for measuring the difference between two sequences is the Levenshtein distance, where \( d(t[\textsc{Y}], t'[\textsc{Y}]) = \text{lev}_{t,t'}(|t|, |t'|) \) and
 \begin{align*}
     \text{lev}_{t,t'} =
@@ -370,7 +415,7 @@ The opposite holds as well, such that a falsely predicted label will be either a
 Using the classification introduced by the binary confusion matrix, all predicted labels \(y_{pred}\) are assigned to the four sets TP, TN, FN and FP.
 Using these four sets, we can introduce measures for classification performance.
 
-\emph{Precision} is a measure that depicts the proportion of correctly classified positive samples to the total amount of samples classified as positive.\cite[p.4]{THA18} This can be algebarically expressed as
+\emph{Precision} is a measure that depicts the proportion of correctly classified positive samples to the total amount of samples classified as positive.\cite[p.4]{THA18} This can be algebraically expressed as
 \begin{align}
     Precision = \frac{|TP|}{|TP| + |FP|}
 \end{align}

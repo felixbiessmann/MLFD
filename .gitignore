@@ -22,3 +22,6 @@ imputer_model/
 __pycache__/
 .ipynb_checkpoints/
 *.pyc
+
+# cluster docker-stuff
+cluster/
