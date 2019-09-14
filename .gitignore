@@ -25,3 +25,4 @@ __pycache__/
 
 # cluster docker-stuff
 cluster/
+.env
