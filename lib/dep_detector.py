@@ -3,6 +3,7 @@ import anytree as tree
 import pandas as pd
 import numpy as np
 import random
+from joblib import Parallel, delayed
 
 
 def get_continuous_min_dep(root):
@@ -222,30 +223,34 @@ class RootNode(tree.NodeMixin):
                             [c for c in pot_lhs if c != col],
                             parent=node, score=None)
 
+    def parallel_ml_imputer(self, node):
+        """This function is only defined to allow for parallel
+        processing in run_ml_imputer()."""
+        print(str(node.name) + ' for RHS ' + str(self.name))
+        # search for known scores
+        node.score = self.known_scores.get(tuple(node.name), None)
+        if node.score is None:
+            dependency = {self.name: [node.name]}
+            res = fd.run_ml_imputer_on_fd_set(self.df_train,
+                                              self.df_validate,
+                                              self.df_test,
+                                              dependency,
+                                              self.continuous,
+                                              self.cycles)
+            if self.is_continuous:
+                node.score = res[self.name][0]['mse']
+            else:
+                node.score = res[self.name][0]['f1']
+
+            # add score to dict
+            self.known_scores[tuple(node.name)] = node.score
+
     def run_ml_imputer(self):
         """ Runs Datawig imputer on all nodes on the deepest levels on all
         trees. The root node's name contains the potential rhs to be imputed,
         the node's name the potential lhs."""
         most_recent_nodes = self.get_newest_children()
-        for node in most_recent_nodes:
-            print(str(node.name) + ' for RHS ' + str(self.name))
-            # search for known scores
-            node.score = self.known_scores.get(tuple(node.name), None)
-            if node.score is None:
-                dependency = {self.name: [node.name]}
-                res = fd.run_ml_imputer_on_fd_set(self.df_train,
-                                                  self.df_validate,
-                                                  self.df_test,
-                                                  dependency,
-                                                  self.continuous,
-                                                  self.cycles)
-                if self.is_continuous:
-                    node.score = res[self.name][0]['mse']
-                else:
-                    node.score = res[self.name][0]['f1']
-
-                # add score to dict
-                self.known_scores[tuple(node.name)] = node.score
+        Parallel(n_jobs=-1, require='sharedmem')(delayed(self.parallel_ml_imputer)(node) for node in most_recent_nodes)
 
     def generate_scores(self):
         """ Randomly generates scores for nodes on the deepest levels on all
@@ -358,8 +363,9 @@ class DepOptimizer():
         dependencies. """
         self.load_data()
         self.init_roots()
-        for root in self.roots.values():
-            root.run_top_down(strategy, dry_run)
+        roots = list(self.roots.values())
+        Parallel(n_jobs=-1, require='sharedmem')(delayed(root.run_top_down)
+                                                 (strategy, dry_run) for root in roots)
 
     def get_minimal_dependencies(self):
         """ Yields and prints the minimal LHS combinations for all

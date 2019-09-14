@@ -262,6 +262,7 @@ def ml_imputer(df_train, df_validate, df_test, impute_column, epochs=10):
     epochs - - int, number of training_epochs to use with SimpleImputer.fit
     """
     from datawig import SimpleImputer
+    import tempfile
 
     columns = list(df_train.columns)
 
@@ -274,11 +275,12 @@ def ml_imputer(df_train, df_validate, df_test, impute_column, epochs=10):
     df_test.columns = [str(i) for i in df_test.columns]
     df_validate.columns = [str(i) for i in df_validate.columns]
 
-    imputer = SimpleImputer(
-        input_columns=input_columns,
-        output_column=impute_column,
-        output_path='imputer_model/'
-    )
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        imputer = SimpleImputer(
+            input_columns=input_columns,
+            output_column=impute_column,
+            output_path=tmpdirname
+        )
 
     imputer.fit(train_df=df_train,
                 test_df=df_validate,
