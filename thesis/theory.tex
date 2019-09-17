@@ -2,17 +2,18 @@
 \newpage
 \section{Theory}
 
-In this section, \emph{functional dependencies} and the theoretical foundation necessary to put them into context are introduced.
-Building on this foundation, \emph{relaxed functinal dependencies} are established as a way of adapting FDs for different use-cases.
-Particularly \emph{robustness} of FDs will be discussed an a way of measuring it with cross-validation techniques will be presented.
+In this section, \emph{functional dependencies} and the theoretical foundation necessary to put them into context, are introduced.
+\emph{Database normalization} as the original domain of application for functional dependencies is considered and normal forms are defined.
+Building on this foundation, \emph{relaxed functinal dependencies} are established as a way of adapting FDs for use-cases other than database normalization.
 
-Lastly, machine learning classifier theory will be discussed, introducing the \emph{Datawig} package.
+The term \emph{robustness} of functional dependencies is discussed and a way of measuring it with cross-validation techniques is presented.
+Lastly, machine learning classifier theory will be reviewed, introducing the \emph{Datawig} package.
 
 \subsection{Relational Database Theory}
 \emph{Functional Dependencies} (FDs) are a way of expressing ``a priori knowledge of restrictions or constraints on permissible sets of data''~\cite[p.~42]{MAI83} in relational database theory.
 Introduced in the 1970s for schema normalization of relational databases, functional dependencies have proven to be useful in a multitude of domains.
+
 In order to give a definition of FDs, they need to be put in context to the domain they stem from: relational database theory.
-Some basic concepts will be introduced in this section.
 
 \subsubsection{Relation Scheme, Relation and Tuples}
 A \emph{relation scheme}\footnote{also called \emph{relational schema} in literature\cite[p.21]{ABE19} } \(\boldsymbol{R}\) is a finite set of \emph{attribute names} \( \boldsymbol{R} = \{A_1,~A_2,~\dots,~A_n\}\), where to each attribute name \(A_i\) corresponds a set \(D_i\), called \emph{domain} of \(A_i\), \(1 \leq i \leq n\).
@@ -56,12 +57,12 @@ Thus, if \( F = \{ \textsc{A} \rightarrow \textsc{B}, \textsc{A} \rightarrow \te
 
 \paragraph{Transitive closure} Let \( F \) be a set of FDs.
 The \emph{transitive closure} \( F^{+} \) of \( F \) is defined by
-\begin{align}
+\begin{align}\label{eq:transitive-closure}
     F^{+} := \{ \textsc{X} \rightarrow \textsc{Y} \mid F \models \textsc{X} \rightarrow \textsc{Y} \}
 \end{align}
 
 Considering table~\ref{tab:fd-example}, one can see that every tuple in the left hand side subset of the relation uniquely determines the right hand side.
-We say that \textsc{Id}, \textsc{Prenameame}, \textsc{Surname}, \textsc{Town} \emph{functionally determines} \textsc{Zip} or write \{\textsc{Id}, \textsc{Prename}, \textsc{Surname}, \textsc{Town}\} \( \rightarrow \) \textsc{Zip}.~\cite[p.~43]{MAI83}
+We say that \textsc{Id}, \textsc{Prenameame}, \textsc{Surname}, \textsc{Town} \emph{functionally determines} \textsc{Zip} or write \{\textsc{Id}, \textsc{Prename}, \textsc{Surname}, \textsc{Town} \}~\( \rightarrow \)~\textsc{Zip}.~\cite[p.~43]{MAI83}
 
 \begin{table}[ht]
     \centering
@@ -116,7 +117,7 @@ When real-world data used by an application is stored on a machine according to 
 Following the definition of a relation scheme \( \boldsymbol{R} \), one can formally introduce databases and database schemes:
 
 We assume that \( \boldsymbol{R}\) is composed of two parts, \(S\) and \(\boldsymbol{K}\). We call \(S\) a \emph{set of attributes} and \(\boldsymbol{K}\) a \emph{set of designated keys} and describe this composition by writing \(R = (S, \boldsymbol{K})\).
-A \emph{relational database scheme} \( \mathcal{R} \) over \boldsymbol{U} can now be defined as a collection of relation schemes \( \mathcal{R} = \{R_1, R_1, \dots, R_p\} \), where \(R_i = (S_i, \boldsymbol{K}_i)\), \(1 \leq i, j \leq p\),
+A \emph{relational database scheme} \( \mathcal{R} \) over \( \boldsymbol{U} \) can now be defined as a collection of relation schemes \( \mathcal{R} = \{R_1, R_1, \dots, R_p\} \), where \(R_i = (S_i, \boldsymbol{K}_i)\), \(1 \leq i, j \leq p\),
 \begin{align*}
     \boldsymbol{U} := \bigcup^{p}_{i=1} S_i
 \end{align*}
@@ -125,26 +126,36 @@ We demand that \(S_i \neq S_j\) if \(i \neq j\).
 A \emph{relational database} \( d \) on a \emph{database scheme} \( \mathcal{R} \) is a collection of relations \( d~=~\{r_1, r_2, \dots, r_p \} \) such that for each relation scheme \(R = (S, \boldsymbol{K}) \) in \( \mathcal{R} \) there is a relation \(r\) in \(d\) such that \(r\) is a relation on \(S\) that satisfies every \emph{key} in \(\boldsymbol{K}\).~\cite[p.~94]{MAI83}
 
 
-\subsection{FDs in Application}
+\subsection{Database Normalization}
 FDs are primarily used in database normalization.~\cite[p.~1]{CAR16}
-In 1970, Codd defined the \emph{relational model}~\cite{COD70} and pioneered many important concepts in database theory.
-In the following paragraphs, selected sections of Codd's work will be introduced to put FDs into context.
+In 1970, Edgar F. Codd defined the \emph{relational model}~\cite{COD70} and pioneered many important concepts in database theory.
+When introducing the relational database model in his 1970 article ``A relational model of data for large shared data banks'', Codd formalized database normalization alongside.~\cite{COD70}
 
-\subsubsection{Normalization}
-When introducing the relational database model in his 1970 article ``A relational model of data for large shared data banks'', Edgar F. Codd formalized database normalization alongside.~\cite{COD70}
-Describing what will be know to academia as \emph{first normal form} (1NF), Codd states that ``problems treated [when normalizing databases] are those of \emph{data independence}'', aiming to protect future users of large databases ``from having to know how the data is organized in the machine''.~\cite[p.~1]{COD70}
+Describing what will be know to academia as \emph{First Normal Form} (1NF), Codd states that ``problems treated [when normalizing databases] are those of \emph{data independence}'', aiming to protect future users of large databases ``from having to know how the data is organized in the machine''.~\cite[p.~1]{COD70}
 
 Databases at the time were structured hierarchically or navigationally.
-This design was centered on efficiency, aiming for query handling as fast as possible.
+This design was centered on efficiency, optimized for handling queries as fast as possible.
 While this design yielded good performance in an era when computing time was cost-intensive, it came with a heavy cost of complexity:
 ``Teams of programmers were needed to express queries to extract meaningful information. [\dots] Such databases [\dots] were absolutely inflexible[y]''.~\cite{IBM03}
 
-Codd's relational model shifted the focus of database architecture away from efficiency and towards a new, more user-centered design.
-Among its many benefits compared to previous database designs was
-Update-, insertion- and deletion anomalies can be prevented when normalizing a relational database.~\cite[p.~75]{KLE11}
+Codd's relational model shifted the focus of database architecture away from efficiency towards a new design, centered around the user of a database.
+However, this new approach of database architecture came with new challenges.
+How does one create a database-scheme with favorable properties?
 
-\paragraph{First Normal Form} A relation scheme $R$ is in \emph{First Normal Form} (1NF), if values in \(dom(A)\) are atomic for every attribute \(A\) in \(R\).~\cite[p.~96]{MAI83}
-Consider table~\ref{tab:first-normal-form} which represents two relational database schemes.
+Generally, redundantly stored data is an indicator~\cite[p.~61]{WAT14} that so-called \emph{anormalies} might occur, leading to inconsistency when operating the database.~\cite[p.~162]{STU16}
+Kleuker writes that ``with a certain `database-sense'\ '' one could sense when splitting tables up is necessary to prevent anormalies.~\cite[p.~76]{KLE11}
+
+This `database-sense' was formalized when Codd introduced \emph{database normalization} as part of the relational model.~\cite[p.~381]{COD70}
+Different \emph{normal-forms} were defined.
+Codd used three normal-forms, which he called First-, Second- and Third Normal Form.\footnote{The Third Normal Form was later newly formulated by Boyce and Codd and named Boyce-Codd Normal Form (BCNF). Due to its more elegant definition, BCNF is introduced rather than Codd's original 3NF.}
+
+Subsequently, Fourth-, Fifth- and even higher-order Normal Forms were defined by other authors.
+However, these normal forms find little reception in real-world applications.~\cite[p.~58]{SCH17}
+
+\paragraph{First Normal Form (1NF)} A relation scheme $R$ is in \emph{First Normal Form}, if values in \(dom(A)\) are atomic for every attribute \(A \in R\).~\cite[p.~96]{MAI83}
+Likewise, a database scheme \textbf{R} is in 1NF if every relation scheme \(R \in \textbf{R} \) is in 1NF.\
+
+Consider table~\ref{tab:first-normal-form} which represents two relational instances on two different relational schemes.
 It serves as an example of what is called atomic- and compound data in the Relational Database model.~\cite[p.~6]{COD90}
 
 \begin{table}[ht]
@@ -162,60 +173,75 @@ It serves as an example of what is called atomic- and compound data in the Relat
 \end{tabular}
 \caption{The compound attributes \textsc{Adress} and \textsc{Name} can be split into their atomic components \textsc{Town} and \textsc{Street} as well as \textsc{Prename} and \textsc{Surname}, respectively.}\label{tab:first-normal-form}
 \end{table}
-While the compound scheme's attributes can be decomposed into several other attributes, whereas an atomic attribute cannot be further split into any meaningful smaller components.
+Note that the compound scheme's attributes can be decomposed into several other attributes.
+The atomic scheme's attributes however cannot be further split into any meaningful smaller components.
 
-For a database it is said that the database in 1NF if every relation scheme in the database scheme is in 1NF.
-1NF is the very foundation of the Relational Model, where the only type of compound data is the relation.~\cite[p.~6]{COD90}
+1NF is the very foundation of the Relational Model. It demands, that the only type of compound data is the relation itself.~\cite[p.~6]{COD90}
 
-\paragraph{Second Normal Form (2NF)} A relation scheme \(R\) is said to be in \emph{second normal form} (2NF) in respect to a set of FDs \(F\), if it is in 1NF and every nonprime attribute is fully dependent on every key of of \(R\).~\cite[p.~99]{MAI83}
-This definition can be extended for databases: A database scheme \textbf{R} is in second normal form with respect to \(F\) if every relation scheme \(R\) in \textbf{R} is in 2NF with respect to \(F\).
+\paragraph{Second Normal Form (2NF)} A relation scheme \(R\) is said to be in \emph{Second Normal Form} in respect to a set of FDs \(F\), if it is in 1NF and every nonprime attribute is fully dependent on every key of \(R\).~\cite[p.~99]{MAI83}
+This definition can be extended for databases: A database scheme \textbf{R} is in 2NF with respect to \(F\) if every relation scheme \(R \in \textbf{R} \) is in 2NF with respect to \(F\).
+
+It can be shown that a database scheme in 2NF is also in 1NF.~\cite[p.~58]{SCH17}
 
 \paragraph{Boyce-Codd Normal Form (BCNF)}
 A relation scheme \( R \) is in \emph{Boyce-Codd Normal Form}, if every determinant in \( R \) is a candidate key.~\cite[p.~65]{SCH17}
+Equally, a relational database scheme \( \textbf{R} \) is in BCNF if every relation scheme \( R \in \textbf{R} \) is in BCNF.\
+
+If a database scheme is in BCNF, it is also in 2NF.~\cite[p.~58]{SCH17} A database in BCNF effectively eliminates redundancies apart from candidate keys, freeing a database in BCNF from anormalies.~\cite[p.~67]{SCH17}
 
 
-\subsection{Limitations of FDs}
-In the field of dependency detection an extensive body of theory and algorithms for FD detection has been created in the past decades.\cite[p.~1]{PAP15}
-These mainly consider FDs as defined in formula~\ref{eq:fd-condition}.
-Howevever, the strict detection of FDs yields results that are solely applicable in a strictly controlled environment.
+\subsection{Relaxed Functional Dependencies}
+When Edgar F. Codd introduced the relational model in 1970, the concept of keys and thus the concept of functinal dependencies was already present.\cite[p.~70]{MAI83}
+However, in 1972 Codd separated the definition of a FD from keys, persuing the specific goal of normalizing a relational database scheme.
 
-Real-world datasets that researchers, data scientists or database engineers work with are often \emph{noisy}.
-This noise has many faces:
+In the field of data profiling, an extensive body of theory and algorithms for FD detection has been created in the past decades.
+Various techniques lowered the time needed to detect FDs on a relational table continuously.
+Notably the TANE algorithm developed by Huhtala et al.\ detected FDs faster than any other algorithm at the time.~\cite{HUH99}
+Parallelization techniques and ever more sophisticated search-strategies lead to ever faster algorithms, with new ones being actively developed at time of writing these lines.~\cite[p.~1]{PAP15}
+
+Howevever, progress was not limited to the detection of FDs.
+Researchers abstracted the concept of FDs and transferred the approach.
+They started using FDs in their works to solve problems other than schema normalization.
+One of these use-cases came up due to the fact that real-world datasets are almost always \emph{noisy}.
+
+Noise in databases has many faces:
 Entries might be corrupted by missing data, wrongly entered data or incomplete data.
-Columns might contain data of different kind, where one column could contain the binary representation of an image and another column the contains of a wave-audiofile.
-In these cases, functionally dependent column-combinations might not be detected as such.
-This may result in misleading insights when searching for FDs.
+A database might have been merged, with identical entries formatted in different ways.
+In these cases, functionally dependent column-combinations are not detected as such by a FD detection algorithm searching for FDs as defined in~\ref{eq:fd-condition}.
+This may result in misleading insights when searching for FDs or normalizing a database.
 
-Researchers have faced these limitations of FDs in the past in many domains.
-This lead to the definition of many new kinds of dependencies.
-While there are RFDs introducing general error measures, others are defined ``aiming to solve specific problems''\cite[p.~147]{CAR16}.
-Since all of these \emph{new} kinds of dependencies relax the conditions in equation~\ref{eq:fd-condition}, they are called \emph{relaxed functional dependencies (RFDs)}.
-Caruccio et al.\ classified and compared 35 different RFDs~\cite[p.~151]{CAR16}.
+Taking these limitations of \emph{canonical FDs}\footnote{To accentuate the difference between FD and RFD, FDs are also called canonical FDs. This notion refers to FDs as defined in equation~\ref{eq:fd-condition}.} into account, a multitude of new dependencies was defined, ``aiming to solve specific problems''.~\cite[p.~147]{CAR16}
+Since all of these new kinds of dependencies relax the conditions in equation~\ref{eq:fd-condition}, they are called \emph{relaxed functional dependencies} (RFDs).
 
-In order to classify RFDs, Carucio et al.\ state that each RFD was ``based on its underlying relaxation criteria''\cite[p.~149]{CAR16}.
-They proceed to define two such relaxation criterions.
-\emph{Attribute comparison} refers to ``the type of tuple comparison used on the LHS and RHS''.
-The relaxation criterion \emph{extent} describes a relaxation of the set of tuples for which a FD is valid.
-
-\subsubsection{FDs relaxing on the Extent}
-The term \emph{extent} is used to describe how a RFD relaxes on the subset of tuples for which the RFD is satisfied.
+Caruccio et al.\ classified and compared 35 different RFDs.~\cite[p.~151]{CAR16}
+They state that each RFD was ``based on its underlying relaxation criteria''.~\cite[p.~149]{CAR16}
+They proceed to define two relaxation criteria by which they distinguish all RFDs.
 
 \begin{figure}[ht]
      \centering
-     \includegraphics[width=.4\textwidth]{images/rfds-extent.pdf}
-     \caption{Venn diagram representing the extent relaxation criteria.}
+     \includegraphics[width=\textwidth]{images/rfds-extent.pdf}
+     \caption{Venn diagram representing the extent relaxation criterion.}
      \label{fig:rfds-extent}
  \end{figure}
 
-RFDs implement this idea in different ways.
-In the following section, a selection of RFDs relaxing the extent of the FD will be briefly presented.
+The first relaxation criterion is called \emph{attribute comparison}.
+It refers to ``the type of tuple comparison used on the LHS and RHS'' in equation~\ref{eq:fd-condition}.
+
+The relaxation criterion \emph{extent} implies a relaxation of the set of tuples for which a FD is valid.
+
+\subsubsection{FDs relaxing on the Extent}
+The term \emph{extent} is used to describe how a RFD relaxes on the subset of tuples for which the RFD is satisfied.
+While the definition of a FD demands that a FD's condition has to be valid for all tuples in a relational table, RFDs relaxing on the extent only hold on a subset of all tuples.
+
+This idea is implemented by different RFDs in different ways.
+In the following section, a selection of RFDs relaxing the extent of the FD is briefly presented.
 
 \paragraph{Approximate Functional Dependency (AFD)}
-AFDs improve the applicability of FDs, by ``holding on almost every tuple''\cite[p.~151]{CAR16}.
-An To illustrate this, table~\ref{tab:example-afd-necessity} shows an example of noisy data.
-The potential FD \textsc{Town} \(\to\) \textsc{Zip} is not captured by the definition given in equation~\ref{eq:fd-condition}.
-Due to a type-error, the potential FD is invalidated.
-To still capture meta-information, a different dependency-measure than given in equation~\ref{eq:fd-condition} is needed.
+AFDs improve the applicability of FDs by ``holding on \emph{almost}\footnote{Highlighting by the author.} every tuple''\cite[p.~151]{CAR16}.
+To illustrate this, table~\ref{tab:example-afd-necessity} shows an example of noisy data.
+The potential FD \textsc{Town}~\(\to\)~\textsc{Zip} is not captured by the definition of a canonical FD.\
+Due to a typing error, the potential FD is invalidated in the row where \textsc{ID = 2}.
+To still capture the relation, a different dependency-measure than given in the definition of the canonical FD is required.
 
 \begin{table}[ht]
     \centering
@@ -231,7 +257,7 @@ To still capture meta-information, a different dependency-measure than given in 
         4 & John & Pick & Berlin & 12055 \\
         \bottomrule
     \end{tabular}
-    \caption{Even though column \textsc{Zip} functionally determines column \textsc{Town} (and vice-versa), a FD is not capable of displaying this fact~-~a typing error invalidates the FD.}
+    \caption{Even though column \textsc{Zip} determines the content of column \textsc{Town} (and vice-versa), a FD is not capable of displaying this fact --- a typing error invalidates the FD.}
     \label{tab:example-afd-necessity}
 \end{table}
 
@@ -242,25 +268,25 @@ Tuples that do not correspond to the canonical FD are measured as fraction of th
 \end{align}
 
 Here, function \( \Psi(X, Y) \) is called \emph{coverage measure} of a RFD \textsc{X} \( \to \) \textsc{Y}.
-\( \Psi \) ``quantifies the satisfiability degree of an RFD [\dots] on \( r \)''\cite[p.~150]{CAR16} and is used in the definition of an AFD to be compared to a threshold \( \epsilon \in [0, 1] \).
+\( \Psi \) ``quantifies the satisfiability degree of an RFD [\dots] on \( r \)''~\cite[p.~150]{CAR16} and is used in the definition of an AFD to be compared to a threshold \( \epsilon \in [0, 1] \).
 
 If \( \Psi(X, Y) \) is smaller or equal to \( \epsilon \), the AFD is said to hold on a relation \( r \).
 Applied to table~\ref{tab:example-afd-necessity}, the AFD \textsc{Town} \( \to \) \textsc{Zip} holds, if \( \epsilon \geq 0.25\).
 
 \paragraph{Conditional Functional Dependencies (CFDs)}
 \emph{Conditional Functional Dependencies} employ conditions to define the subset on which a dependency holds.
-Originally, those conditions exclusively allow the definition of constraints using the equality operator.\cite[p.~152]{CAR16}
+Originally, those conditions exclusively allow the definition of constraints using the equality operator.~\cite[p.~152]{CAR16}
 Applied to table~\ref{tab:example-afd-necessity}, a CFD \textsc{Town} \( \to\) \textsc{Zip} holds under the condition that a) entries in column \textsc{Town} = Munich or b) entries in column \textsc{Town} = Berlin.
 
-Other RFDs based on the definition of CFDs include \emph{extended conditional functional dependencies} (ECFDs) by Bravo et al.\ that allow the disjunction-operator as well as the inequality-operator for defining conditions.\cite{BRA08}
+Other RFDs based on the definition of CFDs include \emph{extended conditional functional dependencies} (ECFDs) by Bravo et al.\ that allow the disjunction-operator as well as the inequality-operator for defining conditions.~\cite{BRA08}
 
-Also, Chen et al.\ defined CFD\textsuperscript{p}s, which introduce \( <, \leq, >, \geq \text{and} \neq \) for defining conditions.\cite{CHE09}
+Also, Chen et al.\ defined CFD\textsuperscript{p}s, which introduce \( <, \leq, >, \geq \text{and} \neq \) for defining conditions.~\cite{CHE09}
 
 \subsubsection{FDs Relaxing on the Attribute Comparison}
 Instead of specifying subsets of tuples for which a FD is valid, FDs relaxing on the attribute comparison alter the condition under which a dependency is said to be valid.
 
 \paragraph{Metric Functional Dependencies (MFDs)}
-First introduced by Koudas et al.\ in 2009, \emph{Metric Functional Dependencies} were defined to adress violations of canonical FDs due to ``small variations [\dots] in data format and interpretation''.\cite[p.~1]{KOU09}
+First introduced by Koudas et al.\ in 2009, \emph{Metric Functional Dependencies} were defined to adress violations of canonical FDs due to ``small variations [\dots] in data format and interpretation''.~\cite[p.~1]{KOU09}
 
 According to equation~\ref{eq:fd-condition}, a FD \textsc{Town} \( \to\) textsc{Zip} is said to be valid if
 \begin{align}
@@ -271,7 +297,7 @@ The definition of a MFD replaces this equation by demanding that if and only if 
 \begin{align}\label{eq:mfd-condition}
     t[\textsc{Town}] = t'[\textsc{Town}] \Rightarrow d(t[\textsc{Zip}], t'[\textsc{Zip}]) \leq \delta
 \end{align}
-holds, the MFD \textsc{Town} \( \to\) \textsc{Zip} is said to be valid on \( r \).\cite[p.~2]{KOU09}
+holds, the MFD \textsc{Town} \( \to\) \textsc{Zip} is said to be valid on \( r \).~\cite[p.~2]{KOU09}
 Here, \( \delta \) is called a \emph{tolerance parameter}, indicating how far the result of a \emph{metric} \( d(t[\textsc{Y}], t'[\textsc{Y}]) \) can deviate from exact equality.
 
 One such metric \( d \) would be the absolute difference between two values, such that \( d(t[\textsc{Y}], t'[\textsc{Y}]) = | t[\textsc{Y}] - t'[\textsc{Y}]| \).
@@ -294,27 +320,28 @@ Thus the MFD \textsc{Town} \( \to\) \textsc{Zip} is valid, if \( d = \text{lev} 
 \emph{Purity Dependencies} Lorem ipsum
 
 \subsection{Robustness of FDs}
-When Edgar F. Codd introduced the relational model in 1970, the concept of keys and thus the concept of functinal dependencies was already present.\cite[p.~70]{MAI83}
-However, in 1972 Codd separated the definition of a FD from keys, persuing the specific goal of normalizing a relational database scheme.
-In the years to follow, different researchers started using FDs in their works to solve problems other than schema normalization.
-
-Koudas et al., when introducing the MFD, write that the definition of FDs was ``not \emph{robust}\footnote{Highlighting added by the author.} enough to capture functional relationships on data obtained from merging heterogenous sources [\dots]''.\cite[p.~1]{KOU09}
+Koudas et al., when introducing the MFD, write that the definition of the canonical FD was ``not \emph{robust}\footnote{Highlighting added by the author.} enough to capture functional relationships on data obtained from merging heterogenous sources [\dots]''.~\cite[p.~1]{KOU09}
 However, they do not provide a way of measuring robustness.
 
-Bleifuß et al.\cite[p.~3]{BLE16} define \emph{Correctness} of a set of RFDs \( Out \) compared to a set of FDs \( Gold \) on the same relational instance \( r \) as follows:
+Bleifuß et al.~\cite[p.~3]{BLE16} define \emph{Correctness}.
+They do so by comparing a set of RFDs \( Out \) to a set of FDs \( Gold \) on the same relational instance \( r \) as follows:
 \begin{align*}
     \text{Correctness} = \frac{|Out \cap Gold^{+}|}{|Out|}
 \end{align*}
-\( Gold^{+} \) represents the transitive closure of \( Gold \), meaning that it includes all non-minimal FDs implied by \( Gold \).
-However, this definition is only meaningful for AFDs, which try to minimc FDs as closely as possible.
+\( Gold^{+} \) represents the transitive closure of \( Gold \), meaning that it includes all non-minimal FDs implied by \( Gold \) as defined in equation~\ref{eq:transitive-closure}.
 
-As far as the author of this work knows, there is no method for measuring \emph{robustness} of FDs established.
-Drawing inspiration from Machine Learning theory, we propose the application of cross-validation techniques to functional dependencies in order to measure robustness, as it has been described by Koudas et al.\, in a meaningful way.
+By this definition, the notion `Correctness' consides \( Out \) to be more `correct', if it has as many members in common with \( Gold^{+} \) as possible.
+If a RFD is used to find relations on noisy data, this definition of `Correctness' does not meaningfully measure dependencies that try to work around the noise.
+A RFD that takes the typing error in table~\ref{tab:example-afd-necessity} into account would not be more `correct' than a RFD that does not.
+
+As far as the author of this work knows, there is no method for measuring robustness of FDs established.
+Drawing inspiration from Machine Learning theory, the application of cross-validation techniques to functional dependencies in order to measure robustness is proposed.
+By doing so, it is tried to measure `robustness' as it has been described by Koudas et al.\ in a meaningful way.
 
 \subsubsection{Measuring Robustness}
 Let \( r = \{ t_1, t_2, \dots, t_p \}\) be a a relation on a relation scheme \( \boldsymbol{R} \).
 Then \( p \in \mathbb{N} \) is the number of tuples in \( r \).
-We then introduce a split-ratio \( s \in (0, 1) \) and split \( r \) into two subsets:
+We then introduce a split-ratio \( s \in [0, 1] \) and split \( r \) into two subsets:
 \begin{align*}
     r_{train} &= \{ t_1, t_2, \dots, t_{s \cdot p} \} \\
     r_{test} &= \{ t_{(s \cdot p) + 1}, t_{(s \cdot p) + 2}, \dots, t_{p} \}
@@ -364,10 +391,10 @@ This approach is drawn from statistical cross-validation.
     \label{tab:split-example-fd-imputer}
 \end{table}
 
-In a next step, FDs are detected on the train set using the HyFD algorithm.\cite{PAP16}
-The algorithm we call \emph{FD Imputer} is then used for measuring robustness of each FD detected on the train set.
+In a next step, FDs are detected on the train set using any FD detection algorithm. In this case, the HyFD algorithm is chosen.~\cite{PAP16}
+The algorithm called \emph{FD Imputer} is then used for measuring robustness of each FD detected on the train set.
 
-\paragraph{FD Imputer} FD Imputer iterates through each tuple in the test set and searches for a tuple in the train set with the exact same left hand side.
+\paragraph{FD Imputer} FD Imputer iterates through each tuple in the test set and searches for a tuple in the train set with the exact same LHS.
 If one or more such tuples in the train set are found, FD Imputer randomly selects one of these tuples and saves the right hand side of that tuple.
 We call this right hand side value \emph{imputation} of the right hand side value on the train set.
 
@@ -380,34 +407,56 @@ The FD \textsc{C} \( \ \to \) \textsc{D}, when used for finding a right hand sid
 However, FD \textsc{A} \( \to \) \textsc{D} for example will lead to FD Imputer yielding `Madrid', which is an incorrect imputation.
 
 Implementing FD Imputer, imputations are retrieved by executing a SQL join clause.
-FD Imputer performs an inner join on all left hand side columns, joining train-set and validation-set.
+FD Imputer performs an inner join on all LHS columns, joining train-set and validation-set.
 A successive second left join clause concatenates the original validation-set with the column of imputed tuples stemming from the first join.
 
 \paragraph{Robustness as a F1-Score} The imputed values retrieved by FD Imputer can be leveraged to create a measure for robustness.
-Each imputed value is interpreted as a label and classified as in the binary classification case (see figure~\ref{fig:confusion-matrix}).
-Precision and recall are then calculated and weighted according to the number of true instances for each label.\footnote{See \href{https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html}{sklearn documentation} for \texttt{sklearn.metrics.f1\_score()} with weighted average.}
+First, each imputed value is interpreted as a label.
+These labels are then each classified as in the binary classification case (see figure~\ref{fig:confusion-matrix}).
+Next, precision and recall are calculated and the F1-Score is derived according to equation~\ref{eq:f1-score}.
 
-Finally, this approach yields a f1-score for each FD which we call \emph{robustness}.
+Lastly, the F1-Score weighted according to the number of true instances for each label is calculated.\footnote{See \href{https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html}{sklearn documentation} for \texttt{sklearn.metrics.f1\_score()} with weighted average for more details on the implementation.}
+
+Algebraically, this means that to a set \( L = \{ l_1, l_2, \dots, l_n \} \) of \( n \in \mathbb{N} \) labels, a set \( X = \{ x_1, x_2, \dots, x_n \}\) of \( n \) F1-Scores corresponds.
+Let \( W \) be a set of weights \( W = \{ w_1, w_2, \dots, w_n \} \), each being the number of true instances for each label.
+Then the weighted F1-Score of a dependency can be calculated as follows:
+\begin{align}
+    \text{F1-Score} = \frac{\sum_{i=1}^{n} x_i w_i}{\sum_{i=1}^{n}w_i}
+\end{align}
+This F1-Score, calculated for each FD on a relation \( r \), is named robustness of a FD.
+
+\paragraph{Robustness as Mean Squared Error}
+Depending on the kind of data imputed by FD Imputer, the measure used to express robustness is adapted.
+As shown in the previous paragraph, performance when imputing categorical data can be measured by the F1 Score.
+If the RHS' content is of a sequential datatype, using a classification performance measure is pointless.
+
+Therefore, FD Imputer distinguishes between sequential and categorical data.
+When imputing sequential data, the \emph{mean squared error}(MSE) is chosen as measure.
+
+Let \( \hat{Y} \in \mathbb{R}^{n}\) be the \( n \)-dimensional vector of imputed values and \( \hat{Y} \in \mathbb{R}^{n} \) be the vector of actual RHS values. Then the MSE is defined as
+\begin{align}
+\text{MSE} = \frac{1}{n}\sum_{i=1}^{n} \left(Y_i - \hat{Y}_i\right)^2
+\end{align}
 
 \newpage
 
 \subsection{Machine Learning Classifier Theory}
 Once a model has been trained and validated, it needs to be tested in order to determine whether or not overfitting occured during training.
-This is usually done by measuring the model's performance on a separate dataset not involved in training, the so called test set.
+This is usually done by measuring the model's performance on a separate dataset not involved in training, the so called test set \( X_{test} \).
 Performance is measured according to the type of data and the kind of model involved.
 To visualize the performance of a classifier, a \emph{confusion matrix} can be created.
 \begin{figure}[ht]
      \centering
-     \includegraphics[width=.8\textwidth]{images/binary-confusion-matrix.pdf}
+     \includegraphics[width=\textwidth]{images/binary-confusion-matrix.pdf}
      \caption{Illustration of a binary confusion matrix.
      ``Prediction'' refers to predicted labels \(y_{pred}(x)\) while ``Ground Truth'' represents the actual labels \(y(x)\).}
      \label{fig:confusion-matrix}
  \end{figure}
 
-The simplest case of a confusion matrix can be created when measuring the performance of a binary classifier.
+The simplest case of a confusion matrix can be constructed when measuring the performance of a binary classifier.
 Figure~\ref{fig:confusion-matrix} shows such a binary confusion matrix.
-Here, ``Ground Truth'' describes the label \(y(x)\) of some data point \(x \in X_{test}\), where \(y \in \{0, 1\}\).
-``Prediction'' identifies the predicted labels \(y_{pred}(x)\) that the model generates after is has been executed on the test-set \(X_{test}\) prior unknown.
+Here, `Ground Truth' describes the label \(y(x)\) of some data point \(x \in X_{test}\), where \(y \in \{0, 1\}\).
+`Prediction' identifies the predicted labels \(y_{pred}(x)\) that the model generates after is has been executed on the test-set \(X_{test}\) prior unknown.
 
 Whenever \(y_{pred}(x) = y(x),~x \in X_{test}\) holds, the predicted label can be assigned to be either a \emph{True Positive} (TP) or a \emph{True Negative} (TN).
 The opposite holds as well, such that a falsely predicted label will be either a \emph{False Negative} (FN) or a \emph{False Positive} (FP).
@@ -416,29 +465,31 @@ Using the classification introduced by the binary confusion matrix, all predicte
 Using these four sets, we can introduce measures for classification performance.
 
 \emph{Precision} is a measure that depicts the proportion of correctly classified positive samples to the total amount of samples classified as positive.\cite[p.4]{THA18} This can be algebraically expressed as
-\begin{align}
+\begin{align}\label{eq:precision}
     Precision = \frac{|TP|}{|TP| + |FP|}
 \end{align}
 where \(|A|\) is the cardinality of a set \(A\). Precision measures how many elements classified as positive are True Positives.
 
 \emph{Recall}, also called \emph{sensitivity}, represents the
 share of positive correctly classified samples to the total amount of positive samples.\cite[p.3]{THA18} This can be formalized as
-\begin{align}
+\begin{align}\label{eq:recall}
     Recall = \frac{|TP|}{|TP| + |FN|}
 \end{align}
 Recall measures how many of the positive labelled elements were actually selected.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=.5\textwidth]{images/precision-and-recall}
+    \includegraphics[width=\textwidth]{images/precision-and-recall}
     \caption{Each predicted label \(y_{x}\) is represented by a circle. Hollow circles stand for negative labels and full circles for positive lables.  }
     \label{fig:precision-and-recall}
 \end{figure}
 
-The harmonic mean of precision and recall is called \emph{F1-measure}:
-\begin{align}
-F1-measure = {\left(\frac{Recall^{-1} + Precision^{-1}}{2}\right)}^{-1}
+The harmonic mean of precision and recall is called \emph{F1-Score} or \emph{F1-Measure}:
+\begin{align}\label{eq:f1-score}
+\text{F1-Score} = {\left(\frac{Recall^{-1} + Precision^{-1}}{2}\right)}^{-1}
 \end{align}
+The F1-Score was derived under the name of \emph{MUC-4} by Nancy Chinchor in 1992.~\cite{CHI92}.
+Chinchor based her work on the book `Information Retrieval' by Van Rijsbergen from 1979.~\cite{RIJ79}
 
 \subsubsection{Datawig Imputer}
 Datawig Imputer is an imputation method based on \emph{supervised learning}.
