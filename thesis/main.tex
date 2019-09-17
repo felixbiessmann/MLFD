@@ -53,8 +53,11 @@ urlcolor=fiveblue,
 %++++++++++++++++++++++++++++++++++++++++++++++++++++++++++% Bibi
 \usepackage[babel, german=quotes]{csquotes}
 					% Stil der Zitate und der Bibliographie
-\usepackage[style=alphabetic,backend=biber,
-bibencoding=utf8, natbib=true
+\usepackage[
+style=alphabetic,
+backend=biber,
+bibencoding=utf8,
+natbib=true
 ]{biblatex}
 \addbibresource{Bib.bib} % <---
 %++++++++++++++++++++++++++++++++++++++++++++++++++++++++++%
@@ -94,6 +97,7 @@ bibencoding=utf8, natbib=true
 \input{theory.tex}
 \input{experiments.tex}
 \input{discussion.tex}
-\linespread{1}
+\newpage
+\linespread{1.1}
 \printbibliography
 \end{document}
