@@ -17,9 +17,46 @@ def save_pickle(obj, path):
 
     pickle.dump(obj, open(path, "wb"))
     message = '{0} successfully saved to {1}!'.format(
-            os.path.basename(path).split('.')[0],
-            path)
+        os.path.basename(path).split('.')[0],
+        path)
     print(message)
+
+
+def print_fd_imputer_stats(datasets):
+    """Prints fd imputer stats for all datasets."""
+    import numpy as np
+    print('\n\n~~~FD Imputer Statistical Analysis~~~\n')
+    for data in datasets:
+        path_to_res = data.results_path+'fd_imputer_results.p'
+        fd_imputer_res = pickle.load(open(path_to_res, 'rb'))
+        f1_scores = [y['f1'] for rhs in fd_imputer_res
+                     for y in fd_imputer_res[rhs]
+                     if ('f1' in y.keys())]
+        mse_res = [y['mse'] for rhs in fd_imputer_res
+                      for y in fd_imputer_res[rhs]
+                      if ('mse' in y.keys())]
+        mse_scores = [mse for mse in mse_res if (mse != '')]
+        mse_no_val = [mse for mse in mse_res if (mse == '')]
+        if len(mse_scores) > 0:
+            mse_mean = np.mean(mse_scores)
+            mse_min = min(mse_scores)
+            mse_max = max(mse_scores)
+        else:
+            mse_mean = '-'
+            mse_min = '-'
+            mse_max = '-'
+        fds = fd.read_fds(data.fd_path)
+        no_fds = len([lhs for rhs in fds for lhs in fds[rhs]])
+        print(data.title.upper())
+        print('#FDs on Train-Split: {}'.format(no_fds))
+        print('Mean f1-score: {}'.format(np.mean(f1_scores)))
+        print('Minimal f1-score: {}'.format(min(f1_scores)))
+        print('Maximal f1-score: {}'.format(max(f1_scores)))
+        print('Mean mse: {}'.format(mse_mean))
+        print('Minimal mse: {}'.format(mse_min))
+        print('Maximal mse: {}'.format(mse_max))
+        print('No result mse: {}'.format(len(mse_no_val)))
+        print('~~~~~~~~~~')
 
 
 def split_dataset(data, save=True):
@@ -287,7 +324,8 @@ def main(args):
               'rand_fds': generate_random_fds,
               'complete_detect': compute_complete_dep_detector,
               'greedy_detect': compute_greedy_dep_detector,
-              'dep_lhs_stability': compute_dep_detector_lhs_stability}
+              'dep_lhs_stability': compute_dep_detector_lhs_stability,
+              'fd_imputer_stats': print_fd_imputer_stats}
 
     if (args.cluster_mode):
         for dataset in datasets.values():
@@ -300,10 +338,12 @@ def main(args):
             data()
         else:
             calc_fun = models.get(args.model, no_valid_model)
-            if args.model != 'dep_lhs_stability':  # ugly but works
+            if (args.model != 'dep_lhs_stability') and (args.model != 'fd_imputer_stats'):  # ugly but works
                 calc_fun(data, save=True)
-            else:
+            elif args.model == 'dep_lhs_stability':
                 calc_fun(data, column=args.column, save=True)
+            elif args.model == 'fd_imputer_stats':
+                print_fd_imputer_stats(datasets.values())
 
 
 if __name__ == '__main__':
