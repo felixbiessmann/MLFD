@@ -1,9 +1,9 @@
 % !Tex root = Vorlage.tex
 \newpage
 \section{Experiments}
-To examine the measure of robustness introduced in the previous chapter, a number of experiments are conducted.
-In order to evaluate the capabilities of empirical risk minimization (ERM) techniques for FD discovery, the DepDetector algorithm is run on a number of datasets as well.
-For the experiments, datasets from the UCI Machine Learning Repository were used.~\cite{DUA19}.
+To examine the measure of robustness introduced in the previous chapter, a number of experiments is conducted.
+In order to evaluate the capabilities of empirical risk minimization (ERM) techniques for FD discovery, the DepDetector algorithm is run on a number of datasets as well..
+For the experiments, datasets from the UCI Machine Learning Repository were used.\cite{DUA19}.
 
 Since the algorithms analyzed in this section all handle missing values differently, rows containing missing values are dropped due to possible inconsistencies when comparing results.
 
@@ -11,18 +11,17 @@ The measure chosen to compare imputation performance on columns containing conti
 To compare classification performance, the F1-measure is chosen.
 
 \subsection{FD Imputer}
-FD Imputer is run for every FD found on a train subset of a dataset.~\cite{DUA19}
-Figure~\ref{fig:f1_fd_adult} shows the performance of FD Imputer on the Adult dataset.
-The analyzed columns contain classifiable data, thus the F1-Score represents robustness.
+FD Imputer is run for every FD found on a train subset of the Adult dataset.\cite{DUA19}
+Figure~\ref{fig:f1_fd_adult} shows the performance of FD Imputer on columns containing classifiable data.
 The two top performing FDs have a perfect F1 score of 1 each.
-An explanation for this circumstance can be found when analyzing the content of columns 4 and 5.
+An explanation for this can be found when analyzing the content of columns 4 and 5.
 
 \begin{figure}[ht]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/adult/f1_fd_imputer_adult.pdf}
-     \caption{F1 score of the 10 top-performing FDs on the Adult dataset when imputing values.}
+     \caption{F1 score of the 10 most performant FDs when imputing values on a validation set.}
      \label{fig:f1_fd_adult}
-\end{figure}
+ \end{figure}
 
 Column 4 contains information about the highest educational level achieved.
 There are 16 different categories of educational level defined.
@@ -30,51 +29,35 @@ Each category is assigned an integer in a range from 0 to 15.
 This integer is the content of column 5.
 Thus, the relation between column 4 and column 5 can be modeled by a bijective function, projecting the domains of each attribute onto another.
 
-All other FDs found on the Adult dataset lead to F1 scores smaller than \( 0.2\), being substantially less robust than the two top-performing FDs.
-It can be derived that only the two top-performing FDs can be used to meaningfully impute data.
+Other FDs lead to F1 scores smaller than \( 0.2\), yielding substantially worse results than the two top-performing FDs.
+It can be derived that only the two top-performing FDs hold in a general case.
 If unseen data is added to the dataset, it can thus safely be assumed that these two FDs still hold.
-In reverse, no value in a column other than 4 or 5 can be meaningfully imputed using FDs detected on the Adult dataset.
-
-\begin{figure}[ht]
-     \centering
-     \includegraphics[width=.8\textwidth]{../figures/letter/f1_fd_imputer_letter.pdf}
-     \caption{F1 score of the 10 top-performing FDs on the Letter dataset when imputing values.}
-     \label{fig:f1_fd_letter}
-\end{figure}
-Figure~\ref{fig:f1_fd_letter} displays the result of running FD Imputer on the Letter dataset.
-From the 80 FDs found on the train split, the 10 most robust ones all share the same RHS.
-At the same time, the LHSs of those top-performing FDs show minimal destinctions.
-While they are, by the definition of the search-algorithm used to detect them, minimal dependencies, they have similar robustness.
-
-This illustrates the fact that the criterion by which minimal FDs are distinguished does not account for robustness.
-
-All datasets other than Adult show no FD with a perfect score.
-Only a FD on the Breast Cancer Wisconsit dataset achieves a score higher than 0.75
-Table~\ref{tab:fd-imputer-performance} provides a summary of how FD Imputer performs on a range of datasets.
-
+\\
 \begin{table}[ht]
     \centering
     \begin{tabular}{lrrrrrr}
-        & & & \multicolumn{3}{c}{Classification Performance} \\
-        \cmidrule(lr{.25em}){4-6}
-        Dataset & \#FDs & \#FDs\textsubscript{train} & \#FD (F1 = 0) & F1\textsubscript{mean} & F1\textsubscript{max} \\
+        \toprule
+        & & & \multicolumn{4}{c}{Classification Performance} \\
+        \cmidrule(lr{.25em}){4-7}
+        Dataset & \#FDs & \#FDs\textsubscript{train} & \#FD (F1 = 0) & F1\textsubscript{mean} & F1\textsubscript{max} & F1\textsubscript{min}  \\
         \midrule
-        Abalone & 175 & 193 & 45 & 0.0008 & 0.0048 \\
-        Adult & 93 & 88 & 10 & 0.0669 & 1.0000 \\
-        Balance Scale & 7 & 7 & 6 & 0.0000 & 0.0000 \\
-        Breast Cancer Wisconsin & 57 & 77 & 10 & 0.2198 & 0.7539 \\
-        Chess & 9 & 9 & 8 & 0.0000 & 0.0000 \\
-        Iris & 9 & 8 & 1 & 0.1274 & 0.2252 \\
-        Letter & 78 & 80 & 17 & 0.2347 & 0.3737 \\
-        Nursery & 11 & 11 & 10 & 0.0000 & 0.0000  \\
+        Abalone & 175 & 193 & 45 & 0.0008 & 0.0048 & 0.0000 \\
+        Adult & 93 & 88 & 10 & 0.0669 & 1.0000 & 0.0000 \\
+        Balance Scale & 7 & 7 & 6 & 0.0000 & 0.0000 & 0.0000 \\
+        Breast Cancer Wisconsin & 57 & 77 & 10 & 0.2198 & 0.7539 & 0.0000 \\
+        Chess & 9 & 9 & 8 & 0.0000 & 0.0000 & 0.0000 \\
+        Iris & 9 & 8 & 1 & 0.1274 & 0.2252 & 0.0000 \\
+        Letter & 78 & 80 & 17 & 0.2347 & 0.3737& 0.0000 \\
+        Nursery & 11 & 11 & 10 & 0.0000 & 0.0000 & 0.0000 \\
         \bottomrule
     \end{tabular}
     \caption{Performance of the FD Imputer on a selection of UCI datasets.}\label{tab:fd-imputer-performance}
 \end{table}
 
+Table~\ref{tab:fd-imputer-performance} provides a summary of how FD Imputer performs on a range of datasets to put results from the Adult and Nursery datasets into perspective.
 Column \#FDs indicates how many FDs were found on the complete dataset.
 \#FDS\textsubscript{train} contains the number of FDs that were detected on the train subset used for imputations.
-F1\textsubscript{mean} and F1\textsubscript{max} indicate the arithmetic mean and maximal F1 score achieved on each dataset respectively.
+F1\textsubscript{mean}, F1\textsubscript{max} and F1\textsubscript{min} indicate the arithmetic mean, maximal and minimal F1 score achieved on each dataset respectively.
 The last column named \#(F1 = 0) provides the number of FDs that scored a F1 score of 0.
 
 The results displayed in table~\ref{tab:fd-imputer-performance} show how strongly the FD Imputer's performance depends on the dataset considered.
@@ -101,15 +84,10 @@ This shows that Datawig Imputer is capable of learning Conditional Dependencies.
         \toprule
         & & & \multicolumn{4}{c}{Classification Performance} \\
         \cmidrule(lr{.25em}){4-7}
-        Dataset & \#FDs & \#FDs\textsubscript{train} & \#(F1 = 0) & F1\textsubscript{mean} & F1\textsubscript{max} & F1\textsubscript{min} \\
+        Dataset & \# FDs & \# FDs\textsubscript{train} & F1\textsubscript{mean} & F1\textsubscript{max} & F1\textsubscript{min} & \# (F1 = 0) \\
         \midrule
-        Abalone & 175 & 193 & 0 & 0.3697 & 0.5664 & 0.0619 \\
-        Adult & 93 & 88 & 0 & 0.7720 & 1.0000 & 0.0409 \\
-        Balance Scale & 7 & 7 & 0 & 0.4670 & 0.9443 & 0.0255 \\
-        Chess & 9 & 9 & 0 & 0.3744 & 0.9276 & 0.1162 \\
-        Iris & 9 & 8 & 0 & 0.9243 & 1.0000 & 0.1275 \\
-        Letter & 78 & 80 & 0 & 0.7207 & 0.9134 & 0.0058 \\
-        Nursery & 11 & 11 & 0 & 0.9915 & 0.4531 & 0.1138 \\
+        adult & 93 & 88 & 0.7720 & 1.0000 & 0.0409 & 0 \\
+        nursery & 11 & 11 & 0.4531 & 0.9915 & 0.1138 & 0 \\
         \bottomrule
     \end{tabular}
     \caption{Performance of the Datawig Imputer.}\label{tab:ml-imputer-performance}

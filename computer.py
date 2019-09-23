@@ -22,40 +22,101 @@ def save_pickle(obj, path):
     print(message)
 
 
+def print_ml_imputer_stats(datasets):
+    """ Prints ml imputer stats for all datasets."""
+    import numpy as np
+    print('\n\n~~~ML Imputer Statistical Analysis~~~\n')
+    datasets = list(datasets)
+    datasets.remove(c.BREASTCANCER)  # keine results
+    for data in datasets:
+        path_ml_res = data.results_path+'ml_imputer_results.p'
+        ml_imputer_res = pickle.load(open(path_ml_res, 'rb'))
+        ml_f1_scores = [y['f1'] for rhs in ml_imputer_res
+                        for y in ml_imputer_res[rhs]
+                        if ('f1' in y.keys())]
+        ml_mse_scores = [y['mse'] for rhs in ml_imputer_res
+                         for y in ml_imputer_res[rhs]
+                         if ('mse' in y.keys())]
+        ml_mse_scores = [mse for mse in ml_mse_scores if (mse != '')]
+        ml_mse_no_val = [mse for mse in ml_mse_scores if (mse == '')]
+        if len(ml_mse_scores) > 0:
+            ml_mse_mean = np.mean(ml_mse_scores)
+            ml_mse_min = min(ml_mse_scores)
+            ml_mse_max = max(ml_mse_scores)
+        else:
+            ml_mse_mean = '-'
+            ml_mse_min = '-'
+            ml_mse_max = '-'
+        fds = fd.read_fds(data.fd_path)
+        no_fds = len([lhs for rhs in fds for lhs in fds[rhs]])
+        print(data.title.upper())
+        print('#FDs on Train-Split: {}'.format(no_fds))
+        print('Mean f1-score: {}'.format(np.mean(ml_f1_scores)))
+        print('Maximal f1-score: {}'.format(max(ml_f1_scores)))
+        print('Minimal f1-score: {}'.format(min(ml_f1_scores)))
+        print('#FDs where f1=0: {}'.format(len(
+            [f1 for f1 in ml_f1_scores if f1 == 0])))
+        print('Mean mse: {}'.format(ml_mse_mean))
+        print('Minimal mse: {}'.format(ml_mse_min))
+        print('Maximal mse: {}'.format(ml_mse_max))
+        print('No result mse: {}'.format(len(ml_mse_no_val)))
+        print('~~~~~~~~~~')
+
+
 def print_fd_imputer_stats(datasets):
     """Prints fd imputer stats for all datasets."""
     import numpy as np
     print('\n\n~~~FD Imputer Statistical Analysis~~~\n')
     for data in datasets:
+        path_ml_res = data.results_path+'ml_imputer_results.p'
         path_to_res = data.results_path+'fd_imputer_results.p'
         fd_imputer_res = pickle.load(open(path_to_res, 'rb'))
-        f1_scores = [y['f1'] for rhs in fd_imputer_res
-                     for y in fd_imputer_res[rhs]
-                     if ('f1' in y.keys())]
-        mse_res = [y['mse'] for rhs in fd_imputer_res
-                      for y in fd_imputer_res[rhs]
-                      if ('mse' in y.keys())]
-        mse_scores = [mse for mse in mse_res if (mse != '')]
-        mse_no_val = [mse for mse in mse_res if (mse == '')]
-        if len(mse_scores) > 0:
-            mse_mean = np.mean(mse_scores)
-            mse_min = min(mse_scores)
-            mse_max = max(mse_scores)
+        ml_imputer_res = pickle.load(open(path_ml_res, 'rb'))
+        ml_f1_scores = [y['f1'] for rhs in ml_imputer_res
+                        for y in ml_imputer_res[rhs]
+                        if ('f1' in y.keys())]
+        fd_f1_scores = [y['f1'] for rhs in fd_imputer_res
+                        for y in fd_imputer_res[rhs]
+                        if ('f1' in y.keys())]
+        ml_mse_scores = [y['mse'] for rhs in ml_imputer_res
+                         for y in ml_imputer_res[rhs]
+                         if ('mse' in y.keys())]
+        fd_mse_scores = [y['mse'] for rhs in fd_imputer_res
+                         for y in fd_imputer_res[rhs]
+                         if ('mse' in y.keys())]
+        ml_mse_scores = [mse for mse in ml_mse_scores if (mse != '')]
+        ml_mse_no_val = [mse for mse in ml_mse_scores if (mse == '')]
+        fd_mse_scores = [mse for mse in fd_mse_scores if (mse != '')]
+        fd_mse_no_val = [mse for mse in fd_mse_scores if (mse == '')]
+        if len(ml_mse_scores) > 0:
+            ml_mse_mean = np.mean(ml_mse_scores)
+            ml_mse_min = min(ml_mse_scores)
+            ml_mse_max = max(ml_mse_scores)
         else:
-            mse_mean = '-'
-            mse_min = '-'
-            mse_max = '-'
+            ml_mse_mean = '-'
+            ml_mse_min = '-'
+            ml_mse_max = '-'
+        if len(fd_mse_scores) > 0:
+            fd_mse_mean = np.mean(fd_mse_scores)
+            fd_mse_min = min(fd_mse_scores)
+            fd_mse_max = max(fd_mse_scores)
+        else:
+            fd_mse_mean = '-'
+            fd_mse_min = '-'
+            fd_mse_max = '-'
         fds = fd.read_fds(data.fd_path)
         no_fds = len([lhs for rhs in fds for lhs in fds[rhs]])
         print(data.title.upper())
         print('#FDs on Train-Split: {}'.format(no_fds))
-        print('Mean f1-score: {}'.format(np.mean(f1_scores)))
-        print('Minimal f1-score: {}'.format(min(f1_scores)))
-        print('Maximal f1-score: {}'.format(max(f1_scores)))
-        print('Mean mse: {}'.format(mse_mean))
-        print('Minimal mse: {}'.format(mse_min))
-        print('Maximal mse: {}'.format(mse_max))
-        print('No result mse: {}'.format(len(mse_no_val)))
+        print('Mean f1-score: {}'.format(np.mean(fd_f1_scores)))
+        print('Maximal f1-score: {}'.format(max(fd_f1_scores)))
+        print('Minimal f1-score: {}'.format(min(fd_f1_scores)))
+        print('#FDs where f1=0: {}'.format(len(
+            [f1 for f1 in fd_f1_scores if f1 == 0])))
+        print('Mean mse: {}'.format(fd_mse_mean))
+        print('Minimal mse: {}'.format(fd_mse_min))
+        print('Maximal mse: {}'.format(fd_mse_max))
+        print('No result mse: {}'.format(len(fd_mse_no_val)))
         print('~~~~~~~~~~')
 
 
@@ -325,7 +386,11 @@ def main(args):
               'complete_detect': compute_complete_dep_detector,
               'greedy_detect': compute_greedy_dep_detector,
               'dep_lhs_stability': compute_dep_detector_lhs_stability,
-              'fd_imputer_stats': print_fd_imputer_stats}
+              'fd_imputer_stats': print_fd_imputer_stats,
+              'ml_imputer_stats': print_ml_imputer_stats}
+    special_models = ['dep_lhs_stability',
+                      'fd_imputer_stats',
+                      'ml_imputer_stats']
 
     if (args.cluster_mode):
         for dataset in datasets.values():
@@ -338,12 +403,14 @@ def main(args):
             data()
         else:
             calc_fun = models.get(args.model, no_valid_model)
-            if (args.model != 'dep_lhs_stability') and (args.model != 'fd_imputer_stats'):  # ugly but works
+            if args.model not in special_models:
                 calc_fun(data, save=True)
             elif args.model == 'dep_lhs_stability':
                 calc_fun(data, column=args.column, save=True)
             elif args.model == 'fd_imputer_stats':
                 print_fd_imputer_stats(datasets.values())
+            elif args.model == 'ml_imputer_stats':
+                print_ml_imputer_stats(datasets.values())
 
 
 if __name__ == '__main__':
