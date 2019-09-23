@@ -133,7 +133,7 @@ def plot_f1_fd_imputer(data):
     ax = fig.add_subplot(111)
     ax.barh(lhs_names, f1_fd)
 
-    ax.set(title='ML Imputer Performance on '+data.title.capitalize(),
+    ax.set(title='FD Imputer Performance on '+data.title.capitalize(),
            xlabel='F1-Score',
            xlim=[0.0, 1.0])
     return(fig, ax)
