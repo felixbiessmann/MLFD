@@ -195,11 +195,11 @@ However, in 1972 Codd separated the definition of a FD from keys, persuing the s
 
 In the ensuing time, researchers abstracted the concept of FDs and transferred the approach.
 FDs were used in research to solve problems other than schema normalization.~\cite[p.~161]{CAR16}
-Many of these use-cases, such as `Approximate classification', `approximate classification' or `source merging' came up due to the fact that real-world datasets are almost always \emph{noisy}.
+Many of these use-cases, such as `approximate classification' or `source merging', arose due to the fact that real-world datasets are almost always \emph{noisy}.
 
 Noise in databases has many faces:
 Entries might be corrupted by missing data, wrongly entered data or incomplete data.
-A database might have been merged, with identical entries formatted in different ways.~\cite[p.~1]{KOU09}
+A database might have been merged with identical entries formatted in different ways.~\cite[p.~1]{KOU09}
 In these cases, functionally dependent column-combinations are not detected as such by a FD detection algorithm searching for FDs as defined in~\ref{eq:fd-condition}.
 This may result in misleading insights when searching for FDs or normalizing a database.
 
@@ -281,16 +281,16 @@ One common RFD relaxing on the attribute comparison is the metric functional dep
 \paragraph{Metric Functional Dependencies (MFDs)}
 First introduced by Koudas et al.\ in 2009, \emph{Metric Functional Dependencies} were defined to adress violations of canonical FDs due to ``small variations [\dots] in data format and interpretation''.~\cite[p.~1]{KOU09}
 
-According to equation~\ref{eq:fd-condition}, a FD \textsc{Town} \( \to\) \textsc{Zip} is said to be valid if
+According to equation~\ref{eq:fd-condition}, a FD \textsc{Zip} \( \to\) \textsc{Town} is said to be valid if
 \begin{align}
-    t[\textsc{Town}] = t'[\textsc{Town}] \Rightarrow t[\textsc{Zip}] = t'[\textsc{Zip}]
+    t[\textsc{Zip}] = t'[\textsc{Zip}] \Rightarrow t[\textsc{Town}] = t'[\textsc{Town}]
 \end{align}
 holds for all pairs of distinct tuples \( t_i, t_j \in r \), where \( r \) is a relation on scheme \( \boldsymbol{R} \).
 The definition of a MFD replaces this equation by demanding that if and only if for all pairs of distinct tuples \( t_i, t_j \in r \) the metric condition
 \begin{align}\label{eq:mfd-condition}
-    t[\textsc{Town}] = t'[\textsc{Town}] \Rightarrow d(t[\textsc{Zip}], t'[\textsc{Zip}]) \leq \delta
+    t[\textsc{Zip}] = t'[\textsc{Zip}] \Rightarrow d(t[\textsc{Town}], t'[\textsc{Town}]) \leq \delta
 \end{align}
-holds, the MFD \textsc{Town} \( \to\) \textsc{Zip} is said to be valid on \( r \).~\cite[p.~2]{KOU09}
+holds, the MFD \textsc{Zip} \( \to\) \textsc{Town} is said to be valid on \( r \).~\cite[p.~2]{KOU09}
 Here, \( \delta \) is called a \emph{tolerance parameter}, indicating how far the result of a \emph{metric} \( d(t[\textsc{Y}], t'[\textsc{Y}]) \) can deviate from exact equality.
 
 One such metric \( d \) would be the absolute difference between two values, such that \( d(t[\textsc{Y}], t'[\textsc{Y}]) = | t[\textsc{Y}] - t'[\textsc{Y}]| \).
@@ -307,13 +307,13 @@ Another popular metric for measuring the difference between two sequences is the
     \end{cases}
 \end{align*}
 Regarding the example given in table~\ref{tab:example-afd-necessity}, the Levenshtein distance between \texttt{Munich} and \texttt{Muinch} is 2.
-Thus the MFD \textsc{Town} \( \to\) \textsc{Zip} is valid, if \( d = \text{lev} \) and \( \delta = 2 \).
+Thus the MFD \textsc{Zip} \( \to\) \textsc{Town} is valid, if \( d = \text{lev} \) and \( \delta = 2 \).
 
 \subsection{Robustness of FDs}
 Koudas et al., when introducing the MFD, write that the definition of the canonical FD was ``not \emph{robust} enough to capture functional relationships on data obtained from merging heterogenous sources [\dots]''\footnote{Highlighting added by the author.}.~\cite[p.~1]{KOU09}
-However, they do not provide a way of measuring robustness.
+However, they do neither provide a definition of robustness, nor a way to measure it.
 
-Bleifuß et al.~\cite[p.~3]{BLE16} define \emph{Correctness}.
+Bleifuß et al.~\cite[p.~3]{BLE16} define a measure similar to robustness called \emph{Correctness}.
 They do so by comparing a set of RFDs \( Out \) to a set of FDs \( Gold \) on the same relational instance \( r \) as follows:
 \begin{align*}
     \text{Correctness} = \frac{|Out \cap Gold^{+}|}{|Out|}
@@ -324,7 +324,7 @@ By this definition, the notion `Correctness' considers \( Out \) to be more or l
 If a RFD is used to find relations on noisy data, this definition of `Correctness' does not meaningfully measure dependencies that try to work around the noise.
 This means that a RFD that takes the typing error in table~\ref{tab:example-afd-necessity} into account would not be more `correct' than a RFD that does not.
 
-As far as the author of this work is informed, no method for measuring robustness as described by Koudas et al.\ is established.
+In summary, Koudes et al.\ do not provide a definition of robustness and `Correctness' cannot be used for measuring robustness.
 Drawing inspiration from Machine Learning theory, the application of cross-validation techniques to FDs order to measure robustness is proposed.
 
 \paragraph{Definition (Train Set, Test Set, Split Ratio)} Let \( r = \{ t_1, t_2, \dots, t_p \}\) be a  relation on a relation scheme \( \boldsymbol{R} \) where \( p \in \mathbb{N} \) is the number of tuples in \( r \).
@@ -430,9 +430,9 @@ Consider table~\ref{tab:split-example-fd-imputer}.
 The FD \textsc{C} \( \ \to \) \textsc{D}, when used for finding a right hand side value on \( r_{test} \), will correctly return `Lisbon'.
 However, FD \textsc{A} \( \to \) \textsc{D} for example will lead to FD Imputer yielding `Madrid', which is an incorrect imputation.
 
-Implementing FD Imputer, imputations are retrieved by executing a SQL join clause.
-FD Imputer performs an inner join on all LHS columns, joining train-set and validation-set.
-A successive second left join clause concatenates the original validation-set with the column of imputed tuples stemming from the first join.
+The implementation of FD Imputer leverages SQL join clauses to retrieve imputations.
+FD Imputer performs an inner join on all LHS columns, joining train-set and test-set.
+A successive second left join clause concatenates the original test-set with the column of imputed tuples stemming from the first join.
 The result is a set of imputations as described in equation~\ref{eq:imputation-set}.
 
 \paragraph{Robustness as a F1-Score} The imputed values retrieved by FD Imputer can be leveraged to create a measure for robustness.
@@ -527,9 +527,9 @@ We call \( \mathbold{x}_i \in \mathbb{F}\) \emph{feature-vector} in a \emph{feat
 
 Datawig Imputer solves a classification problem.
 A function
-\begin{align}
+\begin{align*}
     f: \mathbb{F} \rightarrow S
-\end{align}
+\end{align*}
 is being approximated, where \( \mathbb{F} \) is the feature-space and \( S = \{a_1, a_2, \dots, a_M \} \) is a set of labels.
 
 Datawig Imputer assumes that the column to be imputed, the so-called \emph{label comumn}, contains data that can be transformed to obtain attributes \( a_1, \dots, a_M \).~\cite[p.~2018]{BIE18}
@@ -555,16 +555,16 @@ Datawig Imputer creates a histogram of column \( c \) and uses the histogram's i
     \label{fig:state-diagram-color}
 \end{figure}
 Thus the encoded column \( c_{cat} \) would have the following form:
-\begin{align}
+\begin{align*}
     c_{cat}^{c} = \{ 0, 1, 2, 0, 0, 1\}
-\end{align}
+\end{align*}
 
 Sequential data is data where the sequece in which individual datapoints are stored in contains information.
 An example for sequential data would be a column containing non-categorical strings, like Usernames:
 
-\begin{align}
+\begin{align*}
     c_{seq} = \{ \texttt{ItalyPaleAle},~\texttt{sisou},~\texttt{primos63} \}
-\end{align}
+\end{align*}
 
 The numerical representation \( c_{seq}^{c} \in \{ 0, 1, 2, \dots, A_c \}^{S_c} \) of the sequential column ``is a vector of length \( S_c \), where \( S_c \) denotes the length of the sequence or \texttt{string} in column \( c_{seq} \).''~\cite[p.~2020]{BIE18}
 This numerical representation is called \emph{n-gram representation}.
@@ -574,31 +574,33 @@ Finally, the Datawig-Imputer learns to predict the label distribution from \( y 
 It therefore models \( p(y|\mathbold{x},\mathbold{\Theta}) \), the \( D_y \)~-~dimensional probability vector over all possible values in the to-be imputed column in function of feature-vector \( \mathbold{x} \) and \emph{learned model parameters} \( \mathbold{\Theta} \).~\cite[p.~2021]{BIE18}
 
 Datawig uses a logistic regression type output layer to achieve this:
-\begin{align}
+\begin{align*}
     p(y|\mathbold{x},\mathbold{\Theta}) = \texttt{softmax}[\mathbold{Wx} + \mathbold{b}]
-\end{align}
+\end{align*}
 Here, the learned model parameters \( \mathbold{\Theta} = (\mathbold{W}, \mathbold{z}, \mathbold{b}) \) depends on the learned \emph{weights} \( \mathbold{W} \) and \emph{biases} \( \mathbold{b} \) as well as \( \mathbold{z} \), representing all parameters of the column-specific feature extraction.
 Parameters \( \mathbold{\Theta} \) are learned by minimizing cross-entropy loss between predicted and observed labels \( y \) by computing
-\begin{align}
-    \mathbold{\Theta} = \min_{\Theta} \sum\nolimits_{1}^{N} - \log(p(y|\mathbold{x}, \mathbold{\Theta}))^\top \texttt{onehot}(y).
+\begin{align}\label{eq:datawig-erm}
+    \mathbold{\Theta} = \min_{\Theta} \sum\nolimits_{1}^{N} - \log\left(p\left(y|\mathbold{x}, \mathbold{\Theta}\right)\right)^\top \texttt{onehot}(y).
 \end{align}
 Here, \( \log() \) represents the element-wise logarithm.
 \( \texttt{onehot}(y) \in {0, 1}^{D_y}\) stands for a one-hot encoding of one label \( y \).
+
+Equation~\ref{eq:datawig-erm} is applying the principle of \emph{Empirical Risk Minimization}.~\cite[p.~832]{VAP92}
+The right-hand term is the \emph{empirical risk-function} for the classification problem.
+By minimizing the risk, in this case cross-entropy loss, weights \( \mathbold{\Theta} \) are `learned' that lead to an optimized classification performance.
 
 Training is done using standard backpropagation and stochastic gradient-descent on mini-batches.
 The exact network layout is described in the paper ``Deep Learning for Missing Value imputation in Tables with Non-Numerical Data''~\cite[p.~2022]{BIE18} in full detail.
 
 \subsubsection{ML Imputer}
-When Datawig Imputer is employed in the experiment-section of this work, it is referred to as `ML Imputer'.
-This label is chosen to emphasize the similar internal mode of operation.
-Similar to FD Imputer when measuring robustness, ML Imputer imputes values on a test set.
-It then derives either a F1-Score as in equation~\ref{eq:fd-imputer-f1-score} for classifiable data or a MSE as in equation~\ref{eq:fd-imputer-mse}.
+When Datawig Imputer is employed in the experimental section of this work, it is referred to as `ML Imputer'.
+This name is chosen to emphasize the internal mode of operation similar to FD Imputer.
+Both imputers use cross-validation to find impute-values on a test set.
+They derive either a F1-Score as in equation~\ref{eq:fd-imputer-f1-score} for classifiable data or a MSE as in equation~\ref{eq:fd-imputer-mse}.
 
 \subsection{DepDetector: RFD Discovery}
-In an effort to leverage the imputation-capabilities of ML Imputer for dependency discovery, the algorithm called \emph{DepDetector} is introduced.
-
 In the field of data profiling, an extensive body of theory and algorithms for FD discovery has been created in the past decades.~\cite[p.~39]{ABE19}
-Various newly introduced techniques such as massive parallelization or hybrid algorithms, combining different discovery strategies, lowered the time needed to detect FDs on a relational table continuously.~\cite[p.~40]{ABE19}
+New techniques such as massive parallelization or hybrid algorithms, combining different discovery strategies, lowered the time needed to detect FDs on a relational table continuously.~\cite[p.~40]{ABE19}
 
 \begin{figure}[ht]
      \centering
@@ -609,8 +611,8 @@ Various newly introduced techniques such as massive parallelization or hybrid al
 
 Notably the \textsc{TANE} algorithm developed by Huhtala et al.\ discovered FDs faster than any other algorithm at the time.~\cite{HUH99}
 It paved the way for other algorithms that use the same search strategy called `lattice traversal', such as \textsc{FUN}~\cite{NOV08}, \textsc{FD\_MINE}~\cite{YAO02} and \textsc{DFD}~\cite{ABE14}.~\cite[p.~39]{ABE19}
-Parallelization techniques and ever more sophisticated search-strategies lead to ever faster algorithms, with new ones being actively developed at time of writing these lines.~\cite[p.~1]{PAP15}
 
+In an effort to leverage the imputation-capabilities of ML Imputer for dependency discovery, the algorithm called \emph{DepDetector} is introduced.
 DepDetector finds RFDs that relax both on the attribute comparison as well as on the extent.
 When discovering dependencies, DepDetector searches all non-trivial, minimal dependencies.
 Similar to FD discovery algorithms, the search space can be modeled as a graph labeling problem.~\cite[p.~24]{ABE19}
@@ -618,24 +620,62 @@ Here, every possible combination of attributes, called \emph{power set} of attri
 Due to the properties of the graph, the problem can be modelled as a \emph{lattice}.~\cite[p.~24]{ABE19}
 This has been visualized using a Hasse diagram in figure~\ref{fig:dep-detector-search-tree}.
 
-\subsubsection{DepDetector Relaxation Criteria}
-DepDetector searches for dependencies by traversing the search tree as depicted in figure~\ref{fig:dep-detector-search-tree}.
-In a first step, a model is trained to measure the imputation-capabilities of all other columns combined.
-In order to further traverse the search tree to search for dependencies, this model needs to surpass a threshold.
-This threshold depends on the data type of the potential RHS.
-The threshold requires either a F1-Score equal or bigger 0.9 or a MSE of less than \( 0.2 \cdot \overline{y} \), where \( \overline{y} \) is the arithmetic mean of all RHS values in the dataset.
+\subsubsection{DepDetector Algorithm}
+DepDetector searches for dependencies by traversing the search lattice as depicted in figure~\ref{fig:dep-detector-search-tree}.
+In a first step, ML Imputer is run, imputing the RHS with all other columns on the relational scheme as LHS.
+This yields the model's robustness.
+For the algorithm to continue traversing the search lattice in search of dependencies, this model's robustness must exceed an initial threshold value.
+The threshold value depends on the data type of the potential RHS.
+The model is required to either achieve an F1-Score equal or greater than 0.9 or an MSE of less than \( 0.2 \cdot \overline{y} \), where \( \overline{y} \) is the arithmetic mean of all RHS values in the dataset.
+If the initial model does not exceed the threshold, we can assume that no dependency is present on the relational instance.
 
-If this threshold has been surpassed, the search-algorithm traverses the search space lattice in a top-down manner when depicting the search lattice as in figure~\ref{fig:dep-detector-search-tree}.
-For each node in the search tree a model is trained and evaluated.
+However, if the initial threshold is surpassed, the search-algorithm traverses the search lattice in a `top-down' manner as depicted in figure~\ref{fig:dep-detector-search-tree}.
+For each node in the search lattice a model is trained and evaluated.
 Again the search is only proceeded, when the model surpasses a threshold: either a smaller MSE than the parent-node, or a F1-Score bigger than 98\% of the parent node's F1-Score.
+This is repeated until the threshold is not exceeded by any new model or until a minimal LHS is reached.
 
 \paragraph{DepDetector Relaxing on the Extent}The threshold-driven search-strategy is effectively a relaxation on the extent of the canonical FD when a potential RHS is of a classifiable data type.
 It is similar to an AFDs approach of ``holding on almost every tuple'' --- the imputation needs to be correct on almost every instance, but not on every instance.
 In addition, ML Imputer is capable of learning conditions, similiar to CFDs.
-As shown in the experiments-section of this work, ML Imputer learns the order of entries in a relational instance as well as thresholds in entries.
-Compared to CFDs, ECFDs and CFD\textsubscript{p}s, it is important to keep in mind though that these conditions are never manually set but entirely learned.
+As shown in the experimental section of this work, ML Imputer learns the order of entries in a relational instance as well as thresholds, such as a CFD\textsuperscript{p} would do.
+Compared to CFDs, ECFDs and CFD\textsuperscript{p}s, it is important to keep in mind though that these conditions are never manually set but learned.
+
+The behavior of DepDetector as described in the paragraph above is also displayed in listing~\ref{lst:complete-depdetector}.
+Note that DepDetector is implemented with two search-modes called `greeedy' and `complete'.
+The `complete' search-mode behaves as described above.
+It is optimized to find all dependencies on a relational scheme.
+Meanwhile the `greedy' search-mode is optimized to detect just \emph{one} dependency.
+This approach converges faster than `complete' and can be used if a single minimal dependency is sufficient.
+However, it neither guarantees to find minimal dependencies, nor does it guarantee to find the most robust dependency.
+
+\begin{lstlisting}[caption={`Complete' candidate generation in the DepDetector algorithm},captionpos=b,language=Python,label=lst:complete-depdetector]
+def get_complete_candidates(root):
+    convergence = True
+    most_recent_nodes = root.get_newest_children()
+    for node in most_recent_nodes:
+        if root.is_continuous:  # sequential data
+            if (node.score < node.parent.score) and (len(node.name) > 1):
+                convergence = False
+                pot_lhs = node.name
+                for col in pot_lhs:
+                    candidate_lhs = [c for c in pot_lhs if c != col]
+                    add_node(candidate_lhs,
+                             parent=node,
+                             score=None)
+
+        elif not root.is_continuous:  # classifiable data
+            if (node.score > node.parent.score*0.98) \
+                    and (len(node.name) > 1):
+                convergence = False
+                pot_lhs = node.name
+                for col in pot_lhs:
+                    candidate_lhs = [c for c in pot_lhs if c != col]
+                    add_node(candidate_lhs,
+                             parent=node,
+                             score=None)
+\end{lstlisting}
 
 \paragraph{DepDetector Relaxing on Attribute Comparison}
-However, a fundamental difference in comparison with e.g. MFDs is the fact that DepDetector is agnostic of the kind of attribute criterion.
-
-
+A fundamental difference that manifests itself when comparing dependencies discovered by DepDetector with MFDs or FDs is due the fact that DepDetector does not derive the existence of a dependency based on attribute comparison as in equations~\ref{eq:fd-condition}~or~\ref{eq:mfd-condition}.
+Instead, DepDetector uses ERM-strategies when executing ML Imputer to measure a dependency's robustness.
+Thus, DepDetector optimizes for maximum robustness and a minimum number of LHS attributes.

@@ -1,26 +1,23 @@
 % !Tex root = Vorlage.tex
 \newpage
 \section{Experiments}
-To examine the measure of robustness introduced in the previous chapter, a number of experiments are conducted.
-In order to evaluate the capabilities of empirical risk minimization (ERM) techniques for FD discovery, the DepDetector algorithm is run on a number of datasets as well.
-For the experiments, datasets from the UCI Machine Learning Repository were used.~\cite{DUA19}.
+To examine robustness as it is defined in the previous chapter, a number of experiments are conducted.
+In the following subsection, in order to evaluate the capabilities of empirical risk minimization (ERM) techniques for FD discovery, the DepDetector algorithm is run on a number of datasets.
+For the experiments, datasets from the UCI Machine Learning Repository are used.~\cite{DUA19}.
 
-Since the algorithms analyzed in this section all handle missing values differently, rows containing missing values are dropped due to possible inconsistencies when comparing results.
-
-The measure chosen to compare imputation performance on columns containing continuous numeric values is the mean squared error.
-To compare classification performance, the F1-measure is chosen.
+Since the algorithms analyzed in this section handle missing values differently, rows containing missing values are excluded from the datasets due to possible inconsistencies when comparing results.
 
 \subsection{FD Imputer}
-FD Imputer is run for every FD found on a train subset of a dataset.~\cite{DUA19}
+FD Imputer is run for every FD found on a train subset of a dataset.
 Figure~\ref{fig:f1_fd_adult} shows the performance of FD Imputer on the Adult dataset.
 The analyzed columns contain classifiable data, thus the F1-Score represents robustness.
-The two top performing FDs have a perfect F1 score of 1 each.
+The two top performing FDs have a perfect F1-Score of 1 each.
 An explanation for this circumstance can be found when analyzing the content of columns 4 and 5.
 
 \begin{figure}[ht]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/adult/f1_fd_imputer_adult.pdf}
-     \caption{F1 score of the 10 top-performing FDs on the Adult dataset when imputing values.}
+     \caption{F1-Scores of the 10 most-robust FDs on the Adult dataset when imputing classifiable values.}
      \label{fig:f1_fd_adult}
 \end{figure}
 
@@ -28,25 +25,26 @@ Column 4 contains information about the highest educational level achieved.
 There are 16 different categories of educational level defined.
 Each category is assigned an integer in a range from 0 to 15.
 This integer is the content of column 5.
-Thus, the relation between column 4 and column 5 can be modeled by a bijective function, projecting the domains of each attribute onto another.
+Thus, the relation between column 4 and column 5 can be modeled by a bijective function, projecting the domains of each attribute onto the other.
 
-All other FDs found on the Adult dataset lead to F1 scores smaller than \( 0.2\), being substantially less robust than the two top-performing FDs.
+All other FDs found on the Adult dataset lead to F1-Scores smaller than \( 0.2\), being substantially less robust than the two top-performing FDs.
 It can be derived that only the two top-performing FDs can be used to meaningfully impute data.
-If unseen data is added to the dataset, it can thus safely be assumed that these two FDs still hold.
-In reverse, no value in a column other than 4 or 5 can be meaningfully imputed using FDs detected on the Adult dataset.
+If new data was added to the dataset, it can thus safely be assumed that these two FDs still held.
+In reverse, no value in a column other than 4 or 5 can be meaningfully imputed using FDs detected on the Adult dataset due to the small robustness of these FDs.
 
 \begin{figure}[ht]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/letter/f1_fd_imputer_letter.pdf}
-     \caption{F1 score of the 10 top-performing FDs on the Letter dataset when imputing values.}
+     \caption{Robustness of the 10 top-performing FDs on the Letter dataset when imputing classifiable RHSs.}
      \label{fig:f1_fd_letter}
 \end{figure}
 Figure~\ref{fig:f1_fd_letter} displays the result of running FD Imputer on the Letter dataset.
-From the 80 FDs found on the train split, the 10 most robust ones all share the same RHS.
+From the 80 FDs found on the train split, the 10 most robust ones all share the same RHS, namely `1'.
 At the same time, the LHSs of those top-performing FDs show minimal destinctions.
-While they are, by the definition of the search-algorithm used to detect them, minimal dependencies, they have similar robustness.
+While they are, by the definition of the canonical FD, distinct minimal dependencies, they have similar robustness.
 
-This illustrates the fact that the criterion by which minimal FDs are distinguished does not account for robustness.
+% This illustrates the fact that the criterion by which minimal FDs are distinguished does not account for robustness.
+% Muss ich belegen.
 
 All datasets other than Adult show no FD with a perfect score.
 Only a FD on the Breast Cancer Wisconsit dataset achieves a score higher than 0.75
