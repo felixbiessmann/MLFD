@@ -7,6 +7,7 @@ footheight=30pt]{scrartcl}
 \usepackage{graphicx}
 \usepackage{svg}
 \usepackage{makeidx}
+\usepackage[T1]{fontenc}
 \usepackage{textcomp}
 \usepackage[utf8]{inputenc}
 \usepackage{textgreek}
@@ -20,6 +21,8 @@ footheight=30pt]{scrartcl}
 \usepackage{epstopdf}
 \usepackage{multicol}
 \usepackage{xcolor}
+\usepackage{listings}
+\usepackage{algorithmic}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}  % pseudocode layout
 \usepackage{booktabs}  % beautiful tables
 \usepackage{url}
@@ -42,6 +45,26 @@ footheight=30pt]{scrartcl}
 \definecolor{fivegrey}{HTML}{8b8b8b}
 \definecolor{fivewhite}{HTML}{FFFFFF}
 \definecolor{fiveblack}{HTML}{000000}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{fivewhite},
+    commentstyle=\color{fivegreen},
+    keywordstyle=\color{fiveblue},
+    numberstyle=\tiny \color{fivegrey},
+    stringstyle=\color{fivepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=7pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+\lstset{style=mystyle}
 
 \hypersetup{
 colorlinks,
@@ -101,4 +124,5 @@ natbib=true
 \newpage
 \linespread{1.1}
 \printbibliography
+\input{appendix.tex}
 \end{document}
