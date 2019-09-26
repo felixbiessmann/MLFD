@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 import pickle
+import lib.fd_imputer as fd
 import lib.plot_utils as pu
 import lib.constants as c
 
@@ -81,7 +82,8 @@ def main(args):
 def plot_dep_detector_lhs_stability(data):
     """ Plots the dependency of lhs-stability on the amount of training-cycles
     Datawig is trained with for the fifth column of the iris dataset as RHS."""
-    minimal_lhs_dict = load_result(data.results_path+'dep_detector_lhs_stability.p')
+    minimal_lhs_dict = load_result(
+        data.results_path+'dep_detector_lhs_stability.p')
     cycle_lhs = {}
     last_cycle = 0  # search highest no of cycles
     for cycle in minimal_lhs_dict:
@@ -117,10 +119,15 @@ def plot_dep_detector_lhs_stability(data):
 def plot_f1_fd_imputer(data):
     fd_imputer_res = load_result(data.results_path+'fd_imputer_results.p')
     res_bigger_zero = [(y['f1'],
-                        ''.join(str(y['lhs'])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(rhs))
+                        sorted(list(map(int, y['lhs']))),
+                        str(rhs))
                        for rhs in fd_imputer_res
                        for y in fd_imputer_res[rhs]
                        if ('f1' in y.keys())]
+
+    res_bigger_zero = [(res[0],
+         ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
+         for res in res_bigger_zero]
 
     res_bigger_zero.sort()
     print(res_bigger_zero)
@@ -141,11 +148,17 @@ def plot_f1_fd_imputer(data):
 
 def plot_f1_ml_imputer(data):
     ml_imputer_res = load_result(data.results_path+'ml_imputer_results.p')
+
     res_bigger_zero = [(y['f1'],
-                        ''.join(str(y['lhs'])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(rhs))
+                        sorted(list(map(int, y['lhs']))),
+                        str(rhs))
                        for rhs in ml_imputer_res
                        for y in ml_imputer_res[rhs]
                        if ('f1' in y.keys())]
+
+    res_bigger_zero = [(res[0],
+         ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
+         for res in res_bigger_zero]
 
     res_bigger_zero.sort()
     print(res_bigger_zero)

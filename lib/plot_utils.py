@@ -114,4 +114,5 @@ def save_fig(fig, file_name, fmt=None, dpi=300, tight=True):
         subprocess.call('convert %s -trim %s' %
                         (tmp_name, file_name), shell=True)
     elif fmt == 'pdf':
-        subprocess.call('pdfcrop %s %s' % (tmp_name, file_name), shell=True)
+        subprocess.call('cp %s %s' % (tmp_name, file_name), shell=True)
+    #     subprocess.call('pdfcrop %s %s' % (tmp_name, file_name), shell=True)

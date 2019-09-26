@@ -349,7 +349,7 @@ def main(args):
     # this appears to be neccessary to avoid 'too many open files'-errors
     import resource
     soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-    resource.setrlimit(resource.RLIMIT_NOFILE, (32768, hard))
+    resource.setrlimit(resource.RLIMIT_NOFILE, (100000, hard))
 
     def no_valid_model(data, save):
         print("No valid model. Please specify one of the following models:")

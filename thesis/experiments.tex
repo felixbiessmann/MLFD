@@ -2,15 +2,15 @@
 \newpage
 \section{Experiments}
 To examine robustness as it is defined in the previous chapter, a number of experiments are conducted.
-In the following subsection, in order to evaluate the capabilities of empirical risk minimization (ERM) techniques for FD discovery, the DepDetector algorithm is run on a number of datasets.
-For the experiments, datasets from the UCI Machine Learning Repository are used.~\cite{DUA19}.
+In the following subsection, in order to evaluate the capabilities of ERM-techniques for FD discovery, the DepDetector algorithm is run on a number of datasets.
+For the experiments, datasets from the UCI Machine Learning Repository are used.~\cite{DUA19}
 
 Since the algorithms analyzed in this section handle missing values differently, rows containing missing values are excluded from the datasets due to possible inconsistencies when comparing results.
 
 \subsection{FD Imputer}
 FD Imputer is run for every FD found on a train subset of a dataset.
 Figure~\ref{fig:f1_fd_adult} shows the performance of FD Imputer on the Adult dataset.
-The analyzed columns contain classifiable data, thus the F1-Score represents robustness.
+The analyzed columns contain classifiable data, thus robustness is measured as a F1-Score.
 The two top performing FDs have a perfect F1-Score of 1 each.
 An explanation for this circumstance can be found when analyzing the content of columns 4 and 5.
 
@@ -23,9 +23,10 @@ An explanation for this circumstance can be found when analyzing the content of 
 
 Column 4 contains information about the highest educational level achieved.
 There are 16 different categories of educational level defined.
-Each category is assigned an integer in a range from 0 to 15.
+Each category is assigned an integer in a range spanning from 0 to 15.
 This integer is the content of column 5.
 Thus, the relation between column 4 and column 5 can be modeled by a bijective function, projecting the domains of each attribute onto the other.
+In consequence, FDs between column 4 and 5 are perfectly robust.
 
 All other FDs found on the Adult dataset lead to F1-Scores smaller than \( 0.2\), being substantially less robust than the two top-performing FDs.
 It can be derived that only the two top-performing FDs can be used to meaningfully impute data.
@@ -40,125 +41,154 @@ In reverse, no value in a column other than 4 or 5 can be meaningfully imputed u
 \end{figure}
 Figure~\ref{fig:f1_fd_letter} displays the result of running FD Imputer on the Letter dataset.
 From the 80 FDs found on the train split, the 10 most robust ones all share the same RHS, namely `1'.
-At the same time, the LHSs of those top-performing FDs show minimal destinctions.
-While they are, by the definition of the canonical FD, distinct minimal dependencies, they have similar robustness.
+No imputation-result better than 0.37 is achieved on this dataset.
 
-% This illustrates the fact that the criterion by which minimal FDs are distinguished does not account for robustness.
-% Muss ich belegen.
-
-All datasets other than Adult show no FD with a perfect score.
-Only a FD on the Breast Cancer Wisconsit dataset achieves a score higher than 0.75
-Table~\ref{tab:fd-imputer-performance} provides a summary of how FD Imputer performs on a range of datasets.
+All analyzed datasets other than Adult yield no FD with a perfect score.
+Only a FD on the Breast Cancer Wisconsin dataset achieves a score higher than 0.75.
+Table~\ref{tab:fd-imputer-performance} provides a summary of how FD Imputer performs on eight different datasets.
 
 \begin{table}[ht]
     \centering
     \begin{tabular}{lrrrrrr}
-        & & & \multicolumn{3}{c}{Classification Performance} \\
-        \cmidrule(lr{.25em}){4-6}
-        Dataset & \#FDs & \#FDs\textsubscript{train} & \#FD (F1 = 0) & F1\textsubscript{mean} & F1\textsubscript{max} \\
+        & & & & \multicolumn{3}{c}{Classification Performance} \\
+        \cmidrule(lr{.25em}){5-7}
+        Dataset & Attributes & \#FDs & \#FDs\textsubscript{train} & \#FD (F1 = 0) & F1\textsubscript{mean} & F1\textsubscript{max} \\
         \midrule
-        Abalone & 175 & 193 & 45 & 0.0008 & 0.0048 \\
-        Adult & 93 & 88 & 10 & 0.0669 & 1.0000 \\
-        Balance Scale & 7 & 7 & 6 & 0.0000 & 0.0000 \\
-        Breast Cancer Wisconsin & 57 & 77 & 10 & 0.2198 & 0.7539 \\
-        Chess & 9 & 9 & 8 & 0.0000 & 0.0000 \\
-        Iris & 9 & 8 & 1 & 0.1274 & 0.2252 \\
-        Letter & 78 & 80 & 17 & 0.2347 & 0.3737 \\
-        Nursery & 11 & 11 & 10 & 0.0000 & 0.0000  \\
+        Abalone & 10 & 175 & 193 & 45 & 0.0008 & 0.0048 \\
+        Adult & 16 & 93 & 88 & 10 & 0.0669 & 1.0000 \\
+        Balance Scale & 6 & 7 & 7 & 6 & 0.0000 & 0.0000 \\
+        Breast Cancer Wisconsin & 12 & 57 & 77 & 10 & 0.2198 & 0.7539 \\
+        Chess & 8 & 9 & 9 & 8 & 0.0000 & 0.0000 \\
+        Iris & 6 & 9 & 8 & 1 & 0.1274 & 0.2252 \\
+        Letter & 18 & 78 & 80 & 17 & 0.2347 & 0.3737 \\
+        Nursery & 10 & 11 & 11 & 10 & 0.0000 & 0.0000  \\
         \bottomrule
     \end{tabular}
     \caption{Performance of the FD Imputer on a selection of UCI datasets.}\label{tab:fd-imputer-performance}
 \end{table}
 
-Column \#FDs indicates how many FDs were found on the complete dataset.
-\#FDS\textsubscript{train} contains the number of FDs that were detected on the train subset used for imputations.
-F1\textsubscript{mean} and F1\textsubscript{max} indicate the arithmetic mean and maximal F1 score achieved on each dataset respectively.
-The last column named \#(F1 = 0) provides the number of FDs that scored a F1 score of 0.
+In Table~\ref{tab:fd-imputer-performance}, Column \#FDs indicates how many FDs were found on the complete dataset.
+\#FDs\textsubscript{train} contains the number of FDs that were detected on the train subset.
+F1\textsubscript{mean} and F1\textsubscript{max} indicate the arithmetic mean and maximal F1-score achieved on each dataset respectively.
+The last column named \#(F1 = 0) provides the number of FDs that scored a F1-Score of 0.
 
-The results displayed in table~\ref{tab:fd-imputer-performance} show how strongly the FD Imputer's performance depends on the dataset considered.
-On a dataset as normalized as nursery, FD Imputer cannot leverage FDs to impute unknown entries.
+The results displayed in table~\ref{tab:fd-imputer-performance} show that robustness depends strongly on the dataset considered.
+However, no relation between #FDs and robustness can be identified (see appendix figure~\ref{fig:robustness-number-of-classifiable-fds}).
+Analysis on a bigger body of datasets seems necessary to draw further conclusions.
 
-\subsection{Datawig Imputer}
-Datawig Imputer is run with the same set of FDs as FD Imputer.
-The 10 best performing FDs' F1 scores are displayed in figure~\ref{fig:f1_ml_adult}.
+\subsection{ML Imputer}
+ML Imputer is run with the same set of FDs as FD Imputer.
+The 10 best performing FDs' F1-Scores are displayed in figure~\ref{fig:f1_ml_adult}.
 \begin{figure}[ht]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/adult/f1_ml_imputer_adult.pdf}
-     \caption{The figure compares the f1-score of the FD Imputer compared to the f1-score of the Datawig Imputer. Each point represents one FD.}
+     \caption{The figure compares the f1-score of the FD Imputer compared to the F1-Score of the ML Imputer. Each point represents one FD.}
      \label{fig:f1_ml_adult}
  \end{figure}
-The two top scoring FDs are the same for FD Imputer and Datawig Imputer.
-The third most performant FD is a relation between row ID and nationality.
-Since there is no appearent dependency between row ID and nationality, it is safe to assume that Datawig Imputer always guesses the most frequent nationality, US-American, for no matter what row ID.
+The two top scoring FDs are the same for FD Imputer and ML Imputer.
+The third most performant FD is \( 0 \rightarrow 14\), a relation between row-ID and nationality.
+There is no appearent dependency between row-ID and nationality.
+It can thus be assumed that ML Imputer always guesses the most frequent nationality, `United-States', for no matter what row-ID.
 
-This shows that Datawig Imputer is capable of learning Conditional Dependencies.
+This assumption can be verified when counting the occurences of value `United-States' in column 14:
+Of 24154 rows in the train-subset, 22020 entries contain the value `United-States'.
+In fact this is exactly what happens --- ML Imputer learns for all 2987 entries in the test-set the same imputation, explaining the robustness of FD \( 0 \rightarrow 14\).
+
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=.8\textwidth]{../figures/chess/f1_ml_imputer_chess.pdf}
+     \caption{F1-Scores of the 10 top-performing FDs on the Adult dataset.}
+     \label{fig:f1-ml-imputer-chess}
+ \end{figure}
+
+The barplot in figure~\ref{fig:f1-ml-imputer-chess} shows the performance of ML Imputer on the Chess dataset.
+The FD with the biggest F1-Score is \( 0 \rightarrow 7 \).
+Column 0 contains the row-ID, whereas column 7 contains the outcome of a chess-game, if both players play perfectly.
+Again, there doesn't seem to exist a relation between the two columns.
+On closer inspection however it can be observed that the Chess-dataset is sorted.
+For tuples with row-ID of less than 2796, column 7 contains always the value `draw'.
+Tuples that have a row-ID bigger than 2795 but smaller than 2824 always contain the value `zero' and so on.
 
 \begin{table}[ht]
     \centering
-    \begin{tabular}{lrrrrrr}
+    \begin{tabular}{lrrrrr}
         \toprule
-        & & & \multicolumn{4}{c}{Classification Performance} \\
-        \cmidrule(lr{.25em}){4-7}
-        Dataset & \#FDs & \#FDs\textsubscript{train} & \#(F1 = 0) & F1\textsubscript{mean} & F1\textsubscript{max} & F1\textsubscript{min} \\
+        & & & \multicolumn{3}{c}{Classification Performance} \\
+        \cmidrule(lr{.25em}){4-6}
+        Dataset & \#FDs & \#FDs\textsubscript{train} & F1\textsubscript{mean} & F1\textsubscript{max} & F1\textsubscript{min} \\
         \midrule
-        Abalone & 175 & 193 & 0 & 0.3697 & 0.5664 & 0.0619 \\
-        Adult & 93 & 88 & 0 & 0.7720 & 1.0000 & 0.0409 \\
-        Balance Scale & 7 & 7 & 0 & 0.4670 & 0.9443 & 0.0255 \\
-        Chess & 9 & 9 & 0 & 0.3744 & 0.9276 & 0.1162 \\
-        Iris & 9 & 8 & 0 & 0.9243 & 1.0000 & 0.1275 \\
-        Letter & 78 & 80 & 0 & 0.7207 & 0.9134 & 0.0058 \\
-        Nursery & 11 & 11 & 0 & 0.9915 & 0.4531 & 0.1138 \\
+        Abalone & 175 & 193 & 0.3697 & 0.5664 & 0.0619 \\
+        Adult & 93 & 88 & 0.7720 & 1.0000 & 0.0409 \\
+        Balance Scale & 7 & 7 & 0.4670 & 0.9443 & 0.0255 \\
+        Chess & 9 & 9 & 0.3744 & 0.9276 & 0.1162 \\
+        Iris & 9 & 8 & 0.9243 & 1.0000 & 0.1275 \\
+        Letter & 78 & 80 & 0.7207 & 0.9134 & 0.0058 \\
+        Nursery & 11 & 11 & 0.9915 & 0.4531 & 0.1138 \\
         \bottomrule
     \end{tabular}
-    \caption{Performance of the Datawig Imputer.}\label{tab:ml-imputer-performance}
+    \caption{Performance of ML Imputer on eight different datasets.}\label{tab:ml-imputer-performance}
 \end{table}
 
-Table~\ref{tab:ml-imputer-performance} shows a generally higher performance of Datawig Imputer compared to FD Imputer.
-There are no FDs for which Datawig Imputer scores 0.
-This can be explained by to Datawig Imputer's behavior of always returning some imputation value, even if certainty is very low.
+This showcases ML Imputer's capability to learn relaxation on the extent.
+This is similar to what CFDs, ECFDs and CFD\textsuperscript{p}s use when detecting RFDs:
+ML Imputer approximately learns a pattern where a dependency \( 0 \rightarrow 7\) holds, if \( 0 \leq \text{ row-ID } \leq 2795 \) or \( 2796 \leq \text{ row-ID } \leq 2823 \), and so on.
+
+Table~\ref{tab:ml-imputer-performance} shows a generally higher performance of ML Imputer compared to FD Imputer.
+There are no FDs for which ML Imputer scores 0.
+This can be explained by to ML Imputer's behavior of always returning some imputation value, even if certainty is very low.
 This is contrasted by FD Imputer, which frequently returns no imputation value at all.
 
-\subsection{Overfitting the Datawig Imputer}
+\subsection{Overfitting ML Imputer}
+To further investigate ML Imputer's capabilities for overfitting models, experiments are run to compare imputation performance between a overfitted model and a normally trained model.
+Overfitting was achieved by first uniting \( r_{train} \) and \( r_{test} \) and then training and testing the model on the same unified relational instance.
 
-\subsection{Comparing Datawig Imputer with FD Imputer}
-As discussed in the previous section, Datawig Imputer and FD imputer differ fundamentally in the way they function.
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=.8\textwidth]{../figures/adult/f1_ml_overfit_adult.pdf}
+     \caption{F1-Scores }
+     \label{fig:f1-ml-overfit-chess}
+ \end{figure}
+
+
+\subsection{Comparing ML Imputer with FD Imputer}
+As discussed in the previous section, ML Imputer and FD imputer differ fundamentally in the way they function.
 When comparing the two, metrics need to be computed bearing those differences in mind.
 
 FD Imputer cannot approximate numerical values.
 Due to the nature of the definition of a FD, Data is always assumed to be classifiable.
-Meanwhile, Datawig Imputer is able to perform regression, predicting a continuous label for a given input with an uncertainty.
+Meanwhile, ML Imputer is able to perform regression, predicting a continuous label for a given input with an uncertainty.
 
-Naturally, this circumstance leads to a far superior performance of Datawig Imputer when imputing continuous labels.
+Naturally, this circumstance leads to a far superior performance of ML Imputer when imputing continuous labels.
 FD Imputer usually does not find any values on the train set to impute with and cannot return a meaningful result.
 Taking the above into account, rows that aren't imputed by FD Imputer are not considered when computing a performance measure on columns containing continuous values.
 
 \begin{figure}[ht]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/adult/f1_ml_fd_adult}
-     \caption{The figure compares the f1-score of the FD Imputer compared to the f1-score of the Datawig Imputer. Each point represents one FD.}
+     \caption{The figure compares the F1-Score of the FD Imputer compared to the F1-Score of ML Imputer. Each point represents one FD.}
      \label{fig:f1_ml_fd_adult}
  \end{figure}
 
-Figure~\ref{fig:f1_ml_fd_adult} compares the F1-scores of both Datawig Imputer and FD Imputer on the Adult dataset.
-One can observe that for almost all FDs, the Datawig Imputer performs better than the FD Imputer.
+Figure~\ref{fig:f1_ml_fd_adult} compares the F1-scores of both ML Imputer and FD Imputer on the Adult dataset.
+One can observe that for almost all FDs, ML Imputer performs better than the FD Imputer.
 
-FD Imputer performance and Datawig Imputer performance seem to be proportional.
-If the ML imputers F1-score is lower than 0.7, the FD Imputers F1-score for the same FD is 0.
-However, for FDs where the Datawig Imputer scores are larger than 0.7, the FD Imputer scores better than 0.0.
+FD Imputer performance and ML Imputer performance seem to be proportional.
+If ML imputer's F1-score is lower than 0.7, the FD Imputers F1-score for the same FD is 0.
+However, for FDs where ML Imputer scores are larger than 0.7, the FD Imputer scores better than 0.0.
 
-There are two FDs for which the FD Imputer performs equally good as the Datawig Imputer.
+There are two FDs for which the FD Imputer performs equally good as ML Imputer.
 These FDs were identified in the previous section.
 
 \begin{figure}[ht]
      \centering
      \includegraphics[width=.8\textwidth]{../figures/nursery/f1_ml_fd_nursery}
-     \caption{The FD imputers classification performance compared to the performance of the Datawig Imputer on the nursery dataset.}
+     \caption{The FD imputers classification performance compared to the performance of ML Imputer on the nursery dataset.}
      \label{fig:f1_ml_fd_nursery}
 \end{figure}
 
 The same experiment was run on the Nursery dataset.\cite{DUA19}
 Results are displayed in figure~\ref{fig:f1_ml_fd_nursery}.
-On this dataset, the ML Imputer performs better for every single FD.
+On this dataset, ML Imputer performs better for every single FD.
 This is explainable by the fact that the Nursery dataset is strongly normalized.
 It contains only 11 FDs, most of them are the key, functionally determining a single column.
 
