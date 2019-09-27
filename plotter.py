@@ -62,21 +62,36 @@ def main(args):
              'dep_detector_lhs_stability': plot_dep_detector_lhs_stability}
 
     data = datasets.get(args.data, no_valid_data)
-    if data != 0:
-        plot_fun = plots.get(args.figure, no_valid_figure)
-
-    if (plot_fun != no_valid_figure) and (data != 0):
-        fig, ax = plot_fun(data)
-
-        ax.set_axisbelow(True)
-        plt.tight_layout()
-
-        if args.save:
-            pu.save_fig(fig, data.figures_path + args.save)
-        else:
-            plt.show()
+    if args.all:
+        for data in datasets.values():
+            for plot_name in plots:
+                plot_fun = plots[plot_name]
+                try:
+                    fig, ax = plot_fun(data)
+                    ax.set_axisbelow(True)
+                    plt.tight_layout()
+                    path = data.figures_path + plot_name + '.pdf'
+                    pu.save_fig(fig, path)
+                    plt.close(fig)
+                except OSError:
+                    '''Could not create {0}-plot for dataset
+                    {1}: File not found.'''.format(plot_name, data.title)
     else:
-        plot_fun()
+        if data != 0:
+            plot_fun = plots.get(args.figure, no_valid_figure)
+
+        if (plot_fun != no_valid_figure) and (data != 0):
+            fig, ax = plot_fun(data)
+
+            ax.set_axisbelow(True)
+            plt.tight_layout()
+
+            if args.save:
+                pu.save_fig(fig, data.figures_path + args.save)
+            else:
+                plt.show()
+        else:
+            plot_fun()
 
 
 def plot_dep_detector_lhs_stability(data):
@@ -166,7 +181,7 @@ def plot_f1_ml_imputer(data):
     f1_fd, lhs_names = zip(*res_bigger_zero[-10:])
 
     pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 6)
+    fig_size = pu.get_fig_size(10, 5)
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
     ax.barh(lhs_names, f1_fd)
@@ -190,12 +205,12 @@ def plot_f1_ml_overfit(data):
                   if 'f1' in y.keys()]
 
     pu.figure_setup()
-    fig_size = pu.get_fig_size(5, 10)
+    fig_size = pu.get_fig_size(10, 5)
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
 
     ax.scatter(f1_overfit, f1_ml, c='C0')
-    ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='C1')
+    ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='C1', linewidth=1)
     ax.set(title='Classification Performance on ' + data.title.capitalize(),
            xlabel='F1-Score ML Imputer Overfitted',
            ylabel='F1-Score ML Imputer',
@@ -217,7 +232,7 @@ def plot_f1_random_ml_overfit(data):
                   if 'f1' in y.keys()]
 
     pu.figure_setup()
-    fig_size = pu.get_fig_size(5, 10)
+    fig_size = pu.get_fig_size(10, 5)
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
 
@@ -302,6 +317,8 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--figure', help='specify a figure to plot.')
     parser.add_argument(
         '-d', '--data', help='specify a dataset to use results of.')
+    parser.add_argument('-a', '--all', help='plot and save all possible plots',
+            action='store_true')
 
     args = parser.parse_args()
     main(args)
