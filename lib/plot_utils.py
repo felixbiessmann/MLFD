@@ -26,13 +26,13 @@ the various elements of the figures.
 def label_size():
     """Size of axis labels
     """
-    return 10  # 10pt is latex standard font-size
+    return 8  # 10pt is latex standard font-size
 
 
 def font_size():
     """Size of all texts shown in plots
     """
-    return 10
+    return 8
 
 
 def ticks_size():

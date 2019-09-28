@@ -57,6 +57,8 @@ def main(args):
              'f1_ml_imputer': plot_f1_ml_imputer,
              'f1_ml_fd': plot_f1_ml_fd,
              'mse_ml_fd': plot_mse_ml_fd,
+             'mse_ml_imputer': plot_mse_ml_imputer,
+             'mse_fd_imputer': plot_mse_fd_imputer,
              'f1_ml_overfit': plot_f1_ml_overfit,
              'f1_random_overfit': plot_f1_random_ml_overfit,
              'dep_detector_lhs_stability': plot_dep_detector_lhs_stability}
@@ -119,15 +121,43 @@ def plot_dep_detector_lhs_stability(data):
     print(dist)
     print(cycles)
     pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 5)
+    fig_size = pu.get_fig_size(10, 4)
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
     ax.plot(cycles, dist)
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 
-    ax.set(title='Stability-Analysis on '+data.title.capitalize(),
-           xlabel='Training-Cycles',
-           ylabel='Undetected minimal LHSs')
+    ax.set(xlabel='Training-Cycles',
+           ylabel='Undetected minimal LHSs ({})'.format(data.title.capitalize()))
+    return(fig, ax)
+
+
+def plot_f1_ml_imputer(data):
+    ml_imputer_res = load_result(data.results_path+'ml_imputer_results.p')
+    res_bigger_zero = [(y['f1'],
+                        sorted(list(map(int, y['lhs']))),
+                        str(rhs))
+                       for rhs in ml_imputer_res
+                       for y in ml_imputer_res[rhs]
+                       if ('f1' in y.keys())]
+
+    res_bigger_zero = [(res[0],
+         ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
+         for res in res_bigger_zero]
+
+    res_bigger_zero.sort()
+    print(res_bigger_zero)
+
+    f1_fd, lhs_names = zip(*res_bigger_zero[-7:])
+
+    pu.figure_setup()
+    fig_size = pu.get_fig_size(10, 4)
+    fig = plt.figure(figsize=list(fig_size))
+    ax = fig.add_subplot(111)
+    ax.barh(lhs_names, f1_fd)
+
+    ax.set(xlabel='F1-Score ({})'.format(data.title.capitalize()),
+           xlim=[0.0, 1.0])
     return(fig, ax)
 
 
@@ -147,48 +177,79 @@ def plot_f1_fd_imputer(data):
     res_bigger_zero.sort()
     print(res_bigger_zero)
 
-    f1_fd, lhs_names = zip(*res_bigger_zero[-10:])
+    f1_fd, lhs_names = zip(*res_bigger_zero[-7:])
 
     pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 6)
+    fig_size = pu.get_fig_size(10, 4)
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
     ax.barh(lhs_names, f1_fd)
 
-    ax.set(title='FD Imputer Performance on '+data.title.capitalize(),
-           xlabel='F1-Score',
+    ax.set(xlabel='F1-Score ({})'.format(data.title.capitalize()),
            xlim=[0.0, 1.0])
     return(fig, ax)
 
 
-def plot_f1_ml_imputer(data):
-    ml_imputer_res = load_result(data.results_path+'ml_imputer_results.p')
+def plot_mse_fd_imputer(data):
+    ml_imputer_res = load_result(data.results_path+'fd_imputer_results.p')
 
-    res_bigger_zero = [(y['f1'],
+    res_bigger_zero = [(y['mse'],
                         sorted(list(map(int, y['lhs']))),
                         str(rhs))
                        for rhs in ml_imputer_res
                        for y in ml_imputer_res[rhs]
-                       if ('f1' in y.keys())]
+                       if ('mse' in y.keys())]
+
+    res_bigger_zero = [(res[0],
+         ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
+         for res in res_bigger_zero
+         if res[0] != '']
+
+    print(res_bigger_zero)
+    res_bigger_zero.sort(reverse=True)
+    if len(res_bigger_zero) > 0:
+        mse_fd, lhs_names = zip(*res_bigger_zero[-7:])
+    else:
+        mse_fd, lhs_names = (list(np.zeros(10)), list(np.zeros(10)))
+    pu.figure_setup()
+    fig_size = pu.get_fig_size(10, 4)
+    fig = plt.figure(figsize=list(fig_size))
+    ax = fig.add_subplot(111)
+    ax.barh(lhs_names, mse_fd)
+
+    ax.set(xlabel='MSE ({})'.format(data.title.capitalize()))
+           # xlim=[0.0, 1000.0])
+    return(fig, ax)
+
+
+def plot_mse_ml_imputer(data):
+    ml_imputer_res = load_result(data.results_path+'ml_imputer_results.p')
+
+    res_bigger_zero = [(y['mse'],
+                        sorted(list(map(int, y['lhs']))),
+                        str(rhs))
+                       for rhs in ml_imputer_res
+                       for y in ml_imputer_res[rhs]
+                       if ('mse' in y.keys())]
 
     res_bigger_zero = [(res[0],
          ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
          for res in res_bigger_zero]
 
-    res_bigger_zero.sort()
+    res_bigger_zero.sort(reverse=True)
     print(res_bigger_zero)
-
-    f1_fd, lhs_names = zip(*res_bigger_zero[-10:])
-
+    if len(res_bigger_zero) > 0:
+        mse_fd, lhs_names = zip(*res_bigger_zero[-7:])
+    else:
+        mse_fd, lhs_names = (list(np.zeros(10)), list(np.zeros(10)))
     pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 5)
+    fig_size = pu.get_fig_size(10, 4)
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
-    ax.barh(lhs_names, f1_fd)
+    ax.barh(lhs_names, mse_fd)
 
-    ax.set(title='ML Imputer Performance on '+data.title.capitalize(),
-           xlabel='F1-Score',
-           xlim=[0.0, 1.0])
+    ax.set(xlabel='MSE ({})'.format(data.title.capitalize()))
+           # xlim=[0.0, 1000.0])
     return(fig, ax)
 
 
@@ -205,15 +266,14 @@ def plot_f1_ml_overfit(data):
                   if 'f1' in y.keys()]
 
     pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 5)
+    fig_size = pu.get_fig_size(10, 4)
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
 
     ax.scatter(f1_overfit, f1_ml, c='C0')
     ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='C1', linewidth=1)
-    ax.set(title='Classification Performance on ' + data.title.capitalize(),
-           xlabel='F1-Score ML Imputer Overfitted',
-           ylabel='F1-Score ML Imputer',
+    ax.set(xlabel='F1-Score ML Imputer Overfitted ({})'.format(data.title.capitalize()),
+           ylabel='F1-Score ML Imputer ({})'.format(data.title.capitalize()),
            xlim=[-0.1, 1.1],
            ylim=[-0.1, 1.1])
     return (fig, ax)
@@ -232,15 +292,14 @@ def plot_f1_random_ml_overfit(data):
                   if 'f1' in y.keys()]
 
     pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 5)
+    fig_size = pu.get_fig_size(10, 4)
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
 
     ax.scatter(f1_overfit, f1_ml, c='C0')
     ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='C1')
-    ax.set(title='Classification Performance on Random FDs '+data.title.capitalize(),
-           xlabel='F1-Score ML Imputer Overfitted',
-           ylabel='F1-Score ML Imputer',
+    ax.set(xlabel='F1-Score ML Imputer Overfitted ({})'.format(data.title.capitalize()),
+           ylabel='F1-Score ML Imputer ({})'.format(data.title.capitalize()),
            xlim=[-0.1, 1.1],
            ylim=[-0.1, 1.1])
     return (fig, ax)
@@ -265,7 +324,7 @@ def plot_mse_ml_fd(data):
             rel_mse.append(np.nan)
 
     pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 5)
+    fig_size = pu.get_fig_size(10, 4)
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
 
@@ -291,7 +350,7 @@ def plot_f1_ml_fd(data):
              for y in ml_imputer_results[x] if 'f1' in y.keys()]
 
     pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 5)
+    fig_size = pu.get_fig_size(10, 4)
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
 
@@ -299,9 +358,8 @@ def plot_f1_ml_fd(data):
     ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), lw=pu.plot_lw(),
             color='C1')
 
-    ax.set(title='Classification Performance on '+data.title.capitalize(),
-           xlabel='F1-Score FD Imputer',
-           ylabel='F1-Score ML Imputer',
+    ax.set(xlabel='F1-Score FD Imputer ({})'.format(data.title.capitalize()),
+           ylabel='F1-Score ML Imputer ({})'.format(data.title.capitalize()),
            xlim=[-0.1, 1.1],
            ylim=[-0.1, 1.1])
     return(fig, ax)

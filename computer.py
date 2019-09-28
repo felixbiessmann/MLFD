@@ -29,94 +29,122 @@ def print_ml_imputer_stats(datasets):
     datasets = list(datasets)
     datasets.remove(c.BREASTCANCER)  # keine results
     for data in datasets:
-        path_ml_res = data.results_path+'ml_imputer_results.p'
-        ml_imputer_res = pickle.load(open(path_ml_res, 'rb'))
-        ml_f1_scores = [y['f1'] for rhs in ml_imputer_res
-                        for y in ml_imputer_res[rhs]
-                        if ('f1' in y.keys())]
-        ml_mse_scores = [y['mse'] for rhs in ml_imputer_res
-                         for y in ml_imputer_res[rhs]
-                         if ('mse' in y.keys())]
-        ml_mse_scores = [mse for mse in ml_mse_scores if (mse != '')]
-        ml_mse_no_val = [mse for mse in ml_mse_scores if (mse == '')]
+        train, validate, test = fd.load_dataframes(data.splits_path,
+                data.title,
+                data.missing_value_token)
+        no_test_rows = test.shape[0]
+        path_to_res = data.results_path+'ml_imputer_results.p'
+        ml_imputer_res = pickle.load(open(path_to_res, 'rb'))
+        ml_no_imputations = 0
+        sequential_fds = 0
+        ml_f1_scores = []
+        ml_mse_scores = {}
+        for rhs in ml_imputer_res:
+            for y in ml_imputer_res[rhs]:
+                if 'f1' in y.keys():
+                    ml_f1_scores.append(y['f1'])
+                elif 'mse' in y.keys():
+                    sequential_fds += 1
+                    if y['mse'] == '':
+                        ml_no_imputations += 1
+                    else:
+                        ml_mse_scores.setdefault(rhs, []).append(y['mse'])
+
+
+        ml_mse_stats = {}
         if len(ml_mse_scores) > 0:
-            ml_mse_mean = np.mean(ml_mse_scores)
-            ml_mse_min = min(ml_mse_scores)
-            ml_mse_max = max(ml_mse_scores)
-        else:
-            ml_mse_mean = '-'
-            ml_mse_min = '-'
-            ml_mse_max = '-'
+            for rhs in ml_mse_scores:
+                ml_mse_stats[rhs] = {'variance': np.var(ml_mse_scores[rhs]),
+                                     'mean': np.mean(ml_mse_scores[rhs]),
+                                     'min': min(ml_mse_scores[rhs]),
+                                     'max': max(ml_mse_scores[rhs])}
+
         fds = fd.read_fds(data.fd_path)
         no_fds = len([lhs for rhs in fds for lhs in fds[rhs]])
         print(data.title.upper())
         print('#FDs on Train-Split: {}'.format(no_fds))
-        print('Mean f1-score: {}'.format(np.mean(ml_f1_scores)))
-        print('Maximal f1-score: {}'.format(max(ml_f1_scores)))
-        print('Minimal f1-score: {}'.format(min(ml_f1_scores)))
+        print('Mean F1-Score: {}'.format(np.mean(ml_f1_scores)))
+        print('Maximal F1-Score: {}'.format(max(ml_f1_scores)))
+        print('Minimal F1-Score: {}'.format(min(ml_f1_scores)))
         print('#FDs where f1=0: {}'.format(len(
             [f1 for f1 in ml_f1_scores if f1 == 0])))
-        print('Mean mse: {}'.format(ml_mse_mean))
-        print('Minimal mse: {}'.format(ml_mse_min))
-        print('Maximal mse: {}'.format(ml_mse_max))
-        print('No result mse: {}'.format(len(ml_mse_no_val)))
+        print('\nMSE ANALYSIS')
+        print('# Sequential FDs: {}'.format(sequential_fds))
+        print('Number of rows in test subset: {}'.format(no_test_rows))
+        print('Sequential FD with no imputation: {}'.format(ml_no_imputations))
+        for rhs in ml_mse_stats:
+            print('  MSE RHS {}'.format(rhs))
+            print('  Var MSE: {}'.format(ml_mse_stats[rhs]['variance']))
+            print('  Mean MSE: {}'.format(ml_mse_stats[rhs]['mean']))
+            print('  Min MSE: {}'.format(ml_mse_stats[rhs]['min']))
+            print('  Max MSE: {}\n'.format(ml_mse_stats[rhs]['max']))
         print('~~~~~~~~~~')
 
 
 def print_fd_imputer_stats(datasets):
-    """Prints fd imputer stats for all datasets."""
+    """ Prints fd imputer stats for all datasets."""
     import numpy as np
     print('\n\n~~~FD Imputer Statistical Analysis~~~\n')
+    datasets = list(datasets)
+    datasets.remove(c.BREASTCANCER)  # keine results
     for data in datasets:
-        path_ml_res = data.results_path+'ml_imputer_results.p'
+        train, validate, test = fd.load_dataframes(data.splits_path,
+                data.title,
+                data.missing_value_token)
+        no_test_rows = test.shape[0]
         path_to_res = data.results_path+'fd_imputer_results.p'
         fd_imputer_res = pickle.load(open(path_to_res, 'rb'))
-        ml_imputer_res = pickle.load(open(path_ml_res, 'rb'))
-        ml_f1_scores = [y['f1'] for rhs in ml_imputer_res
-                        for y in ml_imputer_res[rhs]
-                        if ('f1' in y.keys())]
-        fd_f1_scores = [y['f1'] for rhs in fd_imputer_res
-                        for y in fd_imputer_res[rhs]
-                        if ('f1' in y.keys())]
-        ml_mse_scores = [y['mse'] for rhs in ml_imputer_res
-                         for y in ml_imputer_res[rhs]
-                         if ('mse' in y.keys())]
-        fd_mse_scores = [y['mse'] for rhs in fd_imputer_res
-                         for y in fd_imputer_res[rhs]
-                         if ('mse' in y.keys())]
-        ml_mse_scores = [mse for mse in ml_mse_scores if (mse != '')]
-        ml_mse_no_val = [mse for mse in ml_mse_scores if (mse == '')]
-        fd_mse_scores = [mse for mse in fd_mse_scores if (mse != '')]
-        fd_mse_no_val = [mse for mse in fd_mse_scores if (mse == '')]
-        if len(ml_mse_scores) > 0:
-            ml_mse_mean = np.mean(ml_mse_scores)
-            ml_mse_min = min(ml_mse_scores)
-            ml_mse_max = max(ml_mse_scores)
-        else:
-            ml_mse_mean = '-'
-            ml_mse_min = '-'
-            ml_mse_max = '-'
+        fd_no_imputations = 0
+        sequential_fds = 0
+        fd_f1_scores = []
+        fd_mse_scores = {}
+        fd_mse_nans = []
+        for rhs in fd_imputer_res:
+            for y in fd_imputer_res[rhs]:
+                if 'f1' in y.keys():
+                    fd_f1_scores.append(y['f1'])
+                elif 'mse' in y.keys():
+                    sequential_fds += 1
+                    fd_mse_nans.append(y['nans'])
+                    if y['mse'] == '':
+                        fd_no_imputations += 1
+                    else:
+                        fd_mse_scores.setdefault(rhs, []).append(y['mse'])
+
+        fd_mse_stats = {}
         if len(fd_mse_scores) > 0:
-            fd_mse_mean = np.mean(fd_mse_scores)
-            fd_mse_min = min(fd_mse_scores)
-            fd_mse_max = max(fd_mse_scores)
+            fd_mse_mean_nans = sum(fd_mse_nans)/len(fd_mse_nans)
+            mean_imp_coverage = 100*(1 - fd_mse_mean_nans / no_test_rows)
+            for rhs in fd_mse_scores:
+                fd_mse_stats[rhs] = {'variance': np.var(fd_mse_scores[rhs]),
+                                     'mean': np.mean(fd_mse_scores[rhs]),
+                                     'min': min(fd_mse_scores[rhs]),
+                                     'max': max(fd_mse_scores[rhs])}
         else:
-            fd_mse_mean = '-'
-            fd_mse_min = '-'
-            fd_mse_max = '-'
+            fd_mse_mean_nans = 'No missing MSE imputations.'
+            mean_imp_coverage = '-'
+
         fds = fd.read_fds(data.fd_path)
         no_fds = len([lhs for rhs in fds for lhs in fds[rhs]])
         print(data.title.upper())
         print('#FDs on Train-Split: {}'.format(no_fds))
-        print('Mean f1-score: {}'.format(np.mean(fd_f1_scores)))
-        print('Maximal f1-score: {}'.format(max(fd_f1_scores)))
-        print('Minimal f1-score: {}'.format(min(fd_f1_scores)))
+        print('Mean F1-Score: {}'.format(np.mean(fd_f1_scores)))
+        print('Maximal F1-Score: {}'.format(max(fd_f1_scores)))
+        print('Minimal F1-Score: {}'.format(min(fd_f1_scores)))
         print('#FDs where f1=0: {}'.format(len(
             [f1 for f1 in fd_f1_scores if f1 == 0])))
-        print('Mean mse: {}'.format(fd_mse_mean))
-        print('Minimal mse: {}'.format(fd_mse_min))
-        print('Maximal mse: {}'.format(fd_mse_max))
-        print('No result mse: {}'.format(len(fd_mse_no_val)))
+        print('\nMSE ANALYSIS')
+        print('#Sequential FDs: {}'.format(sequential_fds))
+        print('Sequential FD with no imputation: {}'.format(fd_no_imputations))
+        print('Mean missing MSE-imputations per FD: {}'.format(fd_mse_mean_nans))
+        print('Number of Rows in Test Subset: {}'.format(no_test_rows))
+        print('Mean Imputation Coverage: {}%'.format(mean_imp_coverage))
+        for rhs in fd_mse_stats:
+            print('  MSE RHS {}'.format(rhs))
+            print('  Var MSE: {}'.format(fd_mse_stats[rhs]['variance']))
+            print('  Mean MSE: {}'.format(fd_mse_stats[rhs]['mean']))
+            print('  Min MSE: {}'.format(fd_mse_stats[rhs]['min']))
+            print('  Max MSE: {}\n'.format(fd_mse_stats[rhs]['max']))
         print('~~~~~~~~~~')
 
 

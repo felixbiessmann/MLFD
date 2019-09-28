@@ -9,17 +9,22 @@ Since the algorithms analyzed in this section handle missing values differently,
 
 \subsection{FD Imputer}
 FD Imputer is run for every FD found on a train subset of a dataset.
-Figure~\ref{fig:f1_fd_adult} shows the performance of FD Imputer on the Adult dataset.
-The analyzed columns contain classifiable data, thus robustness is measured as a F1-Score.
-The two top performing FDs have a perfect F1-Score of 1 each.
-An explanation for this circumstance can be found when analyzing the content of columns 4 and 5.
+The measured performance-score is called robustness of the FD.
+Two different measures are chosen to measure sequential data and classifiable data.
+First, experiments run when imputing classifiable Data with FD Imputer will be presented.
+Then, results obtained when imputing sequential data are discussed.
 
 \begin{figure}[ht]
      \centering
-     \includegraphics[width=.8\textwidth]{../figures/adult/f1_fd_imputer_adult.pdf}
-     \caption{F1-Scores of the 10 most-robust FDs on the Adult dataset when imputing classifiable values.}
+     \includegraphics[width=\textwidth]{../figures/adult/f1_fd_imputer.pdf}
+     \caption{F1-Scores of the seven most-robust FDs on the Adult dataset when imputing classifiable values.}
      \label{fig:f1_fd_adult}
 \end{figure}
+
+\subsubsection{Imputation of Classifiable Data}
+Figure~\ref{fig:f1_fd_adult} shows the performance of FD Imputer on the Adult dataset.
+The two top performing FDs have a perfect F1-Score of 1 each.
+An explanation for this circumstance can be found when analyzing the content of columns 4 and 5.
 
 Column 4 contains information about the highest educational level achieved.
 There are 16 different categories of educational level defined.
@@ -32,86 +37,193 @@ All other FDs found on the Adult dataset lead to F1-Scores smaller than \( 0.2\)
 It can be derived that only the two top-performing FDs can be used to meaningfully impute data.
 If new data was added to the dataset, it can thus safely be assumed that these two FDs still held.
 In reverse, no value in a column other than 4 or 5 can be meaningfully imputed using FDs detected on the Adult dataset due to the small robustness of these FDs.
-
 \begin{figure}[ht]
      \centering
-     \includegraphics[width=.8\textwidth]{../figures/letter/f1_fd_imputer_letter.pdf}
-     \caption{Robustness of the 10 top-performing FDs on the Letter dataset when imputing classifiable RHSs.}
+     \includegraphics[width=\textwidth]{../figures/letter/f1_fd_imputer.pdf}
+     \caption{Robustness of the seven top-performing FDs on the Letter dataset when imputing classifiable RHSs.}
      \label{fig:f1_fd_letter}
 \end{figure}
 Figure~\ref{fig:f1_fd_letter} displays the result of running FD Imputer on the Letter dataset.
-From the 80 FDs found on the train split, the 10 most robust ones all share the same RHS, namely `1'.
-No imputation-result better than 0.37 is achieved on this dataset.
+From the 80 FDs found on the train split, the seven most robust ones share the same RHS, column 1.
+No F1-Score better than 0.37 is achieved on this dataset.
 
 All analyzed datasets other than Adult yield no FD with a perfect score.
 Only a FD on the Breast Cancer Wisconsin dataset achieves a score higher than 0.75.
 Table~\ref{tab:fd-imputer-performance} provides a summary of how FD Imputer performs on eight different datasets.
-
-\begin{table}[ht]
-    \centering
-    \begin{tabular}{lrrrrrr}
-        & & & & \multicolumn{3}{c}{Classification Performance} \\
-        \cmidrule(lr{.25em}){5-7}
-        Dataset & Attributes & \#FDs & \#FDs\textsubscript{train} & \#FD (F1 = 0) & F1\textsubscript{mean} & F1\textsubscript{max} \\
-        \midrule
-        Abalone & 10 & 175 & 193 & 45 & 0.0008 & 0.0048 \\
-        Adult & 16 & 93 & 88 & 10 & 0.0669 & 1.0000 \\
-        Balance Scale & 6 & 7 & 7 & 6 & 0.0000 & 0.0000 \\
-        Breast Cancer Wisconsin & 12 & 57 & 77 & 10 & 0.2198 & 0.7539 \\
-        Chess & 8 & 9 & 9 & 8 & 0.0000 & 0.0000 \\
-        Iris & 6 & 9 & 8 & 1 & 0.1274 & 0.2252 \\
-        Letter & 18 & 78 & 80 & 17 & 0.2347 & 0.3737 \\
-        Nursery & 10 & 11 & 11 & 10 & 0.0000 & 0.0000  \\
-        \bottomrule
-    \end{tabular}
-    \caption{Performance of the FD Imputer on a selection of UCI datasets.}\label{tab:fd-imputer-performance}
-\end{table}
 
 In Table~\ref{tab:fd-imputer-performance}, Column \#FDs indicates how many FDs were found on the complete dataset.
 \#FDs\textsubscript{train} contains the number of FDs that were detected on the train subset.
 F1\textsubscript{mean} and F1\textsubscript{max} indicate the arithmetic mean and maximal F1-score achieved on each dataset respectively.
 The last column named \#(F1 = 0) provides the number of FDs that scored a F1-Score of 0.
 
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrrrrr}
+        \toprule
+        \toprule
+        & & & & \multicolumn{3}{c}{Classification Performance} \\
+        \cmidrule(lr{.25em}){5-7}
+        Dataset & Attributes & \#FDs & \#FDs\textsubscript{train} & \#FD (F1 = 0) & F1\textsubscript{mean} & F1\textsubscript{max} \\
+        \midrule
+        Abalone & 10 & 175 & 193 & 45 & 0.0008 & 0.0048 \\
+        Adult & 16 & 93 & 88 & 10 & 0.0669 & 1.0000 \\
+        Balance S. & 6 & 7 & 7 & 6 & 0.0000 & 0.0000 \\
+        Breast C. W. & 12 & 57 & 77 & 10 & 0.2198 & 0.7539 \\
+        Chess & 8 & 9 & 9 & 8 & 0.0000 & 0.0000 \\
+        Iris & 6 & 9 & 8 & 1 & 0.1274 & 0.2252 \\
+        Letter & 18 & 78 & 80 & 17 & 0.2347 & 0.3737 \\
+        Nursery & 10 & 11 & 11 & 10 & 0.0000 & 0.0000  \\
+        \bottomrule
+        \bottomrule
+    \end{tabular}
+    \caption{Performance of the FD Imputer on a selection of UCI datasets.}\label{tab:fd-imputer-performance}
+\end{table}
+
 The results displayed in table~\ref{tab:fd-imputer-performance} show that robustness depends strongly on the dataset considered.
-However, no relation between #FDs and robustness can be identified (see appendix figure~\ref{fig:robustness-number-of-classifiable-fds}).
+However, no relation between \#FDs and robustness can be identified (see appendix figure~\ref{fig:robustness-number-of-classifiable-fds}).
 Analysis on a bigger body of datasets seems necessary to draw further conclusions.
+
+\subsubsection{Imputation of Sequential Data}
+The majority of columns for which FDs are detected in this work contain classifiable data.
+However, some FDs are found where the RHS contains sequential data.
+For brevity, we call such a FD sequential FD or \emph{sFD}.
+Table~\ref{tab:fd-imputer-mse} displays an overview of how FD Imputer performs when imputing sequential RHS values.
+Sequential FDs were detected on seven train-sets of the eight datasets considered --- column `\# sequential FDs\textsubscript{train}' in table~\ref{tab:fd-imputer-mse} shows how many sFDs were detected.
+
+On the Letter dataset, no sFD is detected.
+Five out of seven datasets for which sFDs were detected have a mean imputation coverage of 0\%.
+Concerning the two datasets with nonzero mean imputation coverage, the mean imputation coverage is approximately one per mille.
+
+Column `0-Coverage sFDs' displays for how many sFDs not a single imputation was found.
+If all sFDs found on the train-set are `0-coverage sFDs', the resulting `Coverage' is thus 0\% with missing minimum and maximum values.
+
+The column named `Coverage' indicates the mean imputation coverage.
+Mean imputation coverage is the mean percentage of rows in the test-set for which imputations were found per sFD.
+It was computed according to the following formula:
+
+\begin{align*}
+    \text{mean missing values per sFD} &= \sum_{i} \frac{\text{missing imputations}}{\text{sFD}_i} \cdot \left(\text{\# sFDs}\right)^{-1} \\
+    \text{mean coverage} &= \left( 1 - \frac{\text{mean missing values per sFD}}{\text{\# rows in }r_{test}} \right) \cdot 100
+\end{align*}
+
+Note that the computed mean coverage is a percentage.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrr}
+        \toprule
+        \toprule
+        Dataset & \# sFDs\textsubscript{train} & \# 0-Coverage sFDs  & Coverage (\%) \\
+        \midrule
+        Abalone & 139 & 84 & 0.1277 \\
+        Adult & 11 & 5 & 0.1217 \\
+        Balance S. & 1 & 1 & 0.0000 \\
+        Breast C. W. & 1 & 1 & 0.0000 \\
+        Chess & 1 & 1 & 0.0000 \\
+        Iris & 4 & 4 & 0.0000 \\
+        Letter & 0 & 0 & - \\
+        Nursery & 1 & 1 & 0.0000 \\
+        \bottomrule
+        \bottomrule
+    \end{tabular}
+    \caption{Imputation coverage of FD Imputer on all UCI datasets for which FDs with sequential data in the RHS were detected.}\label{tab:fd-imputer-mse}
+\end{table}
+
+Since the MSE is an absolute error measure, comparisons between sFDs concerning different RHSs do not provide any insights.
+Table~\ref{tab:fd-imputer-mse-abalone} gives an overview of all sFDs examined on the Abalone dataset.
+Mind that every sFD that is used by FD Imputer to return imputations yields exactly one MSE.
+
+Column `RHS' indicates the RHS, for which sFDs were examined.
+The next column `Var(MSE)' contains the experimental variance of the mean MSE.
+The latter is called \( \overline{\text{MSE}} \) and is displayed in the following column.
+The last two columns `MSE\textsubscript{min}' and `MSE\textsubscript{max}' contain the minimum and maximum MSEs.
+
+From the eight RHSs displayed in table~\ref{tab:fd-imputer-mse-abalone}, six RHSs show similar statistical results.
+For these six RHSs, the variance of MSEs lies between \( 10^{-7} \) and \( 10^{-9} \).
+In addition, the mean MSEs are distributed within two orders of magnitude, the maximum MSE within one order of magnitude.
+
+All values observed for RHS 0 are between \( 10^{5} \) and \( 10^{21} \) bigger than values observed for other RHSs.
+Column 0 of the Abalone dataset contains the row-ID.
+Since there is no dependency between any column-combination in the dataset and the row-ID, a high MSE seems plausible.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrrr}
+        \toprule
+        \toprule
+        RHS & Var(MSE) & \( \overline{\text{MSE}} \) & MSE\textsubscript{min} & MSE\textsubscript{max} \\
+        \midrule
+        0 & \( 2.0712 \cdot 10^{13} \) & \( 7.9385 \cdot 10^{6} \) & \( 8.2705 \cdot 10^{5} \) & \( 1.3418 \cdot 10^{7} \) \\
+        2 & \( 1.3039 \cdot 10^{-7} \) & \( 2.3393 \cdot 10^{-4} \) & 0.0000 & \( 9.2500 \cdot 10^{-4} \) \\
+        3 & \( 3.5634 \cdot 10^{-7} \) & \( 3.5412 \cdot 10^{-5} \) & 0.0000 & \( 1.6250 \cdot 10^{-4} \) \\
+        4 & \( 3.4298 \cdot 10^{-9} \) & \( 2.0972 \cdot 10^{-4} \) & \( 1.1250 \cdot 10^{-4} \) & \( 3.1250 \cdot 10^{-4} \) \\
+        5 & \( 3.0624 \cdot 10^{-9} \) & \( 6.9775 \cdot 10^{-5} \) & \( 9.0000 \cdot 10^{-6} \) & \( 1.6700 \cdot 10^{-4} \) \\
+        6 & \( 2.2867 \cdot 10^{-9} \) & \( 1.5017 \cdot 10^{-4} \) & \( 8.4500 \cdot 10^{-5} \) & \( 1.9700 \cdot 10^{-4} \) \\
+        7 & 0.0000 & 0.0000 & 0.0000 & 0.0000 \\
+        8 & \( 7.4015 \cdot 10^{-9} \) & \( 1.0366 \cdot 10^{-4} \) & 0.0000 & \( 2.2250 \cdot 10^{-4} \) \\
+        \bottomrule
+        \bottomrule
+    \end{tabular}
+    \caption{Statistical analysis of the computed MSEs when running FD Imputer with 84 different sFDs on the Abalone dataset.}\label{tab:fd-imputer-mse-abalone}
+\end{table}
+
+If column 7 of the Abalone-dataset is imputed with sFDs, the task results in a perfect MSE of 0.
+On closer inspection, column 7 is the RHS of eleven sFDs.
+Only one of those eleven sFDs can be used by FD Imputer to impute exactly one value --- which happens to be an exact match.
+
+Half of the RHSs are determined by at least one sFD with a perfect MSE of 0.
+This shows that perfect imputations are common when running FD Imputer with sFDs.
 
 \subsection{ML Imputer}
 ML Imputer is run with the same set of FDs as FD Imputer.
-The 10 best performing FDs' F1-Scores are displayed in figure~\ref{fig:f1_ml_adult}.
+Analogously to the discussion of experiments executed with FD Imputer, the evaluation will be separated into two sections, one discussing FDs with sequential RHSs, the other examining FDs with classifiable RHSs.
+
+\subsubsection{Imputation of Classifiable Data}
+The first dataset analyzed is Adult.
+Figure~\ref{fig:f1_ml_adult} displays the seven best performing FDs' F1-Scores.
+The two top scoring FDs are the same for FD Imputer and ML Imputer.
+The third most performant FD is \( 0 \rightarrow 14\), a relation between row-ID and nationality.
 \begin{figure}[ht]
      \centering
-     \includegraphics[width=.8\textwidth]{../figures/adult/f1_ml_imputer_adult.pdf}
+     \includegraphics[width=\textwidth]{../figures/adult/f1_ml_imputer.pdf}
      \caption{The figure compares the f1-score of the FD Imputer compared to the F1-Score of the ML Imputer. Each point represents one FD.}
      \label{fig:f1_ml_adult}
  \end{figure}
-The two top scoring FDs are the same for FD Imputer and ML Imputer.
-The third most performant FD is \( 0 \rightarrow 14\), a relation between row-ID and nationality.
 There is no appearent dependency between row-ID and nationality.
-It can thus be assumed that ML Imputer always guesses the most frequent nationality, `United-States', for no matter what row-ID.
-
-This assumption can be verified when counting the occurences of value `United-States' in column 14:
+Inspecting the distribution of values in column 14, one cause for the performance of FD \( 0 \rightarrow 14 \) can be derived.
+% Maybe plot histogram
 Of 24154 rows in the train-subset, 22020 entries contain the value `United-States'.
-In fact this is exactly what happens --- ML Imputer learns for all 2987 entries in the test-set the same imputation, explaining the robustness of FD \( 0 \rightarrow 14\).
-
-\begin{figure}[ht]
-     \centering
-     \includegraphics[width=.8\textwidth]{../figures/chess/f1_ml_imputer_chess.pdf}
-     \caption{F1-Scores of the 10 top-performing FDs on the Adult dataset.}
-     \label{fig:f1-ml-imputer-chess}
- \end{figure}
+ML Imputer learns for all 2987 entries in the test-set the same imputation, name `United-States'.
+This perfectly explains the robustness of FD \( 0 \rightarrow 14\).
 
 The barplot in figure~\ref{fig:f1-ml-imputer-chess} shows the performance of ML Imputer on the Chess dataset.
 The FD with the biggest F1-Score is \( 0 \rightarrow 7 \).
-Column 0 contains the row-ID, whereas column 7 contains the outcome of a chess-game, if both players play perfectly.
+Column 0 contains the row-ID, whereas column 7 contains the outcome of a chess-game, assuming both players play perfectly.
 Again, there doesn't seem to exist a relation between the two columns.
 On closer inspection however it can be observed that the Chess-dataset is sorted.
 For tuples with row-ID of less than 2796, column 7 contains always the value `draw'.
 Tuples that have a row-ID bigger than 2795 but smaller than 2824 always contain the value `zero' and so on.
 
+This showcases ML Imputer's capability to learn relaxation on the extent.
+This is similar to what CFDs, ECFDs and CFD\textsuperscript{p}s use when detecting RFDs:
+ML Imputer approximately learns a pattern where a dependency \( 0 \rightarrow 7\) holds, if \( 0 \leq \text{ row-ID } \leq 2795 \) or \( 2796 \leq \text{ row-ID } \leq 2823 \), and so on.
+
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=\textwidth]{../figures/chess/f1_ml_imputer.pdf}
+     \caption{F1-Scores of the seven top-performing FDs on the Adult dataset.}
+     \label{fig:f1-ml-imputer-chess}
+ \end{figure}
+
+Table~\ref{tab:ml-imputer-performance} shows a generally higher performance of ML Imputer compared to FD Imputer.
+There are no FDs for which ML Imputer scores 0.
+This can be explained by ML Imputer's behavior of always returning some imputation value, even if the probability with which ML Imputer predicts a value is low.
+This is contrasted by FD Imputer, that frequently returns no imputation value at all.
+
 \begin{table}[ht]
     \centering
     \begin{tabular}{lrrrrr}
+        \toprule
         \toprule
         & & & \multicolumn{3}{c}{Classification Performance} \\
         \cmidrule(lr{.25em}){4-6}
@@ -125,18 +237,43 @@ Tuples that have a row-ID bigger than 2795 but smaller than 2824 always contain 
         Letter & 78 & 80 & 0.7207 & 0.9134 & 0.0058 \\
         Nursery & 11 & 11 & 0.9915 & 0.4531 & 0.1138 \\
         \bottomrule
+        \bottomrule
     \end{tabular}
-    \caption{Performance of ML Imputer on eight different datasets.}\label{tab:ml-imputer-performance}
+    \caption{Performance of ML Imputer on eight different datasets when training on FDs with classifiable RHS entries.}\label{tab:ml-imputer-performance}
 \end{table}
 
-This showcases ML Imputer's capability to learn relaxation on the extent.
-This is similar to what CFDs, ECFDs and CFD\textsuperscript{p}s use when detecting RFDs:
-ML Imputer approximately learns a pattern where a dependency \( 0 \rightarrow 7\) holds, if \( 0 \leq \text{ row-ID } \leq 2795 \) or \( 2796 \leq \text{ row-ID } \leq 2823 \), and so on.
+\subsubsection{Imputation of Sequential Data}
+When ML Imputer is run with sFDs, internally a regression is performed.
+To examine how this mechanism behaves, imputations generated based on sFDs were performed.
+ML Imputer always returns imputations, thus there are no missing values as listed in table~\ref{tab:fd-imputer-mse} --- ML Imputer coverage is always 100\%.
 
-Table~\ref{tab:ml-imputer-performance} shows a generally higher performance of ML Imputer compared to FD Imputer.
-There are no FDs for which ML Imputer scores 0.
-This can be explained by to ML Imputer's behavior of always returning some imputation value, even if certainty is very low.
-This is contrasted by FD Imputer, which frequently returns no imputation value at all.
+As done for the FD Imputer in table~\ref{tab:fd-imputer-mse-abalone}, an in-depth analysis is performed on the Abalone dataset in table~\ref{tab:ml-imputer-mse-abalone}.
+The biggest mean MSE is returned for RHS 0, which contains the row-ID.
+This can be explained with the observation that the data is neither sorted, nor are there any other dependencies between the contents of the Abalaone dataset and the row-ID.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lrrrr}
+        \toprule
+        \toprule
+        RHS & Var(MSE) & \( \overline{\text{MSE}} \) & MSE\textsubscript{min} & MSE\textsubscript{max} \\
+        \midrule
+        0 & \(3.7736 \cdot 10^{9} \) & \(1.4656 \cdot 10^{6} \) & \(1.3884 \cdot 10^{6} \) & \(1.6045 \cdot 10^{6} \) \\
+        2 & \( 1.3150 \cdot 10^{-5} \) & \( 1.5828 \cdot 10^{-3} \) & \( 3.0536 \cdot 10^{-4} \) & \( 1.4630 \cdot 10^{-2} \) \\
+        3 & \( 5.3958 \cdot 10^{-6} \) & \( 9.6910 \cdot 10^{-4} \) & \( 2.0273 \cdot 10^{-4} \) & \( 1.0238 \cdot 10^{-2} \) \\
+        4 & \( 9.2724 \cdot 10^{-8} \) & \( 3.2361 \cdot 10^{-4} \) & \( 2.2714 \cdot 10^{-4} \) & \( 1.5399 \cdot 10^{-3} \) \\
+        5 & \( 3.5212 \cdot 10^{-3} \) & \( 2.1342 \cdot 10^{-2} \) & \( 1.6185 \cdot 10^{-3} \) & \( 2.5844 \cdot 10^{-1} \) \\
+        6 & \( 1.5414 \cdot 10^{-4} \) & \( 6.6988 \cdot 10^{-3} \) & \( 1.2499 \cdot 10^{-3} \) & \( 5.2755 \cdot 10^{-2} \) \\
+        7 & \( 1.1345 \cdot 10^{-5} \)& \( 1.9497 \cdot 10^{-3} \) & \( 4.8120 \cdot 10^{-4} \) & \( 1.2581 \cdot 10^{-2} \) \\
+        8 & \( 1.7069 \cdot 10^{-5} \) & \( 2.8521 \cdot 10^{-3} \) & \( 9.7318 \cdot 10^{-4} \) & \( 1.9730 \cdot 10^{-2} \) \\
+        \bottomrule
+        \bottomrule
+    \end{tabular}
+    \caption{Statistical analysis of the Abalone dataset obtained by running ML Imputer with the same 84 sFDs as used in the generation of table~\ref{tab:fd-imputer-mse-abalone}.}\label{tab:ml-imputer-mse-abalone}
+\end{table}
+
+All other RHSs lead to performance measures that seem plausible.
+Variances are between one and four orders of magnitude smaller than the arithmetic means, minimum and maximum MSEs are separated by between one and two orders of magnitude.
 
 \subsection{Overfitting ML Imputer}
 To further investigate ML Imputer's capabilities for overfitting models, experiments are run to compare imputation performance between a overfitted model and a normally trained model.
@@ -144,7 +281,7 @@ Overfitting was achieved by first uniting \( r_{train} \) and \( r_{test} \) and
 
 \begin{figure}[ht]
      \centering
-     \includegraphics[width=.8\textwidth]{../figures/adult/f1_ml_overfit_adult.pdf}
+     \includegraphics[width=\textwidth]{../figures/adult/f1_ml_overfit.pdf}
      \caption{F1-Scores}
      \label{fig:f1-ml-overfit-adult}
  \end{figure}
@@ -164,7 +301,7 @@ Taking the above into account, rows that aren't imputed by FD Imputer are not co
 
 \begin{figure}[ht]
      \centering
-     \includegraphics[width=.8\textwidth]{../figures/adult/f1_ml_fd_adult}
+     \includegraphics[width=\textwidth]{../figures/adult/f1_ml_fd}
      \caption{The figure compares the F1-Score of the FD Imputer compared to the F1-Score of ML Imputer. Each point represents one FD.}
      \label{fig:f1_ml_fd_adult}
  \end{figure}
@@ -181,7 +318,7 @@ These FDs were identified in the previous section.
 
 \begin{figure}[ht]
      \centering
-     \includegraphics[width=.8\textwidth]{../figures/nursery/f1_ml_fd_nursery}
+     \includegraphics[width=\textwidth]{../figures/nursery/f1_ml_fd}
      \caption{The FD imputers classification performance compared to the performance of ML Imputer on the nursery dataset.}
      \label{fig:f1_ml_fd_nursery}
 \end{figure}
@@ -192,6 +329,10 @@ On this dataset, ML Imputer performs better for every single FD.
 This is explainable by the fact that the Nursery dataset is strongly normalized.
 It contains only 11 FDs, most of them are the key, functionally determining a single column.
 
+\subsubsection{Sequential RHSs}
+The behavior of FD Imputer on sFDs is similar to what can be observed when analyzing a case of \emph{overfitting}.~\cite[p.~56]{SMO08}
+Since FDs are established by exact equality of values, imputations are very rare and, if they exist, either extremely accurate or very wrong.
+This is emphasized by the difference of seven orders of magnitude between the minimum MSE and maximum MSE computed on the Abalone dataset.
 \subsection{Dependency detection}
 Using the approach described in the theory section to detect a generalized imputation dependency, DepDetector is run on number of datasets.
 In addition, the stability of discovered minimal dependencies is investigated.
@@ -212,14 +353,14 @@ For \( \tau \in [7, 15] \) training cycles, DepDetector discovered all minimal d
      \centering
      \begin{subfigure}[b]{0.45\textwidth}
          \centering
-         \includegraphics[width=\textwidth]{../figures/iris/iris_dep_detector_lhs_stability}
+         \includegraphics[width=\textwidth]{../figures/iris/dep_detector_lhs_stability}
          \caption{Analysis on the Iris dataset reveals that results become continuously more stable for larger \( \tau \).}
          \label{fig:dep_detector_lhs_stability_iris}
      \end{subfigure}
      \hfill
      \begin{subfigure}[b]{0.45\textwidth}
          \centering
-         \includegraphics[width=\textwidth]{../figures/balance-scale/balance_scale_dep_detector_lhs_stability.pdf}
+         \includegraphics[width=\textwidth]{../figures/balance-scale/dep_detector_lhs_stability.pdf}
          \caption{On the dataset Balance-scale, the analysis of the result shows a peak at \( \tau = 4 \).}
          \label{fig:dep_detector_lhs_stability_balance_scale}
      \end{subfigure}
@@ -238,6 +379,7 @@ Dependencies were detected on a number of well-known datasets.
     \centering
     \begin{tabular}{lrrrrrrr}
         \toprule
+        \toprule
         & & & & & \multicolumn{1}{c}{Greedy} & \multicolumn{1}{c}{Complete} \\
         Dataset & Cols & Rows & \# FDs & \# FDs\textsubscript{train} & \# F1\textsubscript{LHS} $> 0.90$ & \# F1\textsubscript{LHS} $> 0.90$ \\
         \midrule
@@ -248,6 +390,7 @@ Dependencies were detected on a number of well-known datasets.
         chess & 8 & 28056 & 99 & 99 & 99 & 99 \\
         iris & 6 & 150 & 99 & 99 & 99 & 99 \\
         letter & 18 & 20000 & 99 & 99 & 99 & 99 \\
+        \bottomrule
         \bottomrule
     \end{tabular}
     \caption{Result of running dependency detection on selected datasets. Values in brackets are the respective algorithm's runtime in seconds.}\label{tab:dep-detection-performance}
