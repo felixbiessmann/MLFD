@@ -60,6 +60,7 @@ def main(args):
              'mse_ml_imputer': plot_mse_ml_imputer,
              'mse_fd_imputer': plot_mse_fd_imputer,
              'f1_ml_overfit': plot_f1_ml_overfit,
+             'mse_ml_overfit': plot_mse_ml_overfit,
              'f1_random_overfit': plot_f1_random_ml_overfit,
              'dep_detector_lhs_stability': plot_dep_detector_lhs_stability}
 
@@ -251,6 +252,32 @@ def plot_mse_ml_imputer(data):
     ax.set(xlabel='MSE ({})'.format(data.title.capitalize()))
            # xlim=[0.0, 1000.0])
     return(fig, ax)
+
+
+def plot_mse_ml_overfit(data):
+    ml_imputer_res = load_result(
+        data.results_path+"ml_imputer_results.p")
+    overf_ml_imputer_res = load_result(
+        data.results_path+"overfitted_ml_results.p")
+
+    f1_ml = [y['mse'] for x in ml_imputer_res for y in ml_imputer_res[x]
+             if 'mse' in y.keys()]
+    f1_overfit = [y['mse'] for x in overf_ml_imputer_res
+                  for y in overf_ml_imputer_res[x]
+                  if 'mse' in y.keys()]
+
+    pu.figure_setup()
+    fig_size = pu.get_fig_size(10, 4)
+    fig = plt.figure(figsize=list(fig_size))
+    ax = fig.add_subplot(111)
+
+    ax.scatter(f1_overfit, f1_ml, c='C0')
+    ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='C1', linewidth=1)
+    ax.set(xlabel='MSE ML Imputer Overfitted ({})'.format(data.title.capitalize()),
+           ylabel='MSE ML Imputer ({})'.format(data.title.capitalize()),
+           xlim=[-0.001, 0.02],
+           ylim=[-0.001, 0.02])
+    return (fig, ax)
 
 
 def plot_f1_ml_overfit(data):

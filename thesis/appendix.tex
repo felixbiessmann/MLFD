@@ -8,10 +8,10 @@ def get_greedy_candidates(root):
 
     for node in most_recent_nodes():
         if root.is_continuous:  # sequential RHS
-            if (node.score <= threshold) and (len(node.name) > 1):
+            if (node.score <= 1.02*threshold) and (len(node.name) > 1):
                 highscore_node = node
         elif not root.is_continuous:  # classifiable RHS
-            if (node.score >= highscore) and (len(node.name) > 1):
+            if (node.score >= 0.98*highscore) and (len(node.name) > 1):
                 highscore_node = node
 
     if highscore_node is not None:

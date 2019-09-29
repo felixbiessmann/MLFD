@@ -273,125 +273,132 @@ This can be explained with the observation that the data is neither sorted, nor 
 \end{table}
 
 All other RHSs lead to performance measures that seem plausible.
-Variances are between one and four orders of magnitude smaller than the arithmetic means, minimum and maximum MSEs are separated by between one and two orders of magnitude.
+Variances are between one and four orders of magnitude smaller than the corresponding arithmetic means, minimum and maximum MSEs are separated by up to two orders of magnitude.
 
 \subsection{Overfitting ML Imputer}
-To further investigate ML Imputer's capabilities for overfitting models, experiments are run to compare imputation performance between a overfitted model and a normally trained model.
+If the neural network trained by ML Imputer learns too many examples, the resulting model is just a memorization of the whole training-set --- a phenomenon usually referred to as overfitting.~\cite[p.~164]{HAY08}
+To further investigate ML Imputer's capabilities of overfitting models, experiments are run to compare imputation performance between a overfitted model and a normally trained model.
 Overfitting was achieved by first uniting \( r_{train} \) and \( r_{test} \) and then training and testing the model on the same unified relational instance.
+Internally, this unification of train-set and test-set implies that the resulting train-error and test-error are the same entity, effectively preventing corss-validation to take place.
 
+Figure~\ref{fig:f1-ml-overfit-adult} compares an overfitted model with a cross-validated model on the Adult dataset.
+Every blue data point represents one FD, providing the data with which the models were trained.
+The red/orange line is the identity function.
+All data points that lie below the graph of the identity function indicate that the overfitted model scores higher than the cross-validated model.
+Datapoints that lie above the graph of the identity function represent the opposite.
+Both models score equally well, if a data point lies on the graph of the identity function.
 \begin{figure}[ht]
      \centering
      \includegraphics[width=\textwidth]{../figures/adult/f1_ml_overfit.pdf}
-     \caption{F1-Scores}
+     \caption{Comparison of an overfitted model with a conventionally trained model on the Adult dataset.}
      \label{fig:f1-ml-overfit-adult}
- \end{figure}
-
-
-\subsection{Comparing ML Imputer with FD Imputer}
-As discussed in the previous section, ML Imputer and FD imputer differ fundamentally in the way they function.
-When comparing the two, metrics need to be computed bearing those differences in mind.
-
-FD Imputer cannot approximate numerical values.
-Due to the nature of the definition of a FD, Data is always assumed to be classifiable.
-Meanwhile, ML Imputer is able to perform regression, predicting a continuous label for a given input with an uncertainty.
-
-Naturally, this circumstance leads to a far superior performance of ML Imputer when imputing continuous labels.
-FD Imputer usually does not find any values on the train set to impute with and cannot return a meaningful result.
-Taking the above into account, rows that aren't imputed by FD Imputer are not considered when computing a performance measure on columns containing continuous values.
-
-\begin{figure}[ht]
-     \centering
-     \includegraphics[width=\textwidth]{../figures/adult/f1_ml_fd}
-     \caption{The figure compares the F1-Score of the FD Imputer compared to the F1-Score of ML Imputer. Each point represents one FD.}
-     \label{fig:f1_ml_fd_adult}
- \end{figure}
-
-Figure~\ref{fig:f1_ml_fd_adult} compares the F1-scores of both ML Imputer and FD Imputer on the Adult dataset.
-One can observe that for almost all FDs, ML Imputer performs better than the FD Imputer.
-
-FD Imputer performance and ML Imputer performance seem to be proportional.
-If ML imputer's F1-score is lower than 0.7, the FD Imputers F1-score for the same FD is 0.
-However, for FDs where ML Imputer scores are larger than 0.7, the FD Imputer scores better than 0.0.
-
-There are two FDs for which the FD Imputer performs equally good as ML Imputer.
-These FDs were identified in the previous section.
-
-\begin{figure}[ht]
-     \centering
-     \includegraphics[width=\textwidth]{../figures/nursery/f1_ml_fd}
-     \caption{The FD imputers classification performance compared to the performance of ML Imputer on the nursery dataset.}
-     \label{fig:f1_ml_fd_nursery}
 \end{figure}
+The distribution of data points in figure~\ref{fig:f1-ml-overfit-adult} is well approximated by the identity function.
+It can thus be stated that the models trained by ML Imputer are not capable of overfitting:
+If the model complexity cannot be arbitrarily increased, overfitting is prevented by the network's simple design.\cite[ch.~6,~p.~51-52]{DUD00}
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=\textwidth]{../figures/abalone/mse_ml_overfit.pdf}
+     \caption{Overtrained models are compared with conventionally trained models on the Abalone dataset. Sequential RHSs were imputed to get MSEs.}
+     \label{fig:mse-ml-overfit-abalone}
+\end{figure}
+When sequential data is imputed, ML Imputer uses another network design than when performing a classification.\cite[p.~2025]{BIE18}
+The bahavior of the numerical regression loss function that is used in training to generate models to impute sequential data is represented in figure~\ref{fig:mse-ml-overfit-abalone}.
+Note that, while in figure~\ref{fig:f1-ml-overfit-adult} a higher F1-Score indicates a better performance, in figure~\ref{fig:mse-ml-overfit-abalone} the inverse is true.
 
-The same experiment was run on the Nursery dataset.\cite{DUA19}
-Results are displayed in figure~\ref{fig:f1_ml_fd_nursery}.
-On this dataset, ML Imputer performs better for every single FD.
-This is explainable by the fact that the Nursery dataset is strongly normalized.
-It contains only 11 FDs, most of them are the key, functionally determining a single column.
+It can be observed that the network design used for regression on sequential data is more vulnerable to overfitting than the network used to impute classifiable data.
+The majority of sFDs results in nearly equally big MSEs of overfitted models and conventionally trained models.
+This is represented in figure~\ref{fig:mse-ml-overfit-abalone} by datapoints that are positioned in close proximity of the graph of the identity function.
 
-\subsubsection{Sequential RHSs}
-The behavior of FD Imputer on sFDs is similar to what can be observed when analyzing a case of \emph{overfitting}.~\cite[p.~56]{SMO08}
-Since FDs are established by exact equality of values, imputations are very rare and, if they exist, either extremely accurate or very wrong.
-This is emphasized by the difference of seven orders of magnitude between the minimum MSE and maximum MSE computed on the Abalone dataset.
+However, a considerable number of datapoints indicate that the overfitted models perform \( worse \) than the conventionally trained ones.
+This result appears to be counter-intuitive at first glance.
+One would expect a lower MSE if more data is used in training.
+
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=\textwidth]{../figures/abalone/mse-ml-overfitted-fractions.pdf}
+     \caption{Overfitted imputation-models are trained with FD \( [2, 3, 6, 7] \rightarrow 5\) on the Abalone dataset with varying dataset-size.}
+     \label{fig:mse-ml-overfit-fractions}
+ \end{figure}
+
+However, this phenomenon is well-known in practice.
+For example, Meng and Xie discuss the effect of training models with differently sized datasets.
+They show that more data does not necessarily imply a better model.~\cite[p.~1]{MEN14}
+On one side, additional data only leads to better models if it provides additional information to solve a problem.
+On the other side, as discussed previously, a neural network needs to be sufficiently complex to be able to leverage new data.
+
+Figure~\ref{fig:mse-ml-overfit-fractions} shows the MSE achieved by an overfitted ML Imputer model trained with different fractions of the total dataset.
+One can observe that the model trained on 10\% of the total dataset scores a lower MSE as the model trained on 50\% of the total dataset.
+Thus, when an overfitted model in figure~\ref{fig:mse-ml-overfit-abalone} performs worse than the conventionally trained counterpart, it can be anticipated that either the additional data contains no or little additional information regarding the regression problem, or that the design of the regression network does not provide enough complexity to incorporate addition information.
+
+
 \subsection{Dependency detection}
-Using the approach described in the theory section to detect a generalized imputation dependency, DepDetector is run on number of datasets.
-In addition, the stability of discovered minimal dependencies is investigated.
+DepDetector is run on number of datasets to detect generalized imputation dependencies.
+Since the models used by DepDetector to find minimal dependencies are results of stochastical processes, they are subjects to fluctuations.
+To further investigate how these fluctuations influence the result of the DepDetector algorithm, the number of trainig cycles used in training is varied and performance measures are compared --- we name this process \emph{stability analysis}.
 
-\subsubsection{Dependency stability}
-Stability of the found minimal dependency depends on the number of cycles used for training the classifier.
-DepDetector is run with different numbers of maximal training cycles.
-Minimal dependencies were searched following the `complete' search strategy.
+\subsubsection{DepDetector Results on Various Datasets}
+Dependencies were detected on the eight datasets analyzed throughout this work.
+Table~\ref{tab:dep-detector-performance} lists the results.
 
-The number of training cycles \( \tau \) is increased stepwise from \( 3 \text{ to } 15 \).
-The number of undetected minimal LHSs is calculated by selecting the result of the run with \( \tau = 15 \) training cycles as a reference.
-For every time DepDetector is run to find minimal dependencies, the obtained LHSs are compared to the ones obtained with \( \tau = 15 \).
-For each LHS found when \( \tau = 15 \) that is not contained in the result of a run, the number of undetected minimal LHSs is increased by one.
-
-Figure~\ref{fig:dep_detector_lhs_stability_iris} shows that the Iris dataset contains two minimal LHS combinations and thus two Dependencies.
-For \( \tau \in [7, 15] \) training cycles, DepDetector discovered all minimal dependencies.
-\begin{figure}[ht]
-     \centering
-     \begin{subfigure}[b]{0.45\textwidth}
-         \centering
-         \includegraphics[width=\textwidth]{../figures/iris/dep_detector_lhs_stability}
-         \caption{Analysis on the Iris dataset reveals that results become continuously more stable for larger \( \tau \).}
-         \label{fig:dep_detector_lhs_stability_iris}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{0.45\textwidth}
-         \centering
-         \includegraphics[width=\textwidth]{../figures/balance-scale/dep_detector_lhs_stability.pdf}
-         \caption{On the dataset Balance-scale, the analysis of the result shows a peak at \( \tau = 4 \).}
-         \label{fig:dep_detector_lhs_stability_balance_scale}
-     \end{subfigure}
-        \caption{Stability analysis of the minimal LHSs found by DepDetector.}
-        \label{fig:stabilit_analysis}
-\end{figure}
-
-An analysis on the dataset Balance-scale shows the potentially non-linear behavior of obtained results in function of \( \tau \):
-Even though the result obtained for \( \tau = 3 \) is minimal, the result found when \( \tau = 4 \) is in fact not minimal.
-
-For further analysis, DepDetector models are trained with \( \tau = 10 \) training cycles, aiming to detect dependencies that are stable.
-
-\subsubsection{Results on various Datasets}
-Dependencies were detected on a number of well-known datasets.
 \begin{table}[ht]
     \centering
-    \begin{tabular}{lrrrrrrr}
+    \begin{tabular}{lrrrrrr}
         \toprule
         \toprule
-        & & & & & \multicolumn{1}{c}{Greedy} & \multicolumn{1}{c}{Complete} \\
-        Dataset & Cols & Rows & \# FDs & \# FDs\textsubscript{train} & \# F1\textsubscript{LHS} $> 0.90$ & \# F1\textsubscript{LHS} $> 0.90$ \\
+        & & & & \multicolumn{1}{c}{Greedy} & \multicolumn{1}{c}{Complete} \\
+        Dataset & Cols & Rows & \# FDs & \# F1\textsubscript{LHS} $> 0.90$ & \# F1\textsubscript{LHS} $> 0.90$ \\
         \midrule
-        adult & 16 & 32561 & 93 & 88 & 99 (100s)& 99 \\
-        nursery & 11 & 11 & 99 & 99 & 99 & 99 \\
-        abalone & 10 & 4177 & 99 & 99 & 99 & 99 \\
-        balance-scale & 6 & 625 & 99 & 99 & 99 & 99 \\
-        chess & 8 & 28056 & 99 & 99 & 99 & 99 \\
-        iris & 6 & 150 & 99 & 99 & 99 & 99 \\
-        letter & 18 & 20000 & 99 & 99 & 99 & 99 \\
+        Abalone & 10 & 4177 & 175 & 99 & 99 \\
+        Adult & 16 & 32561 & 93 & 99 (100s)& 99 \\
+        Balance-Scale & 6 & 625 & 7 & 3~(67s) & 3~(80s) \\
+        Chess & 8 & 28056 & 9 & 1~(7075s) & 1~(20428s) \\
+        Iris & 6 & 150 & 9 & 5~(38s) & 8~(43s) \\
+        Letter & 18 & 20000 & 78 & 99 & 99 \\
+        Nursery & 11 & 11 & 11 & 99 & 99 \\
         \bottomrule
         \bottomrule
     \end{tabular}
-    \caption{Result of running dependency detection on selected datasets. Values in brackets are the respective algorithm's runtime in seconds.}\label{tab:dep-detection-performance}
+    \caption{Result of running dependency detection on selected datasets. Values in brackets are the respective algorithm's runtime in seconds.}\label{tab:dep-detector-performance}
 \end{table}
+
+\subsubsection{Dependency stability}
+To investigate the stability of detected minimal dependencies, DepDetector is run for a fixed RHS with varying numbers of training cycles \( \tau \).
+The experiment was conducted on the Iris dataset and the Balance-Scale dataset.
+Minimal dependencies were searched following the `complete' search-strategy.
+
+The number of training cycles \( \tau \) is increased stepwise from \( 3 \text{ to } 15 \).
+For each \( \tau \) the number of undetected minimal LHSs is calculated.
+This is done by first selecting the result of the run with \( \tau_{max} = 15 \) training cycles as a reference.
+Then, the LHSs obtained when \( \tau < \tau_{max} \) are compared to the ones obtained when \( \tau = \tau_{max} \).
+For each LHS found when DepDetector is run with \( \tau_{max} \) training-cycles that is not contained in the result of a run where \( \tau < \tau_{max} \), the number of undetected minimal LHSs is increased by one.
+
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=\textwidth]{../figures/iris/dep_detector_lhs_stability}
+     \caption{Analysis on the Iris dataset reveals that results become continuously more stable for larger \( \tau \).}
+     \label{fig:dep_detector_lhs_stability_iris}
+\end{figure}
+
+Figure~\ref{fig:dep_detector_lhs_stability_iris} shows the result of this procedure on the Iris dataset.
+When dependencies are searched with \( \tau_{max} \) training cycles, DepDetector finds two minimal LHS combinations and thus two Dependencies.
+If \( \tau \in [3, 5] \), both minimal dependencies remained undetected.
+In the run where \( \tau = 6 \), one of the two minimal LHSs was found.
+For \( \tau \in [7, 15] \) training cycles, DepDetector discovered both minimal dependencies.
+
+There are no fluctuations in the amount of undetected minimal LHSs once seven or more training cycles were used in dependency detection.
+This indicates that the minimal dependencies detected by DepDetector do not fluctuate every time new models are trained during detection.
+
+The experiment is repeated on the Balance-Scale dataset.
+Figure~\ref{fig:dep_detector_lhs_stability_balance_scale} displays a non-linear behavior when detecting minimal LHSs in function of \( \tau \).
+Even though the result obtained for \( \tau = 3 \) is minimal, the result found when \( \tau = 4 \) misses one minimal dependency.
+\begin{figure}[ht]
+     \centering
+     \includegraphics[width=\textwidth]{../figures/balance-scale/dep_detector_lhs_stability.pdf}
+     \caption{On the dataset Balance-scale, the analysis of the result shows a peak at \( \tau = 4 \).}
+     \label{fig:dep_detector_lhs_stability_balance_scale}
+\end{figure}
+For all DepDetector-runs performed with five or more training-cycles, all minimal LHSs are detected.
+This is another hint that minimal dependencies identified with DepDetector converge to a stable solution.
+
+While these two examples are no proof that DepDetector always yields a stable set of minimal LHSs, they motivate a default value of \( \tau = 10 \) training-cycles during dependency detection.

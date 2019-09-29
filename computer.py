@@ -182,7 +182,7 @@ def generate_random_fds(data, n=10, save=True):
 
 def compute_dep_detector_lhs_stability(data, column, save=False):
     """ Trains SimpleImputer with a range from 3-15 training-cycles and
-    stores the results of """
+    stores the results."""
     df_train, df_validate, df_test = fd.load_dataframes(
         data.splits_path,
         data.title,
@@ -257,8 +257,8 @@ def compute_overfit_ml_imputer(data, save=False):
         data.splits_path,
         data.title,
         data.missing_value_token)
-    df_overfit_train = pd.concat([df_train, df_validate])
-    fd.check_split_for_duplicates([df_overfit_train, df_test])
+    df_overfit_train = pd.concat([df_train, df_validate, df_test])
+    fd.check_split_for_duplicates([df_overfit_train])
     fds = fd.read_fds(data.fd_path)
 
     # overfitting is train, test, validate on the same set of data

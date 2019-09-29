@@ -180,11 +180,11 @@ class RootNode(tree.NodeMixin):
         highscore_node = None
         for node in most_recent_nodes:
             if self.is_continuous:
-                if (node.score <= highscore) and (len(node.name) > 1):
+                if (node.score <= 1.02*highscore) and (len(node.name) > 1):
                     highscore_node = node
 
             elif not self.is_continuous:
-                if (node.score >= highscore) and (len(node.name) > 1):
+                if (node.score >= 0.98*highscore) and (len(node.name) > 1):
                     highscore_node = node
 
         if highscore_node is not None:

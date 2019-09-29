@@ -1,19 +1,19 @@
 [0] Config.pm:302> INFO - This is Biber 2.11
 [0] Config.pm:305> INFO - Logfile is 'main.blg'
-[25] biber:313> INFO - === Sat Sep 28, 2019, 20:08:31
-[45] Biber.pm:371> INFO - Reading 'main.bcf'
-[105] Biber.pm:857> INFO - Found 34 citekeys in bib section 0
-[118] Biber.pm:3976> INFO - Processing section 0
-[160] Biber.pm:4136> INFO - Looking for bibtex format file 'Bib.bib' for section 0
-[162] bibtex.pm:1500> INFO - LaTeX decoding ...
-[207] bibtex.pm:1316> INFO - Found BibTeX data source 'Bib.bib'
-[379] Utils.pm:193> WARN - month field 'March' in entry 'KOU09' is not an integer - this will probably not sort properly.
-[413] Utils.pm:193> WARN - ISBN '521825830' in entry 'SMO08' is invalid - run biber with '--validate_datamodel' for details.
-[490] Utils.pm:193> WARN - BibTeX subsystem: /tmp/EeDiFWlxJN/Bib.bib_32691.utf8, line 265, warning: 4 characters of junk seen at toplevel
-[534] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[534] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[534] Biber.pm:3804> INFO - Sorting list 'anyt/global//global/global' of type 'entry' with template 'anyt' and locale 'en-US'
-[534] Biber.pm:3810> INFO - No sort tailoring available for locale 'en-US'
-[599] bbl.pm:617> INFO - Writing 'main.bbl' with encoding 'UTF-8'
-[611] bbl.pm:720> INFO - Output to main.bbl
-[611] Biber.pm:110> INFO - WARNINGS: 3
+[59] biber:313> INFO - === Sun Sep 29, 2019, 23:33:10
+[90] Biber.pm:371> INFO - Reading 'main.bcf'
+[189] Biber.pm:857> INFO - Found 35 citekeys in bib section 0
+[214] Biber.pm:3976> INFO - Processing section 0
+[229] Biber.pm:4136> INFO - Looking for bibtex format file 'Bib.bib' for section 0
+[232] bibtex.pm:1500> INFO - LaTeX decoding ...
+[305] bibtex.pm:1316> INFO - Found BibTeX data source 'Bib.bib'
+[483] Utils.pm:193> WARN - month field 'March' in entry 'KOU09' is not an integer - this will probably not sort properly.
+[540] Utils.pm:193> WARN - ISBN '521825830' in entry 'SMO08' is invalid - run biber with '--validate_datamodel' for details.
+[668] Utils.pm:193> WARN - BibTeX subsystem: /tmp/eSxEYSULC_/Bib.bib_17367.utf8, line 279, warning: 4 characters of junk seen at toplevel
+[751] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[751] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[751] Biber.pm:3804> INFO - Sorting list 'anyt/global//global/global' of type 'entry' with template 'anyt' and locale 'en-US'
+[751] Biber.pm:3810> INFO - No sort tailoring available for locale 'en-US'
+[820] bbl.pm:617> INFO - Writing 'main.bbl' with encoding 'UTF-8'
+[839] bbl.pm:720> INFO - Output to main.bbl
+[840] Biber.pm:110> INFO - WARNINGS: 3
