@@ -383,7 +383,7 @@ def plot_f1_ml_fd(data):
 
     ax.scatter(f1_fd, f1_ml, color='C0')
     ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), lw=pu.plot_lw(),
-            color='C1')
+            color='C1', linewidth=1)
 
     ax.set(xlabel='F1-Score FD Imputer ({})'.format(data.title.capitalize()),
            ylabel='F1-Score ML Imputer ({})'.format(data.title.capitalize()),
