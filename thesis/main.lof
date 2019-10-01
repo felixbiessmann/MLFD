@@ -1,0 +1,18 @@
+\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax 
+\babel@toc {english}{}
+\contentsline {figure}{\numberline {1}{\ignorespaces Venn diagram representing the extent relaxation criterion.\relax }}{8}{figure.caption.22}
+\contentsline {figure}{\numberline {2}{\ignorespaces Illustration of a binary confusion matrix. `Prediction' refers to predicted labels \(y_{pred}(x)\) while `Ground Truth' represents the actual labels \(y(x)\).\relax }}{11}{figure.caption.27}
+\contentsline {figure}{\numberline {3}{\ignorespaces Each predicted label \(y_{x}\) is represented by a circle. Hollow circles stand for negative labels and full circles for positive labels. \relax }}{12}{figure.caption.28}
+\contentsline {figure}{\numberline {4}{\ignorespaces State diagram showing the histogram established by Datawig Imputer to encode example~\ref {eq:c-cat}\relax }}{16}{figure.caption.33}
+\contentsline {figure}{\numberline {5}{\ignorespaces Hasse diagram of the search lattice when discovering minimal, non-trivial FDs on a relational schema with five columns.\relax }}{20}{figure.caption.37}
+\contentsline {figure}{\numberline {6}{\ignorespaces F1-Scores of the seven most-robust FDs on the Adult dataset when imputing classifiable values.\relax }}{23}{figure.caption.40}
+\contentsline {figure}{\numberline {7}{\ignorespaces Robustness of the seven top-performing FDs on the Letter dataset when imputing classifiable RHSs.\relax }}{24}{figure.caption.41}
+\contentsline {figure}{\numberline {8}{\ignorespaces The figure compares the F1-Score of the FD Imputer compared to the F1-Score of the ML Imputer. Each point represents one FD.\relax }}{28}{figure.caption.45}
+\contentsline {figure}{\numberline {9}{\ignorespaces F1-Scores of the seven top-performing FDs on the Adult dataset.\relax }}{29}{figure.caption.46}
+\contentsline {figure}{\numberline {10}{\ignorespaces Comparison of an overfitted model with a conventionally trained model on the Adult dataset.\relax }}{31}{figure.caption.49}
+\contentsline {figure}{\numberline {11}{\ignorespaces Overtrained models are compared with conventionally trained models on the Abalone dataset. Continuous RHSs were imputed to get MSEs.\relax }}{31}{figure.caption.50}
+\contentsline {figure}{\numberline {12}{\ignorespaces Overfitted imputation-models are trained with FD \( [2, 3, 6, 7] \rightarrow 5\) on the Abalone dataset with varying dataset-size.\relax }}{32}{figure.caption.51}
+\contentsline {figure}{\numberline {13}{\ignorespaces Analysis on the Iris dataset reveals that results become continuously more stable for larger \( \tau \).\relax }}{34}{figure.caption.53}
+\contentsline {figure}{\numberline {14}{\ignorespaces On the dataset Balance-scale, the analysis of the result shows a peak at \( \tau = 4 \).\relax }}{35}{figure.caption.54}
+\contentsline {figure}{\numberline {15}{\ignorespaces The figure compares the F1-Score of the FD Imputer compared to the F1-Score of ML Imputer. Each point represents one FD.\relax }}{37}{figure.caption.55}
+\contentsline {figure}{\numberline {16}{\ignorespaces Mean robustness of all FDs with a classifiable RHS in function of the total number of FDs with a classifiable RHS divided by the total number of attributes in a dataset. No functional relation between these two values can be stated.\relax }}{43}{figure.caption.57}

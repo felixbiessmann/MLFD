@@ -2,22 +2,29 @@
 \section{Introduction}
 Data-driven methods change the way computer scientists approach algorithmic problems.
 Rather than designing and implementing complex algorithms themselves, recent advances in machine learning have allowed for learned algorithms.
-While these learned algorithm come with their own limitations and problems, e.g.\ lack of explainability, some of them have proven to solve classic algorithmic problems in a more performant fashion.
 
-Kraska et al.\ showed in their 2018 publication ``The case for Learned Index Structures'' that different index structures can be replaced by learned ones, greatly improving performance.\cite{KRA18}
-
-In the field of data cleaning and data enrichment, HoloClean lead the way for machine-learning approaches in the domain of data cleaning.\cite{HEI19}
-HoloClean is agnostic of the way data is structured, making it versitile for many different domains of application.
+Kraska et al.\ showed in their 2018 publication ``The case for Learned Index Structures'' that different index structures can be replaced by learned ones, greatly improving performance.~\cite{KRA18}
+In the field of data cleaning and data enrichment, HoloClean lead the way for machine-learning approaches in the domain of data cleaning.~\cite{HEI19}
+HoloClean is agnostic of the way data is structured, making it versatile for many different domains of application.
 
 In this work, machine-learning techniques are applied to the field of relational database theory --- more precisely, functional dependency detection.
+Stemming from the beginnings of relational database theory, functional dependencies were introduced to formalize normalization of relational schemata.
 
-Stemming from the early days of relational database theory, functional dependencies were introduced to formalize schema normalization.
-
-In this works' theory section, basic relational database terminology is introduced.
-The application of functional dependencies in normalization is presented.
+In the theoretical part of this thesis, the basic relational database terminology is introduced.
 Furthermore, limitations of canonical functional dependencies are mentioned and relaxed functional dependencies are introduced.
 With reference to Koudas et al., functional dependencies' robustness is discussed.
-A way of measuring robustness is proposed.
-Ultimately, machine-learning classification theory necessary for understanding the basic functionality of Datawig\cite{BIE18} is discussed.
+A method for measuring robustness is proposed.
+Mean square error and F1-Score are introduced to measure the performance of imputation models.
 
-Several experiments are conducted to explore machine-learning techniques working with functinoal dependencies. \textbf{continue here with description of experiments}.
+Machine-learning classification theory necessary for understanding the basic functionality of the Datawig framework~\cite{BIE18} is discussed.
+It is described how robustness of FDs is measured using an algorithm called FD Imputer.
+FD Imputer's machine-learning counterpart, called ML Imputer, is presented.
+The theoretical part of this thesis is concluded with a discussion of how to detect dependencies using learned imputation models using an algorithm called DepDetector.
+
+Several experiments are conducted to explore machine-learning techniques applied to functional dependency analysis.
+FD Imputer is run on a range of datasets and FDs are ranked according to their robustness.
+The experiment is repeated with ML Imputer.
+ML Imputer is overfitted and implications of overfitting on the FD robustness-ranking are examined.
+The final building block of the experimental section is formed by dependency detection with DepDetector.
+
+Results are discussed and recommendations for future research in learned dependency detection are issued in the final section of this work.

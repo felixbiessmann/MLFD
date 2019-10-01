@@ -5,6 +5,8 @@ headheight=30pt,
 footheight=30pt]{scrartcl}
 \usepackage[english]{babel}
 \usepackage{graphicx}
+\usepackage{siunitx}
+\sisetup{load-configurations = abbreviations}
 \usepackage{svg}
 \usepackage{makeidx}
 \usepackage[T1]{fontenc}
@@ -26,6 +28,7 @@ footheight=30pt]{scrartcl}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}  % pseudocode layout
 \usepackage{booktabs}  % beautiful tables
 \usepackage{url}
+\usepackage{abstract}
 \usepackage[section]{placeins}  % Paket für erweiterte Positionierung von Gleitobjekten,
 %Gleitobjekte dürfen Abschnitt nicht verlassen
 % \usepackage[nottoc]{tocbibind}
@@ -96,6 +99,7 @@ natbib=true
 \setlength{\abovedisplayskip}{12pt}
 \setlength{\belowdisplayskip}{12pt}
 \renewcommand{\baselinestretch}{1.2}
+\renewcommand{\abstractnamefont}{\Large}
 %+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++%
 \pagestyle{scrheadings}
 \ihead[]{\today} %- linke Kopfzeile
@@ -111,9 +115,14 @@ natbib=true
 \input{cover.tex}
 \pagenumbering{Roman}
 \input{abstract.tex}
+
 \newpage
 \newpage
+
 \tableofcontents
+\listoffigures
+\listoftables
+
 \newpage
 \pagenumbering{arabic}
 \linespread{1.5}

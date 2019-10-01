@@ -1,0 +1,12 @@
+\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax 
+\babel@toc {english}{}
+\contentsline {table}{\numberline {1}{\ignorespaces Example of an FD.\relax }}{3}{table.caption.8}
+\contentsline {table}{\numberline {2}{\ignorespaces The compound attributes \textsc {Address} and \textsc {Name} can be split into their atomic components \textsc {Town} and \textsc {Street} as well as \textsc {First Name} and \textsc {Surname}, respectively.\relax }}{6}{table.caption.19}
+\contentsline {table}{\numberline {3}{\ignorespaces Even though column \textsc {Zip} determines the content of column \textsc {Town}, an FD is not capable of displaying this fact due a typing error in column \textsc {Town}.\relax }}{8}{table.caption.23}
+\contentsline {table}{\numberline {4}{\ignorespaces The relation \( r \) is split into train- and test sets with a split-ratio \( s = 0.5 \). \relax }}{18}{table.caption.34}
+\contentsline {table}{\numberline {5}{\ignorespaces Performance of the FD Imputer on a selection of UCI datasets.\relax }}{25}{table.caption.42}
+\contentsline {table}{\numberline {6}{\ignorespaces Imputation coverage of FD Imputer on all UCI datasets for which FDs with continuous data in the RHS were detected.\relax }}{26}{table.caption.43}
+\contentsline {table}{\numberline {7}{\ignorespaces Statistical analysis of the computed MSEs when running FD Imputer with 84 different cFDs on the Abalone dataset.\relax }}{27}{table.caption.44}
+\contentsline {table}{\numberline {8}{\ignorespaces Performance of ML Imputer on eight different datasets when training on FDs with classifiable RHS entries.\relax }}{29}{table.caption.47}
+\contentsline {table}{\numberline {9}{\ignorespaces Statistical analysis of the Abalone dataset obtained by running ML Imputer with the same 84 cFDs as used in the generation of table~\ref {tab:fd-imputer-mse-abalone}.\relax }}{30}{table.caption.48}
+\contentsline {table}{\numberline {10}{\ignorespaces Result of running dependency detection on selected datasets. Values in brackets are the runtime until convergence. `TL' indicates that a time limit of 350~min is reached.\relax }}{33}{table.caption.52}
