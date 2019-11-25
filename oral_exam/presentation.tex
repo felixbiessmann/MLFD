@@ -78,8 +78,12 @@ philippjung@posteo.de
 \end{frame}
 
 \begin{frame}
-    \frametitle{FD Detection Complexity}
+    \frametitle{FD Detection Search Space Size}
     \includegraphics[width=\textwidth]{fd_detection_complexity}\footnotetext{Image from~\cite{ABE19}}
+    \newline
+    \vspace*{0.3 cm}
+    \newline
+    The number of FD candidates for $m$ attributes is $\mathcal{O}(\frac{m}{2} \cdot 2^m)$.
 \end{frame}
 
 \begin{frame}
@@ -111,12 +115,20 @@ philippjung@posteo.de
     \end{itemize}
 \end{frame}
 
+\begin{frame}
+    \frametitle{DataWig}
+    \begin{itemize}
+        \item DataWig is a framework for learning models to impute missing values in tables
+        \item Data imputation: Replace missing or faulty data
+        \item Models trained by DataWig use either regression or multi-label classification
+        \item DataWig models can be benchmarked against FD Imputer
+    \end{itemize}
+\end{frame}
 
 \section{FD Imputer}
 \begin{frame}
-    \frametitle{FD as a Learned Model for Data Imputation}
+    \frametitle{FD Imputer: FDs as Models}
     \begin{itemize}
-        \item Data imputation: Replace missing or faulty data
         \item Interpret FDs as rules for data imputation
         \item Write FD Imputer: An imputation model entirely based on FDs
         \item Measure \emph{Robustness}: Either the F1-Score or the MSE that FD Imputer obtains for a FD
@@ -206,30 +218,21 @@ In this example, FD Imputer uses the FD \textsc{C}~$\rightarrow$~\textsc{D}.
 \end{frame}
 
 \begin{frame}
-    \frametitle{DataWig}
-    \begin{itemize}
-        \item DataWig is a framework for learning models to impute missing values in tables
-        \item Models trained by DataWig use either regression or multi-label classification
-        \item DataWig models can be benchmarked against FD Imputer
-    \end{itemize}
-\end{frame}
-
-\begin{frame}
     \frametitle{Benchmarking FD Imputer}
     \begin{table}[ht]
         \centering
         \begin{tabular}{lrrrrrr}
             \toprule
             \toprule
-            Dataset & \#FDs & \#FD (F1 = 0) & F1\textsubscript{mean} & F1\textsubscript{max} \\
+            Dataset & \#FDs\textsubscript{train} & \#FD (F1 = 0) & F1\textsubscript{mean} & F1\textsubscript{max} \\
             \midrule
-            Abalone & 175 & 45 & 0.0008 & 0.0048 \\
-            Adult & 93 & 10 & 0.0669 & 1.0000 \\
+            Abalone & 193 & 45 & 0.0008 & 0.0048 \\
+            Adult & 88 & 10 & 0.0669 & 1.0000 \\
             Balance S. & 7 & 6 & 0.0000 & 0.0000 \\
-            Breast C. W. & 57 & 10 & 0.2198 & 0.7539 \\
+            Breast C. W. & 77 & 10 & 0.2198 & 0.7539 \\
             Chess & 9 & 8 & 0.0000 & 0.0000 \\
-            Iris & 9 & 1 & 0.1274 & 0.2252 \\
-            Letter & 78 & 17 & 0.2347 & 0.3737 \\
+            Iris & 8 & 1 & 0.1274 & 0.2252 \\
+            Letter & 80 & 17 & 0.2347 & 0.3737 \\
             Nursery & 11 & 10 & 0.0000 & 0.0000  \\
             \bottomrule
             \bottomrule
@@ -248,7 +251,6 @@ In this example, FD Imputer uses the FD \textsc{C}~$\rightarrow$~\textsc{D}.
     \begin{itemize}
         \item Some FDs are more robust than others
         \item FD Imputer performs generally worse than the model trained with DataWig
-        \item Only for two FDs there is an equal F1-Score for the two models
         \item This concerns only classifiable data -- it is generally impossible to impute continuous numerical data with FD Imputer
     \end{itemize}
 \end{frame}
@@ -445,6 +447,38 @@ The FD \textsc{Zip}~$\rightarrow$~\textsc{Town} is violated by the second row. A
         \end{tabular}
         \caption{Imputation coverage of FD Imputer on all UCI datasets for which FDs with continuous data in the RHS were detected.}\label{tab:fd-imputer-mse}
     \end{table}
+\end{frame}
+
+\begin{frame}
+    \frametitle{FD Imputer Continuous Data Definitions}
+    \begin{align*}
+        \text{mean missing values per cFD} = \sum_{i} \frac{\text{missing imputations}}{\text{cFD}_i} \cdot \left(\text{\# cFDs}\right)^{-1} \\
+        \text{mean coverage} = \left( 1 - \frac{\text{mean missing values per cFD}}{\text{\# rows in }r_{test}} \right) \cdot 100
+    \end{align*}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Machine Learning Models}
+    \includegraphics[width=.95\textwidth]{mi-models.pdf}
+    \footnotetext{Image from Prof.\ Obermeyer, Neural Information Processing Group TU Berlin}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Definition Robustness Continous Data}
+If \textsc{A} contains continuous numerical data, the MSE is determined to measure robustness:
+\begin{align}\label{eq:robustness-mse}
+    \text{robustness\textsubscript{MSE}} = \frac{1}{p-m}\sum_{i=m+1}^{p} \left(t_{i}^{\ast}[A] - t_{i}^{\prime}[A]\right)^2.
+\end{align}
+Here, \( p \in \mathbb{N} \) denotes the number of tuples in a relational instance and \( m \) is the number of imputed tuples.
+\end{frame}
+
+\begin{frame}
+    \frametitle{Definition Robustness Classifiable Data}
+    If \textsc{A} contains classifiable data, the F1-Score is calculated to measure robustness:
+    \begin{align}\label{eq:robustness-f1-score}
+        \text{robustness\textsubscript{F1-Score}} = {\left(\frac{Recall(r_{imp}, r_{test})^{-1} + Precision(r_{imp}, r_{test})^{-1}}{2}\right)}^{-1}
+    \end{align}
 \end{frame}
 
 \end{document}
