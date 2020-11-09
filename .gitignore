@@ -15,7 +15,7 @@
 # metanome binaries
 performance/
 presentation/
-MLFD_fd_detection/
+#MLFD_fd_detection/
 imputer_model/
 
 # python stuff

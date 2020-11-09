@@ -1,0 +1,24 @@
+# TABLES
+nursery.csv	1
+# COLUMN
+1.recommend	9
+1.usual	2
+1.0	1
+1.1	5
+1.complete	4
+1.convenient	6
+1.recommended	8
+1.proper	3
+1.nonprob	7
+# RESULTS
+1->3
+1->9
+1->4
+1->5
+1->2
+1->6
+1->7
+1->8
+1->6
+5,4,6,7,3,8,2->1
+5,4,6,7,3,8,2->9

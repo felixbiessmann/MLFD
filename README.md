@@ -1,21 +1,27 @@
 # MLFD
-Machine Learning for Functional Dependencies
+With this repository I try to leverage machine learning for Approximate Functional Dependency (AFD) detection, based on Philipp Jung's Master thesis at Beuth University of Applied Sciences, under the supervision of Prof. Felix Biessmann.
 
 ## Installation
-Clone the project and cd into the folder.
+The repo requires python version 3.7.3 -- this is due to `datawig`'s dependency with mxnet.
+To clone the project and install dependencies, do as follows:
 
 ```
-git clone https://github.com/Larmor27/MLFD_fd_detection
-cd MLFD_fd_detection
-pip install datawig sklearn numpy pandas anytree
+git clone https://github.com/felixbiessmann/MLFD
+cd MLFD
+pip install -r requirements.txt
 ```
 
-If you want to perform FD-detection as well, load metanome binaries from separate repository.
-```
-git clone https://github.com/Larmor27/MLFD_fd_detection.git
-```
+## Detect FDs Conventionally
+To measure performance of conventional FD-detection algorithms, we use [metanome]((https://github.com/HPI-Information-Systems/Metanome) and [metanome-cli](https://github.com/sekruse/metanome-cli). In `backend/WEB-INF` there is a subfolder `classes` where all algorithms(`algorithms/`) and datasets(`inputData/`) are stored.
 
-Analysis has been moved to `fd_imputer_analysis.ipynb` within the root-folder of the project. Run `jupyter notebook` in the root directory to start a jupyter notebook server and access the notebook.
+To start Metanome, you call `./run.sh` within the `performance/` folder. Open the graphical interface in your browser and use it to add algorithms and datasets.
 
-## Detect FDs
-At this point, FD detection has to be performed manually using Metanome. To do so, follow the instructions in the MLFD_fd_detection repository.
+## Detect AFDs with MLFD
+In the project's root folder, run
+```python
+python computer.py --model greedy_detect --data iris
+```
+to use the greedy strategy on the iris dataset.
+
+## Plot results
+WIP
