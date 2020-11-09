@@ -309,14 +309,15 @@ def compute_complete_dep_detector(data, save=False):
     dep_optimizer.search_dependencies(strategy='complete', dry_run=False)
     end = timeit.default_timer()
     t = end - start
-    print('Time: '+str(t))
     result = {'time': t,
               'dep_optimizer': dep_optimizer}
     if save:
+        print('Time: '+str(t))
         path = data.results_path + "dep_detector_complete_object.p"
         save_pickle(result, path)
     else:
-        return result
+        print('\n~~~~~~~~~~~~~~~~~~~~\n')
+        print(result['dep_optimizer'].print_trees())
 
 
 def compute_greedy_dep_detector(data, save=False):
@@ -374,12 +375,18 @@ def compute_fd_imputer(data, save=False):
 def main(args):
     """ Calculate results for the Master Thesis. """
 
+    # determine whether to save or not
+    if args.display:
+        save_result = False
+    else:
+        save_result = True
+
     # this appears to be neccessary to avoid 'too many open files'-errors
     import resource
     soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
     resource.setrlimit(resource.RLIMIT_NOFILE, (100000, hard))
 
-    def no_valid_model(data, save):
+    def no_valid_model(data):
         print("No valid model. Please specify one of the following models:")
         for key in list(models.keys()):
             print(key)
@@ -401,7 +408,9 @@ def main(args):
         # c.HEPATITIS.title: c.HEPATITIS, mixed dtypes in col 17
         # c.HORSE.title: c.HORSE, mixed dtypes in unknown col
         c.IRIS.title: c.IRIS,
-        c.LETTER.title: c.LETTER
+        c.LETTER.title: c.LETTER,
+        c.MOVIES_DURATION.title: c.MOVIES_DURATION,
+        c.MOVIES_ORDERING.title: c.MOVIES_ORDERING
     }
 
     models = {'fd_imputer': compute_fd_imputer,
@@ -422,8 +431,8 @@ def main(args):
 
     if (args.cluster_mode):
         for dataset in datasets.values():
-            compute_complete_dep_detector(dataset, save=True)
-            compute_greedy_dep_detector(dataset, save=True)
+            compute_complete_dep_detector(dataset, save=save_result)
+            compute_greedy_dep_detector(dataset, save=save_result)
 
     else:
         data = datasets.get(args.data, no_valid_data)
@@ -432,9 +441,9 @@ def main(args):
         else:
             calc_fun = models.get(args.model, no_valid_model)
             if args.model not in special_models:
-                calc_fun(data, save=True)
+                calc_fun(data, save=save_result)
             elif args.model == 'dep_lhs_stability':
-                calc_fun(data, column=args.column, save=True)
+                calc_fun(data, column=args.column, save=save_result)
             elif args.model == 'fd_imputer_stats':
                 print_fd_imputer_stats(datasets.values())
             elif args.model == 'ml_imputer_stats':
@@ -448,6 +457,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--data')
     parser.add_argument('-c', '--column')
     parser.add_argument('-cl', '--cluster_mode')
+    parser.add_argument('-dis', '--display', action='store_true')
 
     args = parser.parse_args()
     main(args)

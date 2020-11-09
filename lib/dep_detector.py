@@ -336,7 +336,7 @@ class DepOptimizer():
                 is_cont = True
             if is_cont:  # threshold is a MSE
                 d = pd.concat([self.df_train, self.df_validate, self.df_test])
-                thresh = d.loc[:, col].mean()*0.2  # this is bad
+                thresh = d.loc[:, col].mean()*0.4  # this is bad
             if not is_cont:
                 thresh = self.f1_threshold
             self.roots[col] = RootNode(name=col,

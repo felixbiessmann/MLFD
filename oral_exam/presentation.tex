@@ -121,8 +121,9 @@ philippjung@posteo.de
     \frametitle{Research Objectives}
     \begin{itemize}
         \item Interpret FDs as \emph{learned} constraints
-        \item Detect FDs with machine-learning techniques
-        \item Compare results to existing algorithms
+        \item Train data imputation models with DataWig and benchmark them against FD-based models
+        \item Identify similarities and leverage them to derive FDs from learned models
+        \item Detect minimal FDs
     \end{itemize}
 \end{frame}
 
@@ -151,7 +152,7 @@ philippjung@posteo.de
     \begin{enumerate}
         \item Split dataset in train-set and test-set
         \item Detect FDs on train-set using HyFD\footcite{PAP16}
-        \item For each FD, impute the right hand side for each tuple in the test-set by looking for a tuple with an identical left hand side in the train-set
+        \item For each FD, impute the right hand side for each row in the \textbf{test}-set. Do so by finding a tuple with equal left hand side in the \textbf{train}-set
         \item Compute \emph{Robustness} by evaluating FD Imputer's performance for each FD (F1-Score or Mean Squared Error)
     \end{enumerate}
 \end{frame}
@@ -263,7 +264,7 @@ In this example, FD Imputer uses the FD \textsc{C}~$\rightarrow$~\textsc{D}.
 \end{frame}
 
 \begin{frame}
-    \frametitle{Benchmarking FD Imputer}
+    \frametitle{Summary of FD Imputer Results}
     \begin{itemize}
         \item Some FDs are more robust than others
         \item FD Imputer performs generally worse than the model trained with DataWig
@@ -272,7 +273,7 @@ In this example, FD Imputer uses the FD \textsc{C}~$\rightarrow$~\textsc{D}.
 \end{frame}
 
 \begin{frame}
-    \frametitle{FD Imputer is Overfitting}
+    \frametitle{FD Imputer is Overfitting by Design}
     \begin{block}{Haykin 2008}
         ``[Overfitting] is essentially a `look-up table', which implies that the input-output mapping [\dots] is not smooth.''\footcite[p.~165]{HAY08}
     \end{block}
@@ -286,13 +287,18 @@ In this example, FD Imputer uses the FD \textsc{C}~$\rightarrow$~\textsc{D}.
 
 \begin{frame}
     \frametitle{Deriving FDs from Trained Models}
- When overfitting DataWig models, one cannot ensure that overfitting takes place on FD-attributes. Thus, it does not appear to be possible to derive FDs with trained models based on empirical risk minimization (ERM).
     \begin{itemize}
-        \item It does not appear to be possible to derive FDs with ERM-based imputation models
-        \item But what about Relaxed Functional Dependencies (RFDs)?
+        \item When overfitting DataWig models, one cannot control that overfitting takes place on LHS FD-attributes
     \end{itemize}
+    \begin{block}{Proposition}
+        In consequence, it does not appear to be possible to derive FDs with ERM-based imputation models.
+    \end{block}
 \end{frame}
 
+\begin{frame}
+    \frametitle{Deriving FDs from Trained Models}
+    But what about Relaxed Functional Dependencies (RFDs)?
+\end{frame}
 \section{DepDetector}
 \begin{frame}
     \frametitle{RFDs as Models}
@@ -390,14 +396,20 @@ The FD \textsc{Zip}~$\rightarrow$~\textsc{Town} is violated by the second row. A
 \begin{frame}
     \frametitle{DepDetector Properties}
     \begin{itemize}
-        \item DepDetector solves an optimization problem on a directed graph, whereas in FD detection, tuple-comparison is performed
-        \item DepDetector depends on one threshold for classifiable data and continous numerical data respectively
-        \item Machine learning classifier/regressor models have the potential to unify RFDs
+        \item DepDetector solves an optimization problem on a directed graph
+        \item DepDetector depends on one threshold for classifiable data and one threshold for continous numerical data
     \end{itemize}
 \end{frame}
 
 \begin{frame}
-    \frametitle{DepDetector Dependency Results}
+    \frametitle{DepDetector Properties}
+    \begin{block}{Proposition}
+        Machine learning classifier/regressor models may have the potential to unify a number of RFDs.
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Summary of DepDetector Results}
     \begin{table}[ht]
         \centering
         \begin{tabular}{lrrrrrr}
@@ -495,6 +507,20 @@ Here, \( p \in \mathbb{N} \) denotes the number of tuples in a relational instan
     \begin{align}\label{eq:robustness-f1-score}
         \text{robustness\textsubscript{F1-Score}} = {\left(\frac{Recall(r_{imp}, r_{test})^{-1} + Precision(r_{imp}, r_{test})^{-1}}{2}\right)}^{-1}
     \end{align}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Empirical Risk Minimization}
+    \begin{itemize}
+        \item We cannot know how an algorithm will be influenced when it is used in practice (\emph{risk})
+        \item We thus simulate the fact that the true distribution of data is unknown by creating models on a subset of the whole dataset (\emph{empirical risk})
+        \item By minimizing the empirical risk and preventing overfitting by cross-validation or train/test validation, we make models resistant towards noise
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{ERM and Overfitting}
+    \includegraphics[width=\textwidth]{erm-overfitting}
 \end{frame}
 
 \end{document}

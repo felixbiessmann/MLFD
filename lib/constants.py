@@ -97,3 +97,15 @@ LETTER = Dataset(title='letter',
                  fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T085300_fds',
                  continuous=[0],  # this is hard to decide
                  missing_value_token='')
+
+MOVIES_DURATION = Dataset(title='movies_duration',
+                         original_separator=',',
+                         fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T085300_fds',
+                         continuous=[0, 1],
+                         missing_value_token='')
+
+MOVIES_ORDERING = Dataset(title='movies_ordering',
+                         original_separator=',',
+                         fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T085300_fds',
+                         continuous=[0, 1],
+                         missing_value_token='')
