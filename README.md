@@ -11,6 +11,13 @@ cd MLFD
 pip install -r requirements.txt
 ```
 
+To fetch the metanome binaries and download the test datasets, run
+```
+python get_binaries.py
+```
+
+which will create a new folder calles `MLFD_fd_detection/` and download the metanome binaries and test datasets.
+
 ## Detect FDs Conventionally
 To measure performance of conventional FD-detection algorithms, we use [metanome]((https://github.com/HPI-Information-Systems/Metanome) and [metanome-cli](https://github.com/sekruse/metanome-cli). In `backend/WEB-INF` there is a subfolder `classes` where all algorithms(`algorithms/`) and datasets(`inputData/`) are stored.
 
