@@ -1,29 +1,23 @@
 import os
 root = os.path.dirname(os.path.abspath(__file__))+'/..'
 
-METANOME_DATA_PATH = root+'/MLFD_fd_detection/backend/WEB-INF/classes/inputData/'
+METANOME_DATA_PATH = f'{root}/MLFD_fd_detection/backend/WEB-INF/classes/inputData/'
 
 
 class Dataset:
     def __init__(self, title, fd_path, continuous,
                  original_separator, missing_value_token):
         self.title = title
-        self.figures_path = '{0}{1}{2}/'.format(root,
-                                                '/figures/',
-                                                title)
-        self.results_path = '{0}{1}{2}/'.format(root,
-                                                '/figures/results/',
-                                                title)
-        self.fd_path = root+'/MLFD_fd_detection/results/'+fd_path
+        self.figures_path = f'{root}/figures/{title}/'
+        self.results_path = f'{root}/figures/results/{title}/'
+        self.fd_path = f'{root}/MLFD_fd_detection/results/{fd_path}'
         self.continuous = continuous
-        self.random_fd_path = '{0}{1}'.format(self.results_path,
-                                              'random_fds.p')
-        self.data_path = root+'/MLFD_fd_detection/data/'+title+'.csv'
-        self.splits_path = root+'/MLFD_fd_detection/data/'
+        self.random_fd_path = f'{self.results_path}random_fds.p'
+        self.data_path = f'{root}/MLFD_fd_detection/data/{title}.csv'
+        self.splits_path = f'{root}/MLFD_fd_detection/data/'
         self.original_separator = original_separator
         self.missing_value_token = missing_value_token
-        self.dep_optimizer_results_path = root+'/figures/results/'\
-            + title+'/'
+        self.dep_optimizer_results_path = f'{root}/figures/results/{title}'
 
 
 ADULT = Dataset(title='adult',
