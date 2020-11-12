@@ -6,6 +6,7 @@ s3_client = boto3.client('s3')
 # taken from the good people over at stackoverflow
 # https://stackoverflow.com/a/56267603
 
+
 def download_dir(prefix, local, bucket, client=s3_client):
     """
     params:
@@ -18,8 +19,8 @@ def download_dir(prefix, local, bucket, client=s3_client):
     dirs = []
     next_token = ''
     base_kwargs = {
-        'Bucket':bucket,
-        'Prefix':prefix,
+        'Bucket': bucket,
+        'Prefix': prefix,
     }
     while next_token is not None:
         kwargs = base_kwargs.copy()
@@ -44,8 +45,9 @@ def download_dir(prefix, local, bucket, client=s3_client):
             os.makedirs(os.path.dirname(dest_pathname))
         client.download_file(bucket, k, dest_pathname)
 
+
 folder_name = 'MLFD_fd_detection'
-bucket_name= 'mlfd-data'
+bucket_name = 'mlfd-data'
 os.mkdir(folder_name)
 download_dir('', folder_name, bucket_name, s3_client)
 print('Finished fetching binaries')

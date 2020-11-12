@@ -1,4 +1,8 @@
-from datawig import SimpleImputer
+#from datawig import SimpleImputer
+import autogluon as ag
+from autogluon import TabularPrediction as task
+from sklearn.model_selection import train_test_split
+
 
 def check_split_for_duplicates(list_of_dfs):
     """ Prints and returns number of duplicate entries in a list of dfs """
@@ -364,48 +368,30 @@ def split_df(data_title, df, split_ratio, splits_path=''):
     split_ratio - - train/test/validate set ratio, e.g. [0.8, 0.1, 0.1]
     """
     import os
-    from datawig.utils import random_split
     import numpy as np
 
-    ratio_train, ratio_validate, ratio_test = (split_ratio)
+    train_ratio, validate_ratio, test_ratio = (split_ratio)
 
     # compare first col with index. if not equal...
     if not np.array_equal(df.iloc[:, 0].values, np.array(df.index)):
         # ...set index as 0th column such that fd_imputer can use it to impute
-        print('kein doppelter index')
+        print('No double index detected.')
         df = index_as_first_column(df)
 
-    splits = {
-        'train': {'path': splits_path+'train/',
-                  'ratio': ratio_train},
-        'validate': {'path': splits_path+'validate/',
-                     'ratio': ratio_validate},
-        'test': {'path': splits_path+'test/',
-                 'ratio': ratio_test}
-    }
+    train_path = f'{splits_path}train/'
+    validate_path = f'{splits_path}validate/'
+    test_path = f'{splits_path}validate/'
 
-    for key in splits:
-        if not os.path.exists(splits[key]['path']):
-            os.mkdir(splits[key]['path'])
+    for p in [train_path, validate_path, test_path]:
+        if not os.path.exists(p):
+            os.mkdir(p)
 
-    ratio_rest = splits['validate']['ratio'] + splits['test']['ratio']
-
-    ratios = [splits['train']['ratio'], ratio_rest]
-    splits['train']['df'], rest = random_split(df, split_ratios=ratios)
-
-    # calculate ratio_validate and ratio_test relative to ratio_rest
-    splits['test']['rel_ratio'] = splits['test']['ratio'] / ratio_rest
-    splits['validate']['rel_ratio'] = 1 - splits['test']['rel_ratio']
-    rel_ratios = [splits['test']['rel_ratio'],
-                  splits['validate']['rel_ratio']]
-
-    splits['validate']['df'], splits['test']['df'] = random_split(
-        rest, split_ratios=rel_ratios)
+    rest_df, test_df = train_test_split(df, test_size=test_ratio)
+    train_df, validate_df = train_test_split(rest_df, test_size=validate_ratio)
 
     if splits_path == '':
-        return(splits['train']['df'],
-               splits['validate']['df'],
-               splits['test']['df'])
+        return(train_df, validate_df, test_df)
+
     else:
         try:
             df.to_csv(splits_path+data_title+'.csv', header=None, sep=',',
@@ -416,12 +402,13 @@ def split_df(data_title, df, split_ratio, splits_path=''):
         except TypeError:
             print('Could not save dataframe to '+splits_path+data_title)
 
-        for key in splits:
+        for name, df, path in [('train', train_df, train_path),
+                               ('test', test_df, test_path),
+                               ('validate', validate_df, validate_path)]:
             try:
-                splits[key]['df'].to_csv(
-                    splits[key]['path']+data_title+'_'+key+'.csv', sep=',',
-                    index=False, header=None)
-                print(key+' set successfully written to ' +
-                      splits[key]['path']+data_title+'_'+key+'.csv')
+                save_path = f'{path}{data_title}_{name}.csv'
+                df.to_csv(save_path, sep=',',
+                          index=False, header=None)
+                print(f'{name} set successfully written to {save_path}.')
             except TypeError:
-                print("Something went wrong writing the splits.")
+                print("Something went wrong writing the splits to files.")
