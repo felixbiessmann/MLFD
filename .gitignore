@@ -12,11 +12,17 @@
 *.out
 *.bcf
 
-# metanome binaries
-performance/
+# Thesis presentation
 presentation/
-MLFD_fd_detection/
+
+# Model storage
+##autogluon
+agModels-predictClass/
+## datawig
 imputer_model/
+
+# metanome binaries
+MLFD_fd_detection/
 
 # python stuff
 __pycache__/

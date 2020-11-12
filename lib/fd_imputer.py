@@ -257,8 +257,32 @@ def get_performance(df_imputed, rhs: str, lhs: list, continuous_cols: list):
     return result
 
 
-def ml_imputer(df_train, df_validate, df_test, impute_column, epochs=10):
-    """ Imputes a column using DataWigs SimpleImputer
+def ml_imputer(df_train, df_validate, df_test, label_column):
+    train_data = task.Dataset(df_train)
+    test_data = task.Dataset(df_test)
+    train_data.columns = [str(i) for i in df_train.columns]
+    test_data.columns = [str(i) for i in df_test.columns]
+
+    dir = 'agModels-predictClass'  # folder to store trained models
+    predictor = task.fit(train_data=train_data, label=str(label_column),
+            output_directory=dir)
+
+    label_test = test_data.loc[:, str(label_column)]
+    test_data_no_label = test_data.drop(labels=[str(label_column)], axis=1)
+
+    label_pred = predictor.predict(test_data_no_label)
+    perf = predictor.evaluate_predictions(y_true=label_test,
+        y_pred=label_pred, auxiliary_metrics=True)
+    print(perf)
+
+    return (label_pred)
+
+
+def ml_imputer_old(df_train, df_validate, df_test, impute_column, epochs=10):
+    """
+    TODO  REPLACE WITH ml_imputer() AND DELETE
+
+    Imputes a column using DataWigs SimpleImputer
 
     Keyword arguments:
     df_train - - dataframe containing the train set
@@ -319,21 +343,9 @@ def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
         rhs_results = []
         for lhs in fds[rhs]:
             relevant_cols = lhs + [rhs]
-
-            # cast rhs to str to make sure that datawig doesn't perform
-            # regression on categories. Also, select relevant subsets to
-            # improve performance.
-            if rhs not in continuous_cols:
-                df_subset_train = df_train.iloc[:, relevant_cols].astype(
-                    {rhs: str})
-                df_subset_validate = df_validate.iloc[:, relevant_cols].astype(
-                    {rhs: str})
-                df_subset_test = df_test.iloc[:, relevant_cols].astype(
-                    {rhs: str})
-            else:
-                df_subset_train = df_train.iloc[:, relevant_cols]
-                df_subset_validate = df_validate.iloc[:, relevant_cols]
-                df_subset_test = df_test.iloc[:, relevant_cols]
+            df_subset_train = df_train.iloc[:, relevant_cols]
+            df_subset_validate = df_validate.iloc[:, relevant_cols]
+            df_subset_test = df_test.iloc[:, relevant_cols]
 
             print(lhs, rhs)
             df_imputed = ml_imputer(df_subset_train,
@@ -396,11 +408,9 @@ def split_df(data_title, df, split_ratio, splits_path=''):
         try:
             df.to_csv(splits_path+data_title+'.csv', header=None, sep=',',
                       index=False)
-            print('Dataset successfully written to '
-                  + splits_path+data_title +
-                  '.csv')
+            print(f'Dataset successfully written to {splits_path}{data_title}.csv')
         except TypeError:
-            print('Could not save dataframe to '+splits_path+data_title)
+            print(f'Could not save dataframe to {splits_path}{data_title}')
 
         for name, df, path in [('train', train_df, train_path),
                                ('test', test_df, test_path),
