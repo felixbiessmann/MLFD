@@ -154,7 +154,7 @@ class RootNode(tree.NodeMixin):
         elif strategy == 'complete':
             candidates_generator = self.get_complete_candidates
         else:
-            raise ValueError('''Indicate a valid stretegy for
+            raise ValueError('''Indicate a valid strategy for
                     dependency detection - either greeedy or
                     complete''')
         steps = 0

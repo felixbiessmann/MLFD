@@ -1,3 +1,5 @@
+from datawig import SimpleImputer
+
 def check_split_for_duplicates(list_of_dfs):
     """ Prints and returns number of duplicate entries in a list of dfs """
     import pandas as pd
@@ -261,8 +263,6 @@ def ml_imputer(df_train, df_validate, df_test, impute_column, epochs=10):
     impute_column - - position(int) of column to be imputed, starting at 0
     epochs - - int, number of training_epochs to use with SimpleImputer.fit
     """
-    from datawig import SimpleImputer
-
     columns = list(df_train.columns)
 
     # SimpleImputer expects dataframes to have stringtype headers.
