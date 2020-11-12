@@ -383,8 +383,13 @@ def main(args):
 
     # this appears to be neccessary to avoid 'too many open files'-errors
     import resource
-    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-    resource.setrlimit(resource.RLIMIT_NOFILE, (100000, hard))
+
+    # The two following lines set the max number of open files. However,
+    # this does not work on Mac OSX, which is why they're commented out
+    # for now.
+
+    # soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    # resource.setrlimit(resource.RLIMIT_NOFILE, (100000, hard))
 
     def no_valid_model(data):
         print("No valid model. Please specify one of the following models:")
