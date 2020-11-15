@@ -275,7 +275,7 @@ def ml_imputer(df_train, df_validate, df_test, label_column):
         y_pred=label_pred, auxiliary_metrics=True)
     print(perf)
 
-    return (label_pred)
+    return label_pred
 
 
 def ml_imputer_old(df_train, df_validate, df_test, impute_column, epochs=10):
@@ -351,8 +351,7 @@ def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
             df_imputed = ml_imputer(df_subset_train,
                                     df_subset_validate,
                                     df_subset_test,
-                                    str(rhs),
-                                    cycles)
+                                    str(rhs))
 
             result = get_performance(df_imputed, rhs, lhs, continuous_cols)
             rhs_results.append(result)
@@ -392,7 +391,7 @@ def split_df(data_title, df, split_ratio, splits_path=''):
 
     train_path = f'{splits_path}train/'
     validate_path = f'{splits_path}validate/'
-    test_path = f'{splits_path}validate/'
+    test_path = f'{splits_path}test/'
 
     for p in [train_path, validate_path, test_path]:
         if not os.path.exists(p):
