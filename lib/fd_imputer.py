@@ -1,4 +1,5 @@
 #from datawig import SimpleImputer
+from collections import namedtuple
 import autogluon as ag
 from autogluon import TabularPrediction as task
 from sklearn.model_selection import train_test_split
@@ -132,7 +133,7 @@ def fd_imputer(df_train, df_validate, fd):
         keep='first',
         inplace=False)
 
-    """ reset_index() and set_index() is a way to preserver df_test's index
+    """ reset_index() and set_index() is a way to preserve df_test's index
     which is normally lost due to pd.merge()."""
     df_imputed = pd.merge(df_train_reduced,
                           df_validate.iloc[:, relevant_cols].reset_index(),
@@ -184,7 +185,7 @@ def run_fd_imputer_on_fd_set(df_train, df_validate, fds,
             print(fd)
 
             df_fd_imputed = fd_imputer(df_train, df_validate, fd)
-            result = get_performance(df_fd_imputed, str(rhs), lhs,
+            result = get_performance_fd(df_fd_imputed, str(rhs), lhs,
                                      continuous_cols)
             rhs_results.append(result)
             if debug:
@@ -198,7 +199,7 @@ def run_fd_imputer_on_fd_set(df_train, df_validate, fds,
         return fd_imputer_results
 
 
-def get_performance(df_imputed, rhs: str, lhs: list, continuous_cols: list):
+def get_performance_ml(performance, rhs: str, lhs: list, continuous_cols: list):
     """ Create a dictionary containing metrics to measure the perfor-
     mance of a classifier. If the classified column contains continuous
     values, return a dictionary with keys {'nans', 'lhs', 'mse'}.
@@ -207,7 +208,66 @@ def get_performance(df_imputed, rhs: str, lhs: list, continuous_cols: list):
     'precision'}.
 
     Keyword arguments:
-    df_imputer -- dataframe. Column names are expected to be strings.
+    df_imputed -- dataframe. Column names are expected to be strings.
+    One column needs to be called rhs, another one rhs+'_imputed'.
+    rhs -- string, name of the column that has been imputed
+    lhs -- list of strings, lhs of the FD
+    continuous_cols -- list of strings, names of columns containing
+    continuous values
+    """
+    from sklearn import metrics
+
+    # turn everything into strings to facilitate df selection
+    rhs = str(rhs)
+    lhs = list(map(str, lhs))
+    print(performance['mean_squared_error'])
+
+    #if rhs in continuous_cols:  # ignore NaNs, count them
+    #    result_selector = df_imputed.loc[:, rhs+'_imputed'].isna()
+    #    y_true = df_imputed.loc[~result_selector, rhs]
+    #    y_pred = df_imputed.loc[~result_selector, rhs+'_imputed']
+    #    no_nans = result_selector.sum()
+    #else:  # include NaNs, adjust dtype
+    #    if isinstance(df_imputed.loc[0, rhs], str):
+    #        df_imputed = df_imputed.fillna('no value')
+    #    else:
+    #        df_imputed = df_imputed.fillna(123456789)
+    #    y_true = df_imputed.loc[:, rhs]
+    #    y_pred = df_imputed.loc[:, rhs+'_imputed']
+
+    #if rhs in continuous_cols:
+    #    mse = ''
+    #    if len(y_pred) > 0:
+    #        mse = metrics.mean_squared_error(y_true, y_pred)
+
+    #    result = {'nans': no_nans, 'lhs': lhs, 'mse': mse}
+    #else:
+    #    result = {
+    #        'lhs': lhs,
+    #        'f1': metrics.f1_score(y_true,
+    #                               y_pred,
+    #                               average='weighted'),
+    #        'recall': metrics.recall_score(y_true,
+    #                                       y_pred,
+    #                                       average='weighted'),
+    #        'precision': metrics.precision_score(y_true,
+    #                                             y_pred,
+    #                                             average='weighted')
+    #    }
+    #return result
+
+
+
+def get_performance_fd(df_imputed, rhs: str, lhs: list, continuous_cols: list):
+    """ Create a dictionary containing metrics to measure the perfor-
+    mance of a classifier. If the classified column contains continuous
+    values, return a dictionary with keys {'nans', 'lhs', 'mse'}.
+    'mse' is the mean squared error. If the classified column contains
+    discrete values, return a dictionary with keys {'lhs', 'f1', 'recall',
+    'precision'}.
+
+    Keyword arguments:
+    df_imputed -- dataframe. Column names are expected to be strings.
     One column needs to be called rhs, another one rhs+'_imputed'.
     rhs -- string, name of the column that has been imputed
     lhs -- list of strings, lhs of the FD
@@ -258,6 +318,8 @@ def get_performance(df_imputed, rhs: str, lhs: list, continuous_cols: list):
 
 
 def ml_imputer(df_train, df_validate, df_test, label_column):
+    result = namedtuple("ml_imputer_result", ["imputed_colum",
+                                              "performance"])
     train_data = task.Dataset(df_train)
     test_data = task.Dataset(df_test)
     train_data.columns = [str(i) for i in df_train.columns]
@@ -265,56 +327,19 @@ def ml_imputer(df_train, df_validate, df_test, label_column):
 
     dir = 'agModels-predictClass'  # folder to store trained models
     predictor = task.fit(train_data=train_data, label=str(label_column),
-            output_directory=dir)
+                         output_directory=dir)
 
-    label_test = test_data.loc[:, str(label_column)]
+    y_test = test_data.loc[:, str(label_column)]
     test_data_no_label = test_data.drop(labels=[str(label_column)], axis=1)
 
-    label_pred = predictor.predict(test_data_no_label)
-    perf = predictor.evaluate_predictions(y_true=label_test,
-        y_pred=label_pred, auxiliary_metrics=True)
-    print(perf)
+    y_pred = predictor.predict(test_data_no_label)
+    perf = predictor.evaluate_predictions(y_true=y_test,
+                                          y_pred=y_pred,
+                                          auxiliary_metrics=True)
 
-    return label_pred
-
-
-def ml_imputer_old(df_train, df_validate, df_test, impute_column, epochs=10):
-    """
-    TODO  REPLACE WITH ml_imputer() AND DELETE
-
-    Imputes a column using DataWigs SimpleImputer
-
-    Keyword arguments:
-    df_train - - dataframe containing the train set
-    df_validate - - dataframe containing the validation dataset
-    df_test - - dataframe containing the test set
-    impute_column - - position(int) of column to be imputed, starting at 0
-    epochs - - int, number of training_epochs to use with SimpleImputer.fit
-    """
-    columns = list(df_train.columns)
-
-    # SimpleImputer expects dataframes to have stringtype headers.
-    impute_column = str(impute_column)
-
-    input_columns = [str(col) for col in columns if str(col) != impute_column]
-
-    df_train.columns = [str(i) for i in df_train.columns]
-    df_test.columns = [str(i) for i in df_test.columns]
-    df_validate.columns = [str(i) for i in df_validate.columns]
-
-    imputer = SimpleImputer(
-        input_columns=input_columns,
-        output_column=impute_column,
-        output_path='imputer_model/'
-    )
-
-    imputer.fit(train_df=df_train,
-                test_df=df_validate,
-                num_epochs=epochs,
-                patience=3)
-
-    predictions = imputer.predict(df_test)
-    return (predictions)
+    result.performance = perf
+    result.imputed_colum = y_pred
+    return result
 
 
 def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
@@ -348,12 +373,13 @@ def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
             df_subset_test = df_test.iloc[:, relevant_cols]
 
             print(lhs, rhs)
-            df_imputed = ml_imputer(df_subset_train,
-                                    df_subset_validate,
-                                    df_subset_test,
-                                    str(rhs))
+            ml_result = ml_imputer(df_subset_train,
+                                   df_subset_validate,
+                                   df_subset_test,
+                                   str(rhs))
 
-            result = get_performance(df_imputed, rhs, lhs, continuous_cols)
+            result = get_performance_ml(ml_result.performance,
+                    rhs, lhs, continuous_cols)
             rhs_results.append(result)
         ml_imputer_results[rhs] = rhs_results
     return ml_imputer_results

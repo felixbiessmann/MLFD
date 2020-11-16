@@ -1,3 +1,4 @@
+import os
 import itertools
 import unittest
 import pandas as pd
@@ -44,7 +45,7 @@ class TestFdImputer(unittest.TestCase):
     def test_get_performance(self):
         """ run test on adult.csv data """
         df_train, df_validate, df_test = fd.load_dataframes(
-            '/home/phil/Desktop/MLFD/MLFD_fd_detection/data/',
+            './MLFD_fd_detection/data/',
             'adult',
             'noValueSetHere123156456')
         df_train = df_train.loc[:2500, :]
@@ -66,8 +67,8 @@ class TestFdImputer(unittest.TestCase):
             df_train = df_train.astype('str')
             df_validate = df_validate.astype('str')
             df_test = df_test.astype('str')
-            df_imputed = fd.ml_imputer(df_train, df_train, df_train, rhs)
-            ml_sym_result.append(fd.get_performance(df_imputed, rhs, lhs, []))
+            ml_res = fd.ml_imputer(df_train, df_train, df_train, rhs)
+            ml_sym_result.append(ml_res.performance)
         print('ML performance results: {}'.format(str(ml_sym_result)))
         mixed_fd = self.mixed_fd
         rhs = list(mixed_fd.keys())[0]

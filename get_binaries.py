@@ -1,14 +1,15 @@
 import os
 import boto3
 
-s3_client = boto3.client('s3')
-
-# taken from the good people over at stackoverflow
-# https://stackoverflow.com/a/56267603
+s3_client = boto3.client('s3', aws_access_key_id='', aws_secret_access_key='')
+s3_client._request_signer.sign = (lambda *args, **kwargs: None)
 
 
 def download_dir(prefix, local, bucket, client=s3_client):
     """
+    Downloads a directory from s3. Taken from the good people
+    over at stackoverflow: https://stackoverflow.com/a/56267603
+
     params:
     - prefix: pattern to match in s3
     - local: local path to folder in which to place files
