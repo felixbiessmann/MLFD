@@ -67,8 +67,8 @@ class TestFdImputer(unittest.TestCase):
             df_train = df_train.astype('str')
             df_validate = df_validate.astype('str')
             df_test = df_test.astype('str')
-            ml_res = fd.ml_imputer(df_train, df_train, df_train, rhs)
-            ml_sym_result.append(ml_res.performance)
+            ml_df_imputed = fd.ml_imputer(df_train, df_train, df_train, str(rhs))
+            ml_sym_result.append(fd.get_performance(ml_df_imputed, rhs, lhs, []))
         print('ML performance results: {}'.format(str(ml_sym_result)))
         mixed_fd = self.mixed_fd
         rhs = list(mixed_fd.keys())[0]
@@ -138,11 +138,10 @@ class TestFdImputer(unittest.TestCase):
         df_imputed = fd.ml_imputer(df_train,
                                    df_validate,
                                    df_test,
-                                   3)
+                                   str(3))
 
-        print(df_imputed)
-        #self.assertTrue(df_imputed.shape[1], self.test_df.shape[1]+1)
-        #self.assertTrue(df_test.shape[0], df_imputed.shape[0])
+        self.assertTrue(df_imputed.shape[1], self.test_df.shape[1]+1)
+        self.assertTrue(df_test.shape[0], df_imputed.shape[0])
 
     def test_split_df(self):
         # does split_df() set the index as the 0th column?
