@@ -274,12 +274,15 @@ class RootNode(tree.NodeMixin):
         """
         if not self.is_continuous:
             self.min_lhs = get_non_continuous_min_dep(self)
+            measure = 'Mean Squared Error'
         else:
             self.min_lhs = get_continuous_min_dep(self)
-        print('\nLHS combinations for RHS {}:'.format(self.name))
+            measure = 'F1-Score'
+        print(f'\nLHS combinations for RHS {self.name}:')
         for lhs in self.min_lhs:
-            print('{} with score {:5.4f}'.format(list(lhs),
-                                                 self.min_lhs[lhs]))
+            print('{} with {} {:5.4f}'.format(list(lhs),
+                                              measure,
+                                              self.min_lhs[lhs]))
         return self.min_lhs
 
 
