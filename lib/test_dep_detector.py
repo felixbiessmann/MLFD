@@ -2,6 +2,7 @@ import unittest
 import lib.dep_detector as dep
 import lib.constants as c
 import anytree as tree
+import lib.test_data.test_trees as test_trees
 
 
 class TestDepDetector(unittest.TestCase):
@@ -86,6 +87,7 @@ class TestDepDetector(unittest.TestCase):
     def test_get_complete_candidates(self):
         self.Detector.load_data()
         self.Detector.init_roots()
+
         root = self.Detector.roots[9]
         root.children[0].score = 1.0
         root.get_complete_candidates()
@@ -106,13 +108,7 @@ class TestDepDetector(unittest.TestCase):
         root = dep.RootNode(0, [0, 1, 2, 3], '', '', '', [],
                             is_continuous=True, threshold=10)
         root.search_strategy = 'greedy'
-        a = root.children[0]
-        a.score = 9
-        b = tree.Node([1, 2], score=99, parent=a)
-        c = tree.Node([2, 3], score=8, parent=a)
-        d = tree.Node([2], score=1, parent=c)
-        e = tree.Node([3], score=99, parent=c)
-
+        d, c = test_trees.get_continuous_greedy_tree()
         self.assertEqual(dep.get_continuous_min_dep(root),
                          {tuple(d.name): d.score})
         d.score = 99

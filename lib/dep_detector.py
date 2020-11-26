@@ -263,27 +263,21 @@ class RootNode(tree.NodeMixin):
                     node.score = rng
 
     def extract_minimal_deps(self):
-        """ Finds all minimal LHS combinations and returns them in a dict.
-
-        Keyword Arguments:
-        f1_threshold -- float in [0, 1]. Defaults to the root node's threshold.
-        Can be used to find minimal dependencies for a stricter threshold than
-        originally searched with. If f1_threshold < self.score, raise error
-        since searching for minimal dependencies with lower precision than
-        creating the tree with is pointless.
+        """
+        Finds all minimal LHS combinations and returns them in a dict.
         """
         if not self.is_continuous:
-            self.min_lhs = get_non_continuous_min_dep(self)
             measure = 'Mean Squared Error'
+            min_lhs = get_non_continuous_min_dep(self)
         else:
-            self.min_lhs = get_continuous_min_dep(self)
             measure = 'F1-Score'
+            min_lhs = get_continuous_min_dep(self)
         print(f'\nLHS combinations for RHS {self.name}:')
         for lhs in self.min_lhs:
             print('{} with {} {:5.4f}'.format(list(lhs),
                                               measure,
-                                              self.min_lhs[lhs]))
-        return self.min_lhs
+                                              min_lhs[lhs]))
+        return min_lhs
 
 
 class DepOptimizer():
