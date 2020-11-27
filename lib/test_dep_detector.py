@@ -1,7 +1,6 @@
 import unittest
 import lib.dep_detector as dep
 import lib.constants as c
-import anytree as tree
 import lib.test_data.test_trees as test_trees
 
 
@@ -105,10 +104,8 @@ class TestDepDetector(unittest.TestCase):
         self.Detector.get_minimal_dependencies()
 
     def test_get_continuous_min_dep_greedy(self):
-        root = dep.RootNode(0, [0, 1, 2, 3], '', '', '', [],
-                            is_continuous=True, threshold=10)
-        root.search_strategy = 'greedy'
-        d, c = test_trees.get_continuous_greedy_tree()
+        root, d, c = test_trees.get_continuous_greedy_tree()
+
         self.assertEqual(dep.get_continuous_min_dep(root),
                          {tuple(d.name): d.score})
         d.score = 99
@@ -116,30 +113,14 @@ class TestDepDetector(unittest.TestCase):
                          {tuple(c.name): c.score})
 
     def test_get_continuous_min_dep_complete(self):
-        root = dep.RootNode(0, [0, 1, 2, 3], '', '', '', [],
-                            is_continuous=True, threshold=10)
-        root.search_strategy = 'complete'
-        a = root.children[0]
-        a.score = 9
-        b = tree.Node([1, 2], score=8, parent=a)
-        c = tree.Node([2, 3], score=8, parent=a)
-        d = tree.Node([2], score=1, parent=c)
-        e = tree.Node([3], score=99, parent=c)
+        root, b, d = test_trees.get_continuous_complete_tree()
+
         self.assertEqual(dep.get_continuous_min_dep(root),
                          {tuple(b.name): b.score,
                           tuple(d.name): d.score})
 
     def test_get_non_continuous_min_dep_greedy(self):
-        root = dep.RootNode(0, [0, 1, 2, 3], '', '', '', [],
-                            is_continuous=False, threshold=0.9)
-        root.search_strategy = 'greedy'
-        a = root.children[0]
-        a.score = 0.94
-        b = tree.Node([1, 2], score=0.93, parent=a)
-        c = tree.Node([2, 3], score=0.93, parent=a)
-        d = tree.Node([2], score=0.80, parent=c)
-        e = tree.Node([3], score=1, parent=c)
-
+        root, e, d = test_trees.get_non_continuous_greedy_tree()
         self.assertEqual(dep.get_non_continuous_min_dep(root),
                          {tuple(e.name): e.score})
         d.score = 0.92

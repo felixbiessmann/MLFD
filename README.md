@@ -8,10 +8,12 @@ To clone the project and install dependencies, do as follows:
 ```
 git clone https://github.com/felixbiessmann/MLFD
 cd MLFD
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
+python -m pip install .
 ```
 
 To fetch the metanome binaries and download the test datasets, run
+
 ```
 python get_binaries.py
 ```
@@ -20,8 +22,9 @@ which will create a new folder calles `MLFD_fd_detection/` and download the meta
 
 ## Testing
 I decided to use python's unit testing framework `unittest` for testing the code. Unittests are stored in the `lib/` folder and are named `test_(...).py`. A test can be run with
+
 ```
-python3.7 -m unittest lib/test_fd_imputer
+python -m unittest lib/test_fd_imputer
 ```
 from the repository's root directory.
 
