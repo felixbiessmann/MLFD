@@ -101,7 +101,7 @@ class TestDepDetector(unittest.TestCase):
                          (no_roots-1) * (no_roots-2))
 
     def test_get_min_dep(self):
-        self.Detector.search_dependencies('complete', True)
+        self.Detector.search_dependencies('complete', dry_run=True)
         self.Detector.get_minimal_dependencies()
 
     def test_get_continuous_min_dep_greedy(self):
