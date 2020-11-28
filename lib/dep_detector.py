@@ -267,16 +267,19 @@ class RootNode(tree.NodeMixin):
         Finds all minimal LHS combinations and returns them in a dict.
         """
         if not self.is_continuous:
-            measure = 'Mean Squared Error'
+            measure = 'F1-Score'
             min_lhs = get_non_continuous_min_dep(self)
         else:
-            measure = 'F1-Score'
+            measure = 'Mean Squared Error'
             min_lhs = get_continuous_min_dep(self)
         print(f'\nLHS combinations for RHS {self.name}:')
-        for lhs in self.min_lhs:
-            print('{} with {} {:5.4f}'.format(list(lhs),
-                                              measure,
-                                              min_lhs[lhs]))
+        if min_lhs == {}:
+            print('No minimal dependencies were detected.')
+        else:
+            for lhs in min_lhs:
+                print('{} with {} {:5.4f}'.format(list(lhs),
+                                                  measure,
+                                                  min_lhs[lhs]))
         return min_lhs
 
 
@@ -349,6 +352,7 @@ class DepOptimizer():
         """ Prints tree of each root. """
         for root in self.roots.values():
             root.print_tree()
+        return True
 
     def search_dependencies(self, strategy='greedy', dry_run=False):
         """ Searches all columns of the original database table for
@@ -357,9 +361,11 @@ class DepOptimizer():
         self.init_roots()
         for root in self.roots.values():
             root.run_top_down(strategy, dry_run)
+        return True
 
     def get_minimal_dependencies(self):
         """ Yields and prints the minimal LHS combinations for all
         root nodes"""
         for root in self.roots.values():
             root.extract_minimal_deps()
+        return True
