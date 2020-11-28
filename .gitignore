@@ -18,6 +18,10 @@ presentation/
 # Model storage
 ##autogluon
 agModels-predictClass/
+
+## computer.py results
+figures/results/*
+
 ## datawig
 imputer_model/
 
