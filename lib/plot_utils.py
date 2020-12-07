@@ -70,7 +70,10 @@ def figure_setup():
               'xtick.labelsize': ticks_size(),
               'ytick.labelsize': ticks_size(),
               'font.family': 'serif'}
-    plt.style.use('thesis')
+
+    # uncomment if the thesis LATEX project is in MLFD's the root folder
+    #plt.style.use('thesis')
+
     plt.rcParams.update(params)
 
 
