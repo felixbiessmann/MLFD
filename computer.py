@@ -180,7 +180,7 @@ def generate_random_fds(data, n=10, save=True):
         print('random FDs successfully written.')
 
 
-def compute_dep_detector_lhs_stability(data, column, save=False):
+def compute_dep_detector_lhs_stability(data, column, save=False, set_dry_run=False):
     """ Trains SimpleImputer with a range from 3-15 training-cycles and
     stores the results."""
     df_train, df_validate, df_test = fd.load_dataframes(
@@ -198,7 +198,7 @@ def compute_dep_detector_lhs_stability(data, column, save=False):
         print('training for {} cycles'.format(no_cycles))
         col.known_scores = {}
         col.cycles = no_cycles
-        col.run_top_down(strategy='complete', dry_run=False)
+        col.run_top_down(strategy='complete', dry_run=set_dry_run)
         minimal_lhs[no_cycles] = col.extract_minimal_deps()
 
     if save:
@@ -276,6 +276,15 @@ def compute_overfit_ml_imputer(data, save=False):
 
 
 def compute_ml_imputer(data, save=False):
+    """
+    Run Auto-ML on a set of FDs to predict RHS values. Save the results
+    to a pickled file, or return them.
+
+    Keyword Arguments:
+    data -- a dataset object from constants.py
+    save -- boolean, the function either save to a pickled dictionary or
+    returns the dictionary
+    """
     df_train, df_validate, df_test = fd.load_dataframes(
         data.splits_path,
         data.title,
@@ -295,9 +304,9 @@ def compute_ml_imputer(data, save=False):
         return ml_imputer_results
 
 
-def compute_complete_dep_detector(data, save=False):
-    """ Find dependencies on a relational database table using a ML
-    classifier (Datawig).
+def compute_complete_dep_detector(data, save=False, set_dry_run=False):
+    """
+    Find dependencies in a table using Auto-ML.
 
     Keyword Arguments:
     data -- a dataset object from constants.py to perform computation upon
@@ -306,7 +315,7 @@ def compute_complete_dep_detector(data, save=False):
     """
     start = timeit.default_timer()
     dep_optimizer = dep.DepOptimizer(data, f1_threshold=0.9)
-    dep_optimizer.search_dependencies(strategy='complete', dry_run=False)
+    dep_optimizer.search_dependencies(strategy='complete', dry_run=set_dry_run)
     end = timeit.default_timer()
     t = end - start
     result = {'time': t,
@@ -381,8 +390,12 @@ def main(args):
     else:
         save_result = True
 
+    set_dry_run = args.set_dry_run
+    if not args.set_dry_run:
+        set_dry_run = False
+
     # this appears to be neccessary to avoid 'too many open files'-errors
-    import resource
+    # import resource
 
     # The two following lines set the max number of open files. However,
     # this does not work on Mac OSX, which is why they're commented out
@@ -433,11 +446,12 @@ def main(args):
     special_models = ['dep_lhs_stability',
                       'fd_imputer_stats',
                       'ml_imputer_stats']
+    detect_models = ['greedy_detect', 'complete_detect']
 
     if (args.cluster_mode):
         for dataset in datasets.values():
-            compute_complete_dep_detector(dataset, save=save_result)
-            compute_greedy_dep_detector(dataset, save=save_result)
+            compute_complete_dep_detector(dataset, save_result, set_dry_run)
+            compute_greedy_dep_detector(dataset, save_result, set_dry_run)
 
     else:
         data = datasets.get(args.data, no_valid_data)
@@ -445,8 +459,10 @@ def main(args):
             data()
         else:
             calc_fun = models.get(args.model, no_valid_model)
-            if args.model not in special_models:
-                calc_fun(data, save=save_result)
+            if args.model in detect_models:
+                calc_fun(data, save_result, set_dry_run)
+            elif args.model not in special_models:
+                calc_fun(data, save_result)
             elif args.model == 'dep_lhs_stability':
                 calc_fun(data, column=args.column, save=save_result)
             elif args.model == 'fd_imputer_stats':
@@ -463,6 +479,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--column')
     parser.add_argument('-cl', '--cluster_mode')
     parser.add_argument('-dis', '--display', action='store_true')
+    parser.add_argument('-dry', '--set_dry_run', action='store_true')
 
     args = parser.parse_args()
     main(args)

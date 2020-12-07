@@ -134,6 +134,10 @@ def plot_dep_detector_lhs_stability(data):
 
 
 def plot_f1_ml_imputer(data):
+    """
+    Plot the output of computer.py's compute_ml_imputer to visualize
+    how the Auto-ML library performs on a set of FDs.
+    """
     ml_imputer_res = load_result(data.results_path+'ml_imputer_results.p')
     res_bigger_zero = [(y['f1'],
                         sorted(list(map(int, y['lhs']))),
