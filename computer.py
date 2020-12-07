@@ -276,6 +276,15 @@ def compute_overfit_ml_imputer(data, save=False):
 
 
 def compute_ml_imputer(data, save=False):
+    """
+    Run Auto-ML on a set of FDs to predict RHS values. Save the results
+    to a pickled file, or return them.
+
+    Keyword Arguments:
+    data -- a dataset object from constants.py
+    save -- boolean, the function either save to a pickled dictionary or
+    returns the dictionary
+    """
     df_train, df_validate, df_test = fd.load_dataframes(
         data.splits_path,
         data.title,
@@ -296,8 +305,8 @@ def compute_ml_imputer(data, save=False):
 
 
 def compute_complete_dep_detector(data, save=False, set_dry_run=False):
-    """ Find dependencies on a relational database table using a ML
-    classifier (Datawig).
+    """
+    Find dependencies in a table using Auto-ML.
 
     Keyword Arguments:
     data -- a dataset object from constants.py to perform computation upon
