@@ -359,7 +359,7 @@ def split_df(data_title, df, split_ratio, splits_path=''):
     test_path = f'{splits_path}test/'
 
     for p in [train_path, validate_path, test_path]:
-        if not os.path.exists(p):
+        if (not os.path.exists(p) and splits_path != ''):
             os.mkdir(p)
 
     rest_df, test_df = train_test_split(df, test_size=test_ratio)
