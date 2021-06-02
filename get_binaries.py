@@ -49,6 +49,11 @@ def download_dir(prefix, local, bucket, client=s3_client):
 
 folder_name = 'MLFD_fd_detection'
 bucket_name = 'mlfd-data'
-os.mkdir(folder_name)
-download_dir('', folder_name, bucket_name, s3_client)
-print('Finished fetching binaries')
+try:
+    os.mkdir(folder_name)
+    print('Downloading. This may take a while...')
+    download_dir('', folder_name, bucket_name, s3_client)
+    print('Finished fetching binaries')
+except FileExistsError:
+    print(f'The {folder_name} directory already exists. Delete it to\
+            re-download the binaries.')

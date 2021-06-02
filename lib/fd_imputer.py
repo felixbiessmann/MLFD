@@ -1,8 +1,67 @@
 from collections import namedtuple
 import autogluon as ag
-from autogluon import TabularPrediction as task
+from autogluon.tabular import TabularPredictor as task
 from sklearn.model_selection import train_test_split
 import pandas as pd
+
+
+def split_df(data_title, df, split_ratio, splits_path=''):
+    """ Splits a dataframe into train-, validate - and test-subsets.
+    If a splits_path is provided, splits will be saved to the harddrive.
+
+    Returns a tuple(df_train, df_validate, df_test) if the splits_path
+    is an empty string.
+
+    Keyword arguments:
+    data_title - - a string naming the data
+    df - - a pandas data frame
+    splits_path - - file-path to folder where splits should be saved
+    split_ratio - - train/test/validate set ratio, e.g. [0.8, 0.1, 0.1]
+    """
+    import os
+    import numpy as np
+
+    train_ratio, validate_ratio, test_ratio = (split_ratio)
+
+    # compare first col with index. if not equal...
+    if not np.array_equal(df.iloc[:, 0].values, np.array(df.index)):
+        # ...set index as 0th column such that fd_imputer can use it to impute
+        print('No double index detected.')
+        df = index_as_first_column(df)
+
+    train_path = f'{splits_path}train/'
+    validate_path = f'{splits_path}validate/'
+    test_path = f'{splits_path}test/'
+
+    for p in [train_path, validate_path, test_path]:
+        if (not os.path.exists(p) and splits_path != ''):
+            os.mkdir(p)
+
+    rest_df, test_df = train_test_split(df, test_size=test_ratio)
+    train_df, validate_df = train_test_split(rest_df, test_size=validate_ratio)
+
+    if splits_path == '':
+        return(train_df, validate_df, test_df)
+
+    else:
+        try:
+            df.to_csv(splits_path+data_title+'.csv', header=None, sep=',',
+                      index=False)
+            print(
+                f'Dataset successfully written to {splits_path}{data_title}.csv')
+        except TypeError:
+            print(f'Could not save dataframe to {splits_path}{data_title}')
+
+        for name, df, path in [('train', train_df, train_path),
+                               ('test', test_df, test_path),
+                               ('validate', validate_df, validate_path)]:
+            try:
+                save_path = f'{path}{data_title}_{name}.csv'
+                df.to_csv(save_path, sep=',',
+                          index=False, header=None)
+                print(f'{name} set successfully written to {save_path}.')
+            except TypeError:
+                print("Something went wrong writing the splits to files.")
 
 
 def check_split_for_duplicates(list_of_dfs):
@@ -260,17 +319,19 @@ def ml_imputer(df_train, df_validate, df_test, label_column: str):
     validate_data.columns = [str(i) for i in df_validate.columns]
 
     d = 'agModels-predictClass'  # folder to store trained models
-    predictor = task.fit(train_data=train_data,
-                         tuning_data=test_data,
-                         label=str(label_column),
-                         output_directory=d)
+    predictor = task(label=str(label_column),
+                     path=d).fit(train_data=train_data, tuning_data=test_data)
 
     validate_data_no_y = validate_data.drop(labels=[label_column], axis=1)
     y_pred = predictor.predict(validate_data_no_y)
-    print("These are the predicted labels: ", y_pred)
-    print("And this is the validated dataset: ", validate_data)
+    print("These are the predicted labels: ")
+    print(y_pred)
+    print("And this is the validation-dataset: ")
+    print(validate_data)
 
-    df_imputed = pd.DataFrame(data=y_pred, columns=[f'{label_column}_imputed'])
+    df_imputed = y_pred.to_frame(name=f'{label_column}_imputed')
+    print('df_imputed: ')
+    print(df_imputed)
 
     df_validate_imputed = pd.merge(df_validate.loc[:, label_column],
                                    df_imputed,
@@ -282,7 +343,6 @@ def ml_imputer(df_train, df_validate, df_test, label_column: str):
 
 def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
                              continuous_cols=[], cycles=10):
-
     """ Runs ml_imputer for every fd contained in a dictionary on a split df.
 
     Executes fd_imputer() for every fd in fds. df_train and df_split should be
@@ -318,7 +378,7 @@ def run_ml_imputer_on_fd_set(df_train, df_validate, df_test, fds,
 
             print(ml_result)
             result = get_performance(ml_result,
-                    rhs, lhs, continuous_cols)
+                                     rhs, lhs, continuous_cols)
             rhs_results.append(result)
         ml_imputer_results[rhs] = rhs_results
     return ml_imputer_results
@@ -328,61 +388,3 @@ def index_as_first_column(df):
     df = df.reset_index()
     df.columns = [x for x in range(0, len(df.columns))]
     return df
-
-
-def split_df(data_title, df, split_ratio, splits_path=''):
-    """ Splits a dataframe into train-, validate - and test-subsets.
-    If a splits_path is provided, splits will be saved to the harddrive.
-
-    Returns a tuple(df_train, df_validate, df_test) if the splits_path
-    is an empty string.
-
-    Keyword arguments:
-    data_title - - a string naming the data
-    df - - a pandas data frame
-    splits_path - - file-path to folder where splits should be saved
-    split_ratio - - train/test/validate set ratio, e.g. [0.8, 0.1, 0.1]
-    """
-    import os
-    import numpy as np
-
-    train_ratio, validate_ratio, test_ratio = (split_ratio)
-
-    # compare first col with index. if not equal...
-    if not np.array_equal(df.iloc[:, 0].values, np.array(df.index)):
-        # ...set index as 0th column such that fd_imputer can use it to impute
-        print('No double index detected.')
-        df = index_as_first_column(df)
-
-    train_path = f'{splits_path}train/'
-    validate_path = f'{splits_path}validate/'
-    test_path = f'{splits_path}test/'
-
-    for p in [train_path, validate_path, test_path]:
-        if (not os.path.exists(p) and splits_path != ''):
-            os.mkdir(p)
-
-    rest_df, test_df = train_test_split(df, test_size=test_ratio)
-    train_df, validate_df = train_test_split(rest_df, test_size=validate_ratio)
-
-    if splits_path == '':
-        return(train_df, validate_df, test_df)
-
-    else:
-        try:
-            df.to_csv(splits_path+data_title+'.csv', header=None, sep=',',
-                      index=False)
-            print(f'Dataset successfully written to {splits_path}{data_title}.csv')
-        except TypeError:
-            print(f'Could not save dataframe to {splits_path}{data_title}')
-
-        for name, df, path in [('train', train_df, train_path),
-                               ('test', test_df, test_path),
-                               ('validate', validate_df, validate_path)]:
-            try:
-                save_path = f'{path}{data_title}_{name}.csv'
-                df.to_csv(save_path, sep=',',
-                          index=False, header=None)
-                print(f'{name} set successfully written to {save_path}.')
-            except TypeError:
-                print("Something went wrong writing the splits to files.")

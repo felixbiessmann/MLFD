@@ -18,6 +18,7 @@ presentation/
 # Model storage
 ##autogluon
 agModels-predictClass/
+AutogluonModels/
 
 ## computer.py results
 figures/results/*
