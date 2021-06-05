@@ -79,7 +79,3 @@ def calculate_global_shap_values(shap_values: SHAPs,
     else:
         raise ValueError(f"""Global SHAP computation for AG problem type
             {problem_type} hasn't been implemented yet!""")
-
-# AutoGluon functions
-
-

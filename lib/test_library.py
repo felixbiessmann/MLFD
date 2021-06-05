@@ -1,25 +1,16 @@
 import random
 import pytest
-import tempfile
 import itertools
 import numpy as np
 import pandas as pd
-import lib.library as library
-
-
-class simpleInput:
-    """A simple set of data as it is used for basic tests."""
-    def __init__(self, title, continuous_cols, fd, df_train, df_validate, df_test):
-        self.title = title
-        self.continuous_cols = continuous_cols
-        self.fd = fd
-        self.df_train = df_train
-        self.df_validate = df_validate
-        self.df_test = df_test
-        self.full_df = pd.concat([self.df_train,
-                                  self.df_validate,
-                                  self.df_test],
-                                 ignore_index=True)
+from lib.helpers import (
+    get_performance,
+    random_dependency_generator,
+    read_fds,
+    split_df,
+    load_dataframes
+)
+from lib.test_imputer import simpleInput
 
 
 @pytest.fixture
@@ -42,7 +33,7 @@ def minimal_dataset():
 def test_get_performance():
     source = {'x': [1, 2, 3], 'x_imputed': [1, 2, 0]}
     df_source = pd.DataFrame(source)
-    p = library.get_performance(df_source, 'x', [], [])
+    p = get_performance(df_source, 'x', [], [])
     assert p['lhs'] == []
     assert round(p['f1'], 3) == 0.667
     assert round(p['recall'], 3) == 0.667
@@ -53,7 +44,7 @@ def test_random_dependency_generator():
     n = random.randint(0, 800)
     cols = list(range(0, 30))
 
-    dependencies = library.random_dependency_generator(cols, n)
+    dependencies = random_dependency_generator(cols, n)
     for rhs in dependencies:
         lhs = dependencies[rhs]
         lhs.sort()
@@ -69,7 +60,7 @@ def test_split_df():
 
 
 def test_read_fds():
-    fds = library.read_fds('lib/test_data/test_fd.txt')
+    fds = read_fds('lib/test_data/test_fd.txt')
     rhs = [x for x in fds]
     assert min(rhs) == 1  # index is not a rhs
     assert max(rhs) == (len(rhs))  # same reason as above
@@ -81,47 +72,14 @@ def test_read_fds():
 
 def test_split_df_and_load_dataframes(minimal_dataset, tmp_path):
     tmp_path_str = str(tmp_path)
-    library.split_df(
-        minimal_dataset.title,
-        minimal_dataset.full_df,
-        [0.33, 0.33, 0.33],
-        tmp_path_str+'/')
+    split_df(minimal_dataset.title, minimal_dataset.full_df,
+             [0.33, 0.33, 0.33], tmp_path_str+'/')
 
-    df_train, df_validate, df_test = library.load_dataframes(
+    df_train, df_validate, df_test = load_dataframes(
         tmp_path_str+'/', minimal_dataset.title, 'noData')
 
     df_glued = pd.concat([df_train, df_validate, df_test])
 
-    assert sum(df_glued.duplicated()) == 0
-
     # check if missing value deletion from load_dataframes works
     assert df_glued.isna().values.sum() == 0
     assert df_glued.shape[0] <= minimal_dataset.full_df.shape[0]
-
-
-def test_ml_imputer(minimal_dataset):
-    df_imputed = library.ml_imputer(minimal_dataset.df_train,
-                                    minimal_dataset.df_validate,
-                                    minimal_dataset.df_test,
-                                    str(2))
-
-    assert df_imputed.shape[1] == 2  # consists of label and labed_imputed
-    assert minimal_dataset.df_validate.shape[0] == df_imputed.shape[0]
-
-
-def test_run_ml_imputer_on_fd_set(minimal_dataset):
-    fds = minimal_dataset.fd
-    rhs = list(fds.keys())[0]
-    lhs = fds[rhs]
-    fds[rhs] = [fds[rhs]]
-
-    ml_imputer_results = library.run_ml_imputer_on_fd_set(
-                            minimal_dataset.df_train,
-                            minimal_dataset.df_validate,
-                            minimal_dataset.df_test,
-                            fds,
-                            minimal_dataset.continuous_cols)
-
-    assert 2 in ml_imputer_results
-    assert 'lhs' in ml_imputer_results[rhs][0]
-    assert ml_imputer_results[rhs][0]['lhs'] == list(map(str, lhs))
