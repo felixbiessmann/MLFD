@@ -7,7 +7,7 @@
 *.log
 *.toc
 *.fls
-*.synctex.gz\
+*.synctex.gz
 *.bbl
 *.out
 *.bcf

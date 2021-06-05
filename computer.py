@@ -3,8 +3,7 @@ import timeit
 import argparse
 import pickle
 import pandas as pd
-import lib.fd_imputer as fd
-import lib.dep_detector as dep
+import lib.library as library
 import lib.constants as c
 
 
@@ -31,7 +30,7 @@ def split_dataset(data, save=True):
     if sure == 'y':
         df = pd.read_csv(data.data_path, sep=data.original_separator,
                          header=None)
-        fd.split_df(data.title, df, [0.8, 0.1, 0.1], data.splits_path)
+        library.split_df(data.title, df, [0.8, 0.1, 0.1], data.splits_path)
         print('successfully split.')
         print('original data duplicates: ' + str(sum(df.duplicated())))
     else:
@@ -48,7 +47,7 @@ def compute_complete_dep_detector(data, save=False, set_dry_run=False):
     data.results_path or return it.
     """
     start = timeit.default_timer()
-    dep_optimizer = dep.DepOptimizer(data, f1_threshold=0.9)
+    dep_optimizer = library.DepOptimizer(data, f1_threshold=0.9)
     dep_optimizer.search_dependencies(strategy='complete', dry_run=set_dry_run)
     end = timeit.default_timer()
     t = end - start
@@ -73,7 +72,7 @@ def compute_greedy_dep_detector(data, save=False, set_dry_run=False):
     data.results_path or return it.
     """
     start = timeit.default_timer()
-    dep_optimizer = dep.DepOptimizer(data, f1_threshold=0.9)
+    dep_optimizer = library.DepOptimizer(data, f1_threshold=0.9)
     dep_optimizer.search_dependencies(strategy='greedy', dry_run=set_dry_run)
     end = timeit.default_timer()
     t = end - start
