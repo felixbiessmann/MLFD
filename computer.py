@@ -1,36 +1,22 @@
-import os
 import timeit
 import argparse
-import pickle
 import pandas as pd
-import lib.library as library
+import lib.helpers as helps
+import lib.optimizer as opt
 import lib.constants as c
-
-
-def save_pickle(obj, path):
-    """ Pickles object obj and saves it to path. If path doesn't exist,
-    creates path. """
-    directory = os.path.dirname(path)
-    if not os.path.exists(directory):
-        os.mkdir(directory)
-
-    pickle.dump(obj, open(path, "wb"))
-    message = '{0} successfully saved to {1}!'.format(
-        os.path.basename(path).split('.')[0],
-        path)
-    print(message)
 
 
 def split_dataset(data, save=True):
     """Splits a dataset into train, validate and test subsets.
     Be cautious when using, this might overwrite existing data"""
-    print('You are about to split dataset ' + data.title)
+    print(f'You are about to split dataset {data.title}.')
+    print(f'Splits will be saved to {data.splits_path}, if you continue.')
     print('This might overwrite and nullify existing results.')
     sure = input('Do you want to proceed? [y/N]')
     if sure == 'y':
         df = pd.read_csv(data.data_path, sep=data.original_separator,
                          header=None)
-        library.split_df(data.title, df, [0.8, 0.1, 0.1], data.splits_path)
+        helps.split_df(data.title, df, (0.8, 0.1, 0.1), data.splits_path)
         print('successfully split.')
         print('original data duplicates: ' + str(sum(df.duplicated())))
     else:
@@ -47,7 +33,7 @@ def compute_complete_dep_detector(data, save=False, set_dry_run=False):
     data.results_path or return it.
     """
     start = timeit.default_timer()
-    dep_optimizer = library.DepOptimizer(data, f1_threshold=0.9)
+    dep_optimizer = opt.DepOptimizer(data, f1_threshold=0.9)
     dep_optimizer.search_dependencies(strategy='complete', dry_run=set_dry_run)
     end = timeit.default_timer()
     t = end - start
@@ -56,7 +42,7 @@ def compute_complete_dep_detector(data, save=False, set_dry_run=False):
     if save:
         print('Time: '+str(t))
         path = data.results_path + "dep_detector_complete_object.p"
-        save_pickle(result, path)
+        helps.save_pickle(result, path)
     else:
         print('\n~~~~~~~~~~~~~~~~~~~~\n')
         print(result['dep_optimizer'].print_trees())
@@ -72,7 +58,7 @@ def compute_greedy_dep_detector(data, save=False, set_dry_run=False):
     data.results_path or return it.
     """
     start = timeit.default_timer()
-    dep_optimizer = library.DepOptimizer(data, f1_threshold=0.9)
+    dep_optimizer = opt.DepOptimizer(data, f1_threshold=0.9)
     dep_optimizer.search_dependencies(strategy='greedy', dry_run=set_dry_run)
     end = timeit.default_timer()
     t = end - start
@@ -81,7 +67,7 @@ def compute_greedy_dep_detector(data, save=False, set_dry_run=False):
               'dep_optimizer': dep_optimizer}
     if save:
         path = data.results_path + "dep_detector_greedy_object.p"
-        save_pickle(result, path)
+        helps.save_pickle(result, path)
     else:
         return result
 
@@ -109,19 +95,16 @@ def main(args):
 
     datasets = {
         c.ADULT.title: c.ADULT,
-        c.NURSERY.title: c.NURSERY,
         c.ABALONE.title: c.ABALONE,
         c.BALANCESCALE.title: c.BALANCESCALE,
         c.BREASTCANCER.title: c.BREASTCANCER,
-        # c.BRIDGES.title: c.BRIDGES, mixed dtypes in col 3
-        c.CHESS.title: c.CHESS,
-        # c.ECHOCARDIOGRAM.title: c.ECHOCARDIOGRAM, mixed dtypes in col 1
-        # c.HEPATITIS.title: c.HEPATITIS, mixed dtypes in col 17
-        # c.HORSE.title: c.HORSE, mixed dtypes in unknown col
+        c.BRIDGES.title: c.BRIDGES,
+        c.ECHOCARDIOGRAM.title: c.ECHOCARDIOGRAM,
+        c.HEPATITIS.title: c.HEPATITIS,
+        c.HORSE.title: c.HORSE,
         c.IRIS.title: c.IRIS,
         c.LETTER.title: c.LETTER,
-        c.MOVIES_DURATION.title: c.MOVIES_DURATION,
-        c.MOVIES_ORDERING.title: c.MOVIES_ORDERING
+        c.NURSERY.title: c.NURSERY,
     }
 
     models = {'split': split_dataset,
