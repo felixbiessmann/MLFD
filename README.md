@@ -1,9 +1,12 @@
 # MLFD
-With this repository I try to leverage machine learning for Approximate Functional Dependency (AFD) detection, based on Philipp Jung's Master thesis at Beuth University of Applied Sciences, under the supervision of Prof. Felix Biessmann.
+This repository started out as the codebase for my master thesis, titled "Robust Machine-Learning Approaches for Efficient Functional Dependency Approximation", which I've written at Beuth University of Applied Sciences under the supervision of Prof. Felix Biessmann.
+
+The code changed substantially ever since. If you're interested in the thesis' state of the repository, have a look at the `abgabe` branch.
 
 ## Installation
-The repo requires python version 3.7.3 -- this is due to `datawig`'s dependency with mxnet.
-To clone the project and install dependencies, do as follows:
+The repo requires python version 3.7.10. More recent python versions are not supported, mainly the `shap` and `AutoGluon` dependencies prevent this.
+
+Run the following commands to clone and install the dependencies:
 
 ```
 git clone https://github.com/felixbiessmann/MLFD
@@ -21,18 +24,22 @@ python get_binaries.py
 which will create a new folder calles `MLFD_fd_detection/` and download the metanome binaries and test datasets.
 
 ## Testing
-I decided to use python's unit testing framework `unittest` for testing the code. Unittests are stored in the `lib/` folder and are named `test_(...).py`. A test can be run with
+I use `pytest` to carry out all tests. The tests are stored in the `lib/` directory and are named `test_$LIBRARY.py`.
+
+The easiest way to run the tests is to install the repository as an editable package with `pip`. Run in the repository's root folder the following command:
 
 ```
-python -m unittest lib/test_fd_imputer
+python -m pip install -e .
 ```
 
-from the repository's root directory.
+Once that is done, simply run `pytest` in the project's root folder to execute all tests.
+
 
 ## Detect FDs Conventionally
 To measure performance of conventional FD-detection algorithms, we use [metanome]((https://github.com/HPI-Information-Systems/Metanome) and [metanome-cli](https://github.com/sekruse/metanome-cli). In `backend/WEB-INF` there is a subfolder `classes` where all algorithms(`algorithms/`) and datasets(`inputData/`) are stored.
 
 To start Metanome, you call `./run.sh` within the `performance/` folder. Open the graphical interface in your browser and use it to add algorithms and datasets.
+
 
 ## Detect AFDs with MLFD
 In the project's root folder, run
