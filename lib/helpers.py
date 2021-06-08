@@ -20,17 +20,17 @@ def save_pickle(obj, path):
     print(message)
 
 
-def split_df(data_title, df, split_ratio, splits_path=''):
+def split_df(data_title, df, split_ratio, data_path=''):
     """ Splits a dataframe into train-, validate - and test-subsets.
-    If a splits_path is provided, splits will be saved to the harddrive.
+    If a data_path is provided, splits will be saved to the harddrive.
 
-    Returns a tuple(df_train, df_validate, df_test) if the splits_path
+    Returns a tuple(df_train, df_validate, df_test) if the data_path
     is an empty string.
 
     Keyword arguments:
     data_title - - a string naming the data
     df - - a pandas data frame
-    splits_path - - file-path to folder where splits should be saved
+    data_path - - file-path to folder where splits should be saved
     split_ratio - - train/test/validate set ratio, e.g. [0.8, 0.1, 0.1]
     """
     import os
@@ -40,11 +40,11 @@ def split_df(data_title, df, split_ratio, splits_path=''):
     rest_df, test_df = train_test_split(df, test_size=test_ratio)
     train_df, validate_df = train_test_split(rest_df, test_size=validate_ratio)
 
-    if splits_path != '':
+    if data_path != '':
         for name, df in [('train', train_df),
                          ('test', test_df),
                          ('validate', validate_df)]:
-            path = f'{splits_path}{name}/'
+            path = f'{data_path}{name}/'
             if not os.path.exists(path):
                 os.mkdir(path)
             try:
@@ -65,27 +65,37 @@ def check_split_for_duplicates(list_of_dfs):
     return no_duplicates
 
 
-def load_dataframes(splits_path, data_title, missing_value_token):
+def load_original_data(data_path, data_title, missing_value_token):
+    """
+    Loads the original dataframe. Missing values are replaced with
+    np.nan
+    """
+    df = pd.read_csv(f'{data_path}{data_title}.csv', header=None)
+    df = df.replace(missing_value_token, np.nan)
+    return df
+
+
+def load_splits(data_path, data_title, missing_value_token):
     """ Loads train, validate, test splits from a directory.
     The data's missing values, which are represented in the data by
-    missing_value_token, are deleted.
+    missing_value_token, are replaced with np.nan.
 
     Argument Keywords:
-    splits_path -- path where subdirectories with splits are located
+    data_path -- path where subdirectories with splits are located
     data_title -- name of the dataset and it's associated splits
     missing_value_token -- specifies how missing values are represented
     in the dataset
     """
-    df_train = pd.read_csv(splits_path+'train/' +
+    df_train = pd.read_csv(data_path+'train/' +
                            data_title+'_train.csv', header=None)
     df_validate = pd.read_csv(
-        splits_path+'validate/'+data_title+'_validate.csv', header=None)
-    df_test = pd.read_csv(splits_path+'test/' +
+        data_path+'validate/'+data_title+'_validate.csv', header=None)
+    df_test = pd.read_csv(data_path+'test/' +
                           data_title+'_test.csv', header=None)
 
     dfs = [df_train, df_validate, df_test]
     dfs = [df.replace(missing_value_token, np.nan) for df in dfs]
-    dfs = [df.dropna(axis=0) for df in dfs]  # drop rows with nans
+    # dfs = [df.dropna(axis=0) for df in dfs]  # drop rows with nans
 
     return (dfs)
 

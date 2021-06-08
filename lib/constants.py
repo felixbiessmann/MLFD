@@ -24,13 +24,13 @@ class Dataset:
 ABALONE = Dataset(title='abalone',
                   original_separator=',',
                   fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T084553_fds',
-                  continuous=[0, 2, 3, 4, 5, 6, 7, 8],
+                  continuous=[2, 3, 4, 5, 6, 7, 8],
                   missing_value_token='',
                   origin='https://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data')
 
 ADULT = Dataset(title='adult',
                 fd_path='HyFD-1.2-SNAPSHOT.jar2019-07-06T091216_fds',
-                continuous=[0, 1, 3, 11, 12, 13],
+                continuous=[1, 3, 11, 12, 13],
                 original_separator=', ',
                 missing_value_token='noValueSetHere123156456',
                 origin='https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data')
@@ -45,7 +45,7 @@ BALANCESCALE = Dataset(title='balance-scale',
 BREASTCANCER = Dataset(title='breast-cancer',
                        original_separator=',',
                        fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T084747_fds',
-                       continuous=[0, 1],
+                       continuous=[1],
                        missing_value_token='?',
                        origin='https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer/breast-cancer.data')
 
@@ -59,28 +59,28 @@ BRIDGES = Dataset(title='bridges',
 ECHOCARDIOGRAM = Dataset(title='echocardiogram',
                          original_separator=',',
                          fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T085015_fds',
-                         continuous=[0, 1, 3, 5, 6, 7, 8, 9, 10],
+                         continuous=[1, 3, 5, 6, 7, 8, 9, 10],
                          missing_value_token='?',
                          origin='https://archive.ics.uci.edu/ml/machine-learning-databases/echocardiogram/echocardiogram.data')
 
 HEPATITIS = Dataset(title='hepatitis',
                     original_separator=',',
                     fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T090716_fds',
-                    continuous=[0, 15, 18],
+                    continuous=[15, 18],
                     missing_value_token='?',
                     origin='https://archive.ics.uci.edu/ml/machine-learning-databases/hepatitis/hepatitis.data')
 
 HORSE = Dataset(title='horse',
                 original_separator=' ',
                 fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T085141_fds',
-                continuous=[0, 3, 4, 5, 6, 16, 19, 20, 22],
+                continuous=[3, 4, 5, 6, 16, 19, 20, 22],
                 missing_value_token='?',
                 origin='https://archive.ics.uci.edu/ml/machine-learning-databases/horse-colic/horse-colic.data')
 
 IRIS = Dataset(title='iris',
                original_separator=',',
                fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T085225_fds',
-               continuous=[0, 1, 2, 3, 4],
+               continuous=[1, 2, 3, 4],
                missing_value_token='',
                origin='https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data')
 
@@ -93,7 +93,7 @@ LETTER = Dataset(title='letter',
 
 NURSERY = Dataset(title='nursery',
                   fd_path='HyFD-1.2-SNAPSHOT.jar2019-07-04T182440_fds',
-                  continuous=[0],
+                  continuous=[],
                   original_separator=',',
                   missing_value_token='',
                   origin='https://archive.ics.uci.edu/ml/machine-learning-databases/nursery/nursery.data')

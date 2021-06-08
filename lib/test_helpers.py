@@ -8,7 +8,7 @@ from lib.helpers import (
     random_dependency_generator,
     read_fds,
     split_df,
-    load_dataframes
+    load_splits
 )
 from lib.test_imputer import simpleInput
 
@@ -75,11 +75,11 @@ def test_split_df_and_load_dataframes(minimal_dataset, tmp_path):
     split_df(minimal_dataset.title, minimal_dataset.full_df,
              [0.33, 0.33, 0.33], tmp_path_str+'/')
 
-    df_train, df_validate, df_test = load_dataframes(
+    df_train, df_validate, df_test = load_splits(
         tmp_path_str+'/', minimal_dataset.title, 'noData')
 
     df_glued = pd.concat([df_train, df_validate, df_test])
 
-    # check if missing value deletion from load_dataframes works
-    assert df_glued.isna().values.sum() == 0
+    # check missing values in load_splits are preserved
+    assert df_glued.isna().values.sum() == 3  # I know this by heart
     assert df_glued.shape[0] <= minimal_dataset.full_df.shape[0]

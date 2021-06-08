@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import anytree as tree
 from lib.imputer import run_ml_imputer_on_fd_set
-from lib.helpers import load_dataframes, check_split_for_duplicates
+from lib.helpers import load_splits, load_original_data, check_split_for_duplicates
 
 
 class DepOptimizer():
@@ -30,22 +30,27 @@ class DepOptimizer():
     def load_data(self):
         """ Loads train/validate/test splits. Sets class-attributes
         df_train, df_validate, df_test and df_columns. """
-        df_train, df_validate, df_test = load_dataframes(
+        df = load_original_data(self.data.splits_path,
+                                self.data.title,
+                                self.data.missing_value_token)
+        df_train, df_validate, df_test = load_splits(
             self.data.splits_path,
             self.data.title,
             self.data.missing_value_token)
 
-        no_dupl = check_split_for_duplicates(
+        no_dupl = check_split_for_duplicates([df])
+        no_dupl_splits = check_split_for_duplicates(
             [df_train, df_validate, df_test])
 
-        if no_dupl == 0:
+        if no_dupl == no_dupl_splits:
             self.df_train = df_train
             self.df_validate = df_validate
             self.df_test = df_test
             self.columns = list(df_test.columns)
         else:
-            e = '''Found duplicates in train/validate/test splits.
-            Remove duplicates and run again.'''
+            e = '''Found that the number of duplicates in train/validate/test
+            splits deviates from the number of duplicates in the original
+            dataset. Please fix this and try again.'''
             raise ValueError(e)
 
     def init_roots(self):

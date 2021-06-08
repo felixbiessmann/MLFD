@@ -23,7 +23,7 @@ def split_dataset(data, save=True):
         print('Aborted')
 
 
-def compute_complete_dep_detector(data, save=False, set_dry_run=False):
+def compute_complete_dep_detector(data, save=False, dry_run=False):
     """
     Find dependencies in a table using Auto-ML.
 
@@ -34,7 +34,7 @@ def compute_complete_dep_detector(data, save=False, set_dry_run=False):
     """
     start = timeit.default_timer()
     dep_optimizer = opt.DepOptimizer(data, f1_threshold=0.9)
-    dep_optimizer.search_dependencies(strategy='complete', dry_run=set_dry_run)
+    dep_optimizer.search_dependencies(strategy='complete', dry_run=dry_run)
     end = timeit.default_timer()
     t = end - start
     result = {'time': t,
@@ -48,7 +48,7 @@ def compute_complete_dep_detector(data, save=False, set_dry_run=False):
         print(result['dep_optimizer'].print_trees())
 
 
-def compute_greedy_dep_detector(data, save=False, set_dry_run=False):
+def compute_greedy_dep_detector(data, save=False, dry_run=False):
     """ Find dependencies on a relational database table using a ML
     classifier (Datawig).
 
@@ -59,7 +59,7 @@ def compute_greedy_dep_detector(data, save=False, set_dry_run=False):
     """
     start = timeit.default_timer()
     dep_optimizer = opt.DepOptimizer(data, f1_threshold=0.9)
-    dep_optimizer.search_dependencies(strategy='greedy', dry_run=set_dry_run)
+    dep_optimizer.search_dependencies(strategy='greedy', dry_run=dry_run)
     end = timeit.default_timer()
     t = end - start
     print('Time: '+str(t))
@@ -118,7 +118,7 @@ def main(args):
     else:
         calc_fun = models.get(args.model, no_valid_model)
         if args.model in detect_models:
-            calc_fun(dataset, args.save_result, args.set_dry_run)
+            calc_fun(dataset, args.save_result, args.dry_run)
         else:
             calc_fun(dataset, args.save_result)
 
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--dataset')
     parser.add_argument('-c', '--column')
     parser.add_argument('-svr', '--save_result', action='store_true')
-    parser.add_argument('-dry', '--set_dry_run', action='store_true')
+    parser.add_argument('-dry', '--dry_run', action='store_true')
 
     args = parser.parse_args()
     main(args)

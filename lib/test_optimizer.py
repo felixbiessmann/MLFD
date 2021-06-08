@@ -76,7 +76,7 @@ def test_run_top_down(Detector):
 def test_get_greedy_candidates(Detector):
     Detector.load_data()
     Detector.init_roots()
-    root = Detector.roots[9]
+    root = Detector.roots[8]
     root.children[0].score = 1.0
     root.get_greedy_candidates()
     no_roots = len(Detector.roots.values())
@@ -91,7 +91,7 @@ def test_get_complete_candidates(Detector):
     Detector.load_data()
     Detector.init_roots()
 
-    root = Detector.roots[9]
+    root = Detector.roots[8]
     root.children[0].score = 1.0
     root.get_complete_candidates()
     no_roots = len(Detector.roots.values())
