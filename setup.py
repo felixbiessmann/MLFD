@@ -1,8 +1,3 @@
-#!/usr/bin/env python
+from setuptools import setup, find_packages
 
-from distutils.core import setup
-
-setup(name='dep',
-      version='0.1',
-      description='Detect AFDs with Auto-ML techniques',
-      author='Philipp Jung')
+setup(name="pfd", packages=find_packages())

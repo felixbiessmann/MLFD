@@ -1,8 +1,107 @@
-import lib.fd_imputer as fd
-import anytree as tree
-import pandas as pd
-import numpy as np
 import random
+import numpy as np
+import pandas as pd
+import anytree as tree
+from typing import List
+from lib.imputer import run_ml_imputer_on_fd_set, train_model
+from lib.helpers import (load_splits,
+                         load_original_data,
+                         check_split_for_duplicates,
+                         subset_df)
+from lib.explainers import run_feature_permutation
+
+
+class DepOptimizer():
+    """
+    Finds dependencies on a dataset using multi-label
+    classification.
+
+    Argument Keywords:
+    data -- data object from constants
+    f1_threshold -- float in [0, 1]. Potential dependencies need at least this
+    f1 score to be recognized
+    """
+
+    def __init__(self, data, f1_threshold=0.9):
+        """
+        Keyword Arguments:
+        data : Dataset object from constants.py
+            the dataset for which dependencies will be searched
+        """
+        self.data = data
+        self.top_down_convergence = False
+        self.f1_threshold = f1_threshold
+
+    def load_data(self):
+        """ Loads train/validate/test splits. Sets class-attributes
+        df_train, df_validate, df_test and df_columns. """
+        df = load_original_data(self.data.splits_path,
+                                self.data.title,
+                                self.data.missing_value_token)
+        df_train, df_validate, df_test = load_splits(
+            self.data.splits_path,
+            self.data.title,
+            self.data.missing_value_token)
+
+        no_dupl = check_split_for_duplicates([df])
+        no_dupl_splits = check_split_for_duplicates(
+            [df_train, df_validate, df_test])
+
+        if no_dupl == no_dupl_splits:
+            self.df_train = df_train
+            self.df_validate = df_validate
+            self.df_test = df_test
+            self.columns = list(df_test.columns)
+        else:
+            e = '''Found that the number of duplicates in train/validate/test
+            splits deviates from the number of duplicates in the original
+            dataset. Please fix this and try again.'''
+            raise ValueError(e)
+
+    def init_roots(self):
+        """ Initializes the potential RHS's as roots of the search-
+        space tree. """
+        self.roots = {}
+        # create level 0
+        for col in self.columns:
+            is_cont = False
+            if col in self.data.continuous:
+                is_cont = True
+            if is_cont:  # threshold is a MSE
+                d = pd.concat([self.df_train, self.df_validate, self.df_test])
+                thresh = d.loc[:, col].mean()*0.4  # this is bad
+            if not is_cont:
+                thresh = self.f1_threshold
+            self.roots[col] = RootNode(name=col,
+                                       train=self.df_train,
+                                       validate=self.df_validate,
+                                       test=self.df_test,
+                                       continuous=self.data.continuous,
+                                       columns=self.columns,
+                                       is_continuous=is_cont,
+                                       threshold=thresh)
+
+    def print_trees(self):
+        """ Prints tree of each root. """
+        for root in self.roots.values():
+            root.print_tree()
+        return True
+
+    def search_dependencies(self, strategy='greedy', dry_run=False):
+        """ Searches all columns of the original database table for
+        dependencies. """
+        self.load_data()
+        self.init_roots()
+        for root in self.roots.values():
+            root.run_top_down(strategy, dry_run)
+        return True
+
+    def get_minimal_dependencies(self):
+        """ Yields and prints the minimal LHS combinations for all
+        root nodes"""
+        for root in self.roots.values():
+            root.extract_minimal_deps()
+        return True
 
 
 def get_continuous_min_dep(root):
@@ -82,7 +181,7 @@ class RootNode(tree.NodeMixin):
         or children of a tree
 
     Attributes:
-    name -- potential rhs column name
+    name -- rhs-candidate column name
     score -- threshold that child-nodes are compared to when searching for
     dependencies. Either MSE or f1-score, depending on is_continuous.
     is_continuous -- boolean, True if column contains continuous values, False
@@ -92,15 +191,13 @@ class RootNode(tree.NodeMixin):
     dependencies on the tree and "greedy" to find one high-performing
     dependency.
     known_scores -- dict, stores all ml_imputer() results for particular LHS
-    combinations. Strongly improves performance when searching for depdencies.
-    training_cycles -- int, number of training cycles run by Datawig when
+    combinations. Greatly improves performance when searching for depdencies.
     training models. Lower number worsens model performance but reduces
     training time strongly.
     """
 
     def __init__(self, name, columns, train, validate, test,
-                 continuous, is_continuous: bool, threshold=None,
-                 training_cycles=10):
+                 continuous, is_continuous: bool, threshold=None):
         self.name = name
         self.score = threshold
         self.is_continuous = is_continuous
@@ -113,7 +210,6 @@ class RootNode(tree.NodeMixin):
         self.continuous = continuous
 
         self.search_strategy = ''  # greedy or complete
-        self.cycles = training_cycles
 
         self.known_scores = {}
 
@@ -233,12 +329,11 @@ class RootNode(tree.NodeMixin):
             node.score = self.known_scores.get(tuple(node.name), None)
             if node.score is None:
                 dependency = {self.name: [node.name]}
-                res = fd.run_ml_imputer_on_fd_set(self.df_train,
-                                                  self.df_validate,
-                                                  self.df_test,
-                                                  dependency,
-                                                  self.continuous,
-                                                  self.cycles)
+                res = run_ml_imputer_on_fd_set(self.df_train,
+                                               self.df_validate,
+                                               self.df_test,
+                                               dependency,
+                                               self.continuous)
                 if self.is_continuous:
                     node.score = res[self.name][0]['mse']
                 else:
@@ -283,89 +378,32 @@ class RootNode(tree.NodeMixin):
         return min_lhs
 
 
-class DepOptimizer():
+def iterate_pfd(include_cols: List,
+                df_train: pd.DataFrame,
+                df_validate: pd.DataFrame,
+                df_test: pd.DataFrame,
+                label) -> pd.DataFrame:
     """
-    Finds dependencies on a dataset using multi-label
-    classification.
-
-    Argument Keywords:
-    data -- data object from constants
-    f1_threshold -- float in [0, 1]. Potential dependencies need at least this
-    f1 score to be recognized
+    Subsets data based on `include_cols`, then trains a predictor and
+    calculate feature importances via feature permutation. Finally,
+    returns df_importance which is itself returned from the AG feature-
+    permutation implementation.
     """
+    df_sub_train = df_train.loc[:, include_cols]
+    df_sub_test = df_test.loc[:, include_cols]
+    df_sub_validate = df_validate.loc[:, include_cols]
 
-    def __init__(self, data, f1_threshold=0.9):
-        """
-        Keyword Arguments:
-        data : Dataset object from constants.py
-            the dataset for which dependencies will be searched
-        """
-        self.data = data
-        self.top_down_convergence = False
-        self.f1_threshold = f1_threshold
+    df_label_true = df_sub_validate.loc[:, label]
 
-    def load_data(self):
-        """ Loads train/validate/test splits. Sets class-attributes
-        df_train, df_validate, df_test and df_columns. """
-        df_train, df_validate, df_test = fd.load_dataframes(
-            self.data.splits_path,
-            self.data.title,
-            self.data.missing_value_token)
+    predictor = train_model(df_sub_train, df_sub_test, label)
+    df_sub_validate = df_sub_validate.drop(columns=[label])
+    df_predicted = predictor.predict(df_sub_validate)
+    performance = predictor.evaluate_predictions(df_label_true, df_predicted)
 
-        no_dupl = fd.check_split_for_duplicates(
-            [df_train, df_validate, df_test])
+    metric = 'accuracy'
+    if predictor.problem_type == 'regression':
+        metric = 'root_mean_squared_error'
+    print(f"Trained a predictor with {metric} {performance[metric]}")
 
-        if no_dupl == 0:
-            self.df_train = df_train
-            self.df_validate = df_validate
-            self.df_test = df_test
-            self.columns = list(df_test.columns)
-        else:
-            e = '''Found duplicates in train/validate/test splits.
-            Remove duplicates and run again.'''
-            raise ValueError(e)
-
-    def init_roots(self):
-        """ Initializes the potential RHS's as roots of the search-
-        space tree. """
-        self.roots = {}
-        # create level 0
-        for col in self.columns:
-            is_cont = False
-            if col in self.data.continuous:
-                is_cont = True
-            if is_cont:  # threshold is a MSE
-                d = pd.concat([self.df_train, self.df_validate, self.df_test])
-                thresh = d.loc[:, col].mean()*0.4  # this is bad
-            if not is_cont:
-                thresh = self.f1_threshold
-            self.roots[col] = RootNode(name=col,
-                                       train=self.df_train,
-                                       validate=self.df_validate,
-                                       test=self.df_test,
-                                       continuous=self.data.continuous,
-                                       columns=self.columns,
-                                       is_continuous=is_cont,
-                                       threshold=thresh)
-
-    def print_trees(self):
-        """ Prints tree of each root. """
-        for root in self.roots.values():
-            root.print_tree()
-        return True
-
-    def search_dependencies(self, strategy='greedy', dry_run=False):
-        """ Searches all columns of the original database table for
-        dependencies. """
-        self.load_data()
-        self.init_roots()
-        for root in self.roots.values():
-            root.run_top_down(strategy, dry_run)
-        return True
-
-    def get_minimal_dependencies(self):
-        """ Yields and prints the minimal LHS combinations for all
-        root nodes"""
-        for root in self.roots.values():
-            root.extract_minimal_deps()
-        return True
+    df_importance = run_feature_permutation(predictor, df_sub_train)
+    return df_importance

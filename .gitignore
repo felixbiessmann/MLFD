@@ -7,7 +7,7 @@
 *.log
 *.toc
 *.fls
-*.synctex.gz\
+*.synctex.gz
 *.bbl
 *.out
 *.bcf
@@ -17,7 +17,8 @@ presentation/
 
 # Model storage
 ##autogluon
-agModels-predictClass/
+agModels/
+AutogluonModels/
 
 ## computer.py results
 figures/results/*
