@@ -1,19 +1,49 @@
 import pandas as pd
-from lib.helpers import get_performance
-from autogluon.tabular import TabularPredictor as task
+from pandas.util import hash_pandas_object
+from lib.helpers import get_performance, df_to_ag_style
+from autogluon.tabular import TabularPredictor
 
 
-def ml_imputer(df_train, df_validate, df_test, label_column: str):
-    train_data = task.Dataset(df_train)
-    test_data = task.Dataset(df_test)
-    validate_data = task.Dataset(df_validate)
-    train_data.columns = [str(i) for i in df_train.columns]
-    test_data.columns = [str(i) for i in df_test.columns]
-    validate_data.columns = [str(i) for i in df_validate.columns]
+def train_model(df_train: pd.DataFrame,
+                df_test: pd.DataFrame,
+                label: str,
+                verbosity: int = 0,
+                random_state: int = 0) -> TabularPredictor:
+    """
+    Train an autogluon model for df_train, df_test. Specify the label column.
+    Optionally, you can set verbosity to control how much output AutoGluon
+    produces during training.
 
-    d = 'agModels-predictClass'  # folder to store trained models
-    predictor = task(label=str(label_column),
-                     path=d).fit(train_data=train_data, tuning_data=test_data)
+    The function caches models that have been trained on the same data by
+    computing the hash of df_train and comparing that to existing models.
+
+    Returns a tuple consisting of the leaderboard of the predictor object,
+    Returns a tuple consisting of the runtime for training, the test dataset
+    and the predictor object.
+    """
+    d = 'agModels'  # folder to store trained models
+    hash_sum = hash_pandas_object(df_train).sum()
+    checksum = hash(str(hash_sum) + str(label) + str(random_state))
+    try:
+        predictor = TabularPredictor.load(f'{d}/{checksum}')
+    except FileNotFoundError:
+        p = TabularPredictor(label=label, path=f'{d}/{checksum}')
+        predictor = p.fit(train_data=df_train,
+                          tuning_data=df_test,
+                          verbosity=verbosity)
+    return predictor
+
+
+def ml_imputer(df_train,
+               df_validate,
+               df_test,
+               label_column: str) -> pd.DataFrame:
+
+    train_data = df_to_ag_style(df_train)
+    test_data = df_to_ag_style(df_test)
+    validate_data = df_to_ag_style(df_validate)
+
+    predictor = train_model(train_data, test_data, str(label_column))
 
     validate_data_no_y = validate_data.drop(labels=[label_column], axis=1)
     y_pred = predictor.predict(validate_data_no_y)

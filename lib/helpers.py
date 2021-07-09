@@ -1,9 +1,16 @@
 import os
 import pickle
 from sklearn.model_selection import train_test_split
+from autogluon.tabular import TabularPredictor
 import pandas as pd
 import numpy as np
 import random
+
+
+def subset_df(df: pd.DataFrame, exclude_cols: list) -> pd.DataFrame:
+    exclude_cols = [int(x) for x in exclude_cols]
+    new_cols = [x for x in list(df.columns) if x not in exclude_cols]
+    return df.loc[:, new_cols]
 
 
 def save_pickle(obj, path):
@@ -166,13 +173,18 @@ def read_fds(fd_path):
     return fd_dict
 
 
-def get_performance(df_imputed, rhs: str, lhs: list, continuous_cols: list):
-    """ Create a dictionary containing metrics to measure the perfor-
+def get_performance(df_imputed: pd.DataFrame,
+                    rhs: str,
+                    lhs: list,
+                    continuous_cols: list):
+    """
+    Create a dictionary containing metrics to measure the perfor-
     mance of a classifier. If the classified column contains continuous
     values, return a dictionary with keys {'nans', 'lhs', 'mse'}.
     'mse' is the mean squared error. If the classified column contains
     discrete values, return a dictionary with keys {'lhs', 'f1', 'recall',
     'precision'}.
+
     Keyword arguments:
     df_imputed -- dataframe. Column names are expected to be strings.
         One column needs to be called rhs, another one rhs+'_imputed'.
@@ -220,3 +232,14 @@ def get_performance(df_imputed, rhs: str, lhs: list, continuous_cols: list):
                                                  average='weighted')
         }
     return result
+
+
+def df_to_ag_style(df: pd.DataFrame) -> TabularPredictor.Dataset:
+    """
+    Define a standardised way of passing DataFrames to AutoGluon by first
+    casting the DataFrame to TabularPredictor.Dataset, then overwriting
+    column-names with the string of the column's index.
+    """
+    ag_df = TabularPredictor.Dataset(df)
+    ag_df.columns = [str(i) for i in df.columns]
+    return ag_df

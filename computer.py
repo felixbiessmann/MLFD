@@ -6,17 +6,57 @@ import lib.optimizer as opt
 import lib.constants as c
 
 
+def compute_pfd(data, save=False, dry_run=False):
+    """
+    Use SHAP to compute the PFD of a dataset. The user is prompted to
+    insert how much mean absolute deviation from the mean function value
+    they want to secrifice for a smaller LHS
+    """
+    print("Computing PFD. What is the index of the RHS to investigate?")
+    label = int(input(''))  # make sure to select cols based on integers
+
+    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
+                                                       data.title,
+                                                       ',')
+
+    include_cols = list(df_train.columns)
+    while True:
+        exclude_cols = [c for c in df_train.columns if c not in include_cols]
+        print("Training model...")
+        df_importance = opt.iterate_pfd(include_cols,
+                                        df_train,
+                                        df_validate,
+                                        df_test,
+                                        label)
+
+        print("Found the following importances via feature permutation:")
+        print(df_importance.iloc[:, :1])
+        # print("What's your threshold for {metric}?")
+        print(f'Excluded: {exclude_cols}')
+        print("Which columns do you want to exclude? (q to quit)")
+        i = input('')
+        if i == 'q':
+            break
+        exclude_cols = [int(c) for c in i.split(',')]
+
+        include_cols = [c for c in include_cols if c not in exclude_cols]
+
+
 def split_dataset(data, save=True):
     """Splits a dataset into train, validate and test subsets.
     Be cautious when using, this might overwrite existing data"""
-    print(f'You are about to split dataset {data.title}.')
-    print(f'Splits will be saved to {data.splits_path}, if you continue.')
-    print('This might overwrite and nullify existing results.')
-    sure = input('Do you want to proceed? [y/N]')
+    print(f'''You are about to split dataset {data.title}.
+If you continue, splits will be saved to {data.splits_path}.
+This might overwrite and nullify existing results.
+Do you want to proceed? [y/N]''')
+    sure = input('')
     if sure == 'y':
         df = pd.read_csv(data.data_path, sep=data.original_separator,
                          header=None)
-        helps.split_df(data.title, df, (0.8, 0.1, 0.1), data.splits_path)
+        splits_path = ''
+        if save:
+            splits_path = data.splits_path
+        helps.split_df(data.title, df, (0.8, 0.1, 0.1), splits_path)
         print('successfully split.')
         print('original data duplicates: ' + str(sum(df.duplicated())))
     else:
@@ -99,6 +139,7 @@ def main(args):
         c.BALANCESCALE.title: c.BALANCESCALE,
         c.BREASTCANCER.title: c.BREASTCANCER,
         c.BRIDGES.title: c.BRIDGES,
+        c.CERVICAL_CANCER.title: c.CERVICAL_CANCER,
         c.ECHOCARDIOGRAM.title: c.ECHOCARDIOGRAM,
         c.HEPATITIS.title: c.HEPATITIS,
         c.HORSE.title: c.HORSE,
@@ -109,7 +150,8 @@ def main(args):
 
     models = {'split': split_dataset,
               'complete_detect': compute_complete_dep_detector,
-              'greedy_detect': compute_greedy_dep_detector}
+              'greedy_detect': compute_greedy_dep_detector,
+              'compute_pfd': compute_pfd}
     detect_models = ['greedy_detect', 'complete_detect']
 
     dataset = datasets.get(args.dataset, no_valid_data)

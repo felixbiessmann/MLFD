@@ -1,10 +1,8 @@
 import pandas as pd
-from pandas.util import hash_pandas_object
 import shap
-from matplotlib import pyplot as plt
 import numpy as np
 from autogluon.tabular import TabularPredictor
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 
 SHAPs = List[np.array]
@@ -24,7 +22,22 @@ def get_n_best_features(n: int, global_shaps: np.array) -> List[int]:
     return list_of_indices
 
 
+def run_feature_permutation(predictor: TabularPredictor,
+                            df_train: pd.DataFrame,
+                            model_name=None) -> pd.DataFrame:
+    """
+    Use feature permutation to derive feature importances from  an AutoGluon
+    model. The AG documentation refers this website to explain more about
+    feature permutation: https://explained.ai/rf-importance/
+    """
+    df_importance = predictor.feature_importance(df_train,
+                                                 model=model_name,
+                                                 num_shuffle_sets=10,
+                                                 subsample_size=1000)
+    return df_importance
+
 # SHAP functions
+
 
 class AGWrapper:
     """
@@ -35,6 +48,7 @@ class AGWrapper:
     code is here:
     https://github.com/awslabs/autogluon/tree/master/examples/tabular/interpret
     """
+
     def __init__(self, predictor, feature_names, model_name=None):
         self.ag_model = predictor
         self.feature_names = feature_names
@@ -65,7 +79,7 @@ def calculate_shap_values(explainer: shap.explainers, X_test: pd.DataFrame,
 
 def calculate_global_shap_values(shap_values: SHAPs,
                                  problem_type: str,
-                                 df_label_true: pd.DataFrame):
+                                 df_label_true: pd.DataFrame) -> np.array:
     """
     The shap_values come in form of a list of matrices. That list has the same
     length as the classification problem has classes. For each matrix in that
@@ -77,7 +91,6 @@ def calculate_global_shap_values(shap_values: SHAPs,
     """
     if problem_type == 'binary':
         class_shaps = [np.mean(s, axis=0) for s in shap_values]
-
         counts = df_label_true.value_counts().values
         weights = counts/df_label_true.shape[0]
         return np.average(np.array(class_shaps), axis=0, weights=weights)

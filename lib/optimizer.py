@@ -2,8 +2,13 @@ import random
 import numpy as np
 import pandas as pd
 import anytree as tree
-from lib.imputer import run_ml_imputer_on_fd_set
-from lib.helpers import load_splits, load_original_data, check_split_for_duplicates
+from typing import List
+from lib.imputer import run_ml_imputer_on_fd_set, train_model
+from lib.helpers import (load_splits,
+                         load_original_data,
+                         check_split_for_duplicates,
+                         subset_df)
+from lib.explainers import run_feature_permutation
 
 
 class DepOptimizer():
@@ -371,3 +376,34 @@ class RootNode(tree.NodeMixin):
                                                   measure,
                                                   min_lhs[lhs]))
         return min_lhs
+
+
+def iterate_pfd(include_cols: List,
+                df_train: pd.DataFrame,
+                df_validate: pd.DataFrame,
+                df_test: pd.DataFrame,
+                label) -> pd.DataFrame:
+    """
+    Subsets data based on `include_cols`, then trains a predictor and
+    calculate feature importances via feature permutation. Finally,
+    returns df_importance which is itself returned from the AG feature-
+    permutation implementation.
+    """
+    df_sub_train = df_train.loc[:, include_cols]
+    df_sub_test = df_test.loc[:, include_cols]
+    df_sub_validate = df_validate.loc[:, include_cols]
+
+    df_label_true = df_sub_validate.loc[:, label]
+
+    predictor = train_model(df_sub_train, df_sub_test, label)
+    df_sub_validate = df_sub_validate.drop(columns=[label])
+    df_predicted = predictor.predict(df_sub_validate)
+    performance = predictor.evaluate_predictions(df_label_true, df_predicted)
+
+    metric = 'accuracy'
+    if predictor.problem_type == 'regression':
+        metric = 'root_mean_squared_error'
+    print(f"Trained a predictor with {metric} {performance[metric]}")
+
+    df_importance = run_feature_permutation(predictor, df_sub_train)
+    return df_importance

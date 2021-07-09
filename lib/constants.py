@@ -56,6 +56,13 @@ BRIDGES = Dataset(title='bridges',
                   missing_value_token='?',
                   origin='https://archive.ics.uci.edu/ml/machine-learning-databases/bridges/bridges.data.version2')
 
+CERVICAL_CANCER = Dataset(title='cervical-cancer',
+                          original_separator=',',
+                          fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T084747_fds',
+                          continuous=[0, 1, 2, 3, 8, 10, 12, 25, 26, 27],
+                          missing_value_token='?',
+                          origin='https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer/breast-cancer.data')
+
 ECHOCARDIOGRAM = Dataset(title='echocardiogram',
                          original_separator=',',
                          fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T085015_fds',
