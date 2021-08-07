@@ -66,6 +66,7 @@ Alle Knoten, die vom Ursprungsknoten abgehen, sind potentielle linke Seiten der 
 
 Liegt der Schwellenwert eines Kindsknotens über [^0] dem des Elternknotens, wird dieser Ast das Baumdiagramms nicht weiter verfolgt. Zu sehen ist das für den Knoten `[1, 2]`, dessen Schwellwert mit `12.2` über dem Schwellwert des Elternknotens liegt.
 
+```
 2        1.2216000000000002
 └── [0, 1, 3, 4, 5] 0.1026823543956827
     ├── [1, 3, 4, 5] 0.10134767167251084
@@ -91,6 +92,6 @@ Liegt der Schwellenwert eines Kindsknotens über [^0] dem des Elternknotens, wir
     │   └── [0, 1, 4] 0.10557385655521863
     ├── [0, 1, 3, 5] 0.12836826731975562
     └── [0, 1, 3, 4] 0.11918173381240424
-
+```
 
 [^0]Im diskreten Fall unter

@@ -1,4 +1,5 @@
 import timeit
+import logging
 import argparse
 import pandas as pd
 import lib.helpers as helps
@@ -13,6 +14,7 @@ def compute_pfd(data, save=False, dry_run=False):
     they want to secrifice for a smaller LHS
     """
     print("Computing PFD. What is the index of the RHS to investigate?")
+    print(repr(data.column_map))
     label = int(input(''))  # make sure to select cols based on integers
 
     df_train, df_validate, df_test = helps.load_splits(data.splits_path,
@@ -30,6 +32,12 @@ def compute_pfd(data, save=False, dry_run=False):
                                         label)
 
         print("Found the following importances via feature permutation:")
+
+        def map_index(x):
+            """Helps make column list index human-readable"""
+            return f'{x} ({data.column_map[x]})'
+
+        df_importance.index = df_importance.index.map(map_index)
         print(df_importance.iloc[:, :1])
         # print("What's your threshold for {metric}?")
         print(f'Excluded: {exclude_cols}')
@@ -113,15 +121,22 @@ def compute_greedy_dep_detector(data, save=False, dry_run=False):
 
 
 def main(args):
-    # this appears to be neccessary to avoid 'too many open files'-errors
-    # import resource
+    # instantiate logger
+    log = logging.getLogger()
+    log.hasHandlers()
 
-    # The two following lines set the max number of open files. However,
-    # this does not work on Mac OSX, which is why they're commented out
-    # for now.
+    breakpoint()
+    # log.setLevel(logging.DEBUG)
+    # ch = logging.StreamHandler()
+    # ch.setLevel(logging.DEBUG)
 
-    # soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-    # resource.setrlimit(resource.RLIMIT_NOFILE, (100000, hard))
+    # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # ch.setFormatter(formatter)
+    # log.addHandler(ch)
+
+    log.warning('Starting run')
+    log.warning('hallo')
+    log.info('Finished run')
 
     def no_valid_model(*args):
         print("No valid model. Please specify one of the following models:")
