@@ -10,10 +10,12 @@ FlatBenchmarks = List[Tuple[str, float, float]]
 
 
 def get_n_best_features(n: int, global_shaps: np.array) -> List[int]:
-    """Given an array of floats, calculates the absolute value of each component
+    """
+    Given an array of floats, calculates the absolute value of each component
     and returns the indices of those components as a sorted list, with the
     indice of the biggest absolute component first and the smallest absolute
-    component last."""
+    component last.
+    """
     cols = [(i_col, shap) for i_col, shap in enumerate(global_shaps)]
 
     # sort columns by absolute SHAP values
@@ -26,9 +28,9 @@ def run_feature_permutation(predictor: TabularPredictor,
                             df_train: pd.DataFrame,
                             model_name=None) -> pd.DataFrame:
     """
-    Use feature permutation to derive feature importances from  an AutoGluon
-    model. The AG documentation refers this website to explain more about
-    feature permutation: https://explained.ai/rf-importance/
+    Use feature permutation to derive feature importances from an AutoGluon
+    model. The AG documentation refers this website to explain feature
+    permutation: https://explained.ai/rf-importance/
     """
     df_importance = predictor.feature_importance(df_train,
                                                  model=model_name,
@@ -36,9 +38,9 @@ def run_feature_permutation(predictor: TabularPredictor,
                                                  subsample_size=1000)
     return df_importance
 
+
+
 # SHAP functions
-
-
 class AGWrapper:
     """
     A wrapper around AutoGluon that makes it callable by shap.KernelExplainer.
