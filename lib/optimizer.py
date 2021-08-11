@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import pandas as pd
 import anytree as tree
-from typing import List
+from typing import List, Tuple
 from lib.imputer import run_ml_imputer_on_fd_set, train_model
 from lib.helpers import (load_splits,
                          load_original_data,
@@ -383,7 +383,7 @@ def iterate_pfd(include_cols: List,
                 df_train: pd.DataFrame,
                 df_validate: pd.DataFrame,
                 df_test: pd.DataFrame,
-                label) -> pd.DataFrame:
+                label) -> Tuple[pd.DataFrame, dict, str]:
     """
     Subsets data based on `include_cols`, then trains a predictor and
     calculate feature importances via feature permutation. Finally,
@@ -406,7 +406,6 @@ def iterate_pfd(include_cols: List,
     metric = 'accuracy'
     if predictor.problem_type == 'regression':
         metric = 'root_mean_squared_error'
-    logger.info(f"Trained a predictor with {metric} {performance[metric]}")
 
     df_importance = run_feature_permutation(predictor, df_sub_train)
-    return df_importance
+    return (df_importance, performance, metric)

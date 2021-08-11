@@ -7,13 +7,68 @@ import lib.optimizer as opt
 import lib.constants as c
 
 
-def compute_pfd(data, save=False, dry_run=False):
+def automatic_pfd(data, save=False, dry_run=False):
     """
-    Use SHAP to compute the PFD of a dataset. The user is prompted to
-    insert how much mean absolute deviation from the mean function value
-    they want to secrifice for a smaller LHS
+    Uses feature permutation to automatically search for minimal PFDs.
     """
     logger = logging.getLogger('pfd')
+    logger.debug(f"Start automatical search of PFDs for dataset {data.title}")
+    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
+                                                       data.title,
+                                                       ',')
+    print(repr(data.column_map))
+    print("What is the index of the RHS to investigate?")
+    rhs_index = int(input(''))  # select columns based on integers
+    logger.debug(f'User chose rhs_index {rhs_index}')
+
+    include_cols = list(df_train.columns)
+    measured_performance = 0
+    threshold = 1
+
+    # TODO this part doesn't work yet -- perfect predictor has accuracy 1
+    while measured_performance < threshold:
+        exclude_cols = [c for c in df_train.columns if c not in include_cols]
+        logger.info("Begin predictor training")
+        df_importance, performance, metric = opt.iterate_pfd(include_cols,
+                                                             df_train,
+                                                             df_validate,
+                                                             df_test,
+                                                             rhs_index)
+        measured_performance = performance[metric]
+        logger.info(
+            f"Trained a predictor with {metric} {measured_performance}")
+        print("Found the following importances via feature permutation:")
+
+        def map_index(x):
+            """Makes column list index human-readable"""
+            return f'{x} ({data.column_map[x]})'
+
+        df_importance.index = df_importance.index.map(map_index)
+        df_imp = df_importance.iloc[:, :1]
+        print(df_imp)
+        print(f"What's your threshold for {metric}?")
+        user_threshold = float(input(''))
+
+        # the margin is how much performance we can shave off
+        margin = measured_performance - user_threshold
+        df_importance_cumsum = df_imp.sort_values(
+                'importance', ascending=True).cumsum()
+        se_importance_distance = df_importance_cumsum.loc[:, 'importance'] - margin
+
+        exclude_cols = [x[0][0] for x in se_importance_distance.iteritems()
+                        if x[1] < 0]
+
+        include_cols = [c for c in include_cols if c not in exclude_cols]
+
+
+def manual_pfd(data, save=False, dry_run=False):
+    """
+    Use feature permutation to compute the PFD of a dataset. The user is
+    prompted to insert how much mean absolute deviation from the mean
+    function value they want to secrifice for a smaller LHS.
+    """
+    logger = logging.getLogger('pfd')
+    logger.debug(f"Start manual search of PFDs for dataset {data.title}")
     df_train, df_validate, df_test = helps.load_splits(data.splits_path,
                                                        data.title,
                                                        ',')
@@ -25,7 +80,7 @@ def compute_pfd(data, save=False, dry_run=False):
     include_cols = list(df_train.columns)
     while True:
         exclude_cols = [c for c in df_train.columns if c not in include_cols]
-        logger.info("Begin predictor training")
+        logger.info(f"Begin predictor training with LHS {include_cols}")
         df_importance = opt.iterate_pfd(include_cols,
                                         df_train,
                                         df_validate,
@@ -142,7 +197,6 @@ def main(args):
 
     logger.addHandler(ch)
 
-
     def no_valid_model(*args):
         logger.error("No valid model selected.")
         print("Select one of the following models with the --model flag:")
@@ -173,7 +227,8 @@ def main(args):
     models = {'split': split_dataset,
               'complete_detect': compute_complete_dep_detector,
               'greedy_detect': compute_greedy_dep_detector,
-              'compute_pfd': compute_pfd}
+              'automatic_pfd': automatic_pfd,
+              'manual_pfd': manual_pfd}
     detect_models = ['greedy_detect', 'complete_detect']
 
     dataset = datasets.get(args.dataset, no_valid_data)
