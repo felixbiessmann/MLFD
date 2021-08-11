@@ -1,4 +1,5 @@
 import timeit
+import logging
 import argparse
 import pandas as pd
 import lib.helpers as helps
@@ -12,24 +13,32 @@ def compute_pfd(data, save=False, dry_run=False):
     insert how much mean absolute deviation from the mean function value
     they want to secrifice for a smaller LHS
     """
-    print("Computing PFD. What is the index of the RHS to investigate?")
-    label = int(input(''))  # make sure to select cols based on integers
-
+    logger = logging.getLogger('pfd')
     df_train, df_validate, df_test = helps.load_splits(data.splits_path,
                                                        data.title,
                                                        ',')
-
+    print("Compute a PFD.")
+    print("What is the index of the RHS to investigate?")
+    print(repr(data.column_map))
+    rhs_index = int(input(''))  # select columns based on integers
+    logger.debug(f'User chose rhs_index {rhs_index}')
     include_cols = list(df_train.columns)
     while True:
         exclude_cols = [c for c in df_train.columns if c not in include_cols]
-        print("Training model...")
+        logger.info("Begin predictor training")
         df_importance = opt.iterate_pfd(include_cols,
                                         df_train,
                                         df_validate,
                                         df_test,
-                                        label)
+                                        rhs_index)
 
         print("Found the following importances via feature permutation:")
+
+        def map_index(x):
+            """Makes column list index human-readable"""
+            return f'{x} ({data.column_map[x]})'
+
+        df_importance.index = df_importance.index.map(map_index)
         print(df_importance.iloc[:, :1])
         # print("What's your threshold for {metric}?")
         print(f'Excluded: {exclude_cols}')
@@ -57,10 +66,12 @@ Do you want to proceed? [y/N]''')
         if save:
             splits_path = data.splits_path
         helps.split_df(data.title, df, (0.8, 0.1, 0.1), splits_path)
-        print('successfully split.')
-        print('original data duplicates: ' + str(sum(df.duplicated())))
+        print('Splitting successful.')
+        logger = logging.getLogger('pfd')
+        logger.debug('Splitting has been successful.'
+                     f'original data duplicates: {str(sum(df.duplicated()))}')
     else:
-        print('Aborted')
+        logger.info('User aborted splitting.')
 
 
 def compute_complete_dep_detector(data, save=False, dry_run=False):
@@ -113,23 +124,34 @@ def compute_greedy_dep_detector(data, save=False, dry_run=False):
 
 
 def main(args):
-    # this appears to be neccessary to avoid 'too many open files'-errors
-    # import resource
+    logger = logging.getLogger('pfd')
+    logger.propagate = False
+    logger.setLevel(logging.DEBUG)
 
-    # The two following lines set the max number of open files. However,
-    # this does not work on Mac OSX, which is why they're commented out
-    # for now.
+    # create file handler with debug log level
+    fh = logging.FileHandler('z_computer.log')
+    fh.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
 
-    # soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-    # resource.setrlimit(resource.RLIMIT_NOFILE, (100000, hard))
+    # create console handler with a info log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+
+    logger.addHandler(ch)
+
 
     def no_valid_model(*args):
-        print("No valid model. Please specify one of the following models:")
+        logger.error("No valid model selected.")
+        print("Select one of the following models with the --model flag:")
         for key in list(models.keys()):
             print(key)
 
     def no_valid_data():
-        print("No valid dataset selected. Specify one of the following:")
+        logger.error("No valid dataset selected.")
+        print("Select one of the following datasets with the --data flag:")
         for key in list(datasets.keys()):
             print(key)
 
@@ -160,8 +182,11 @@ def main(args):
     else:
         calc_fun = models.get(args.model, no_valid_model)
         if args.model in detect_models:
+            logger.info(f'Running model {args.model} on data {args.dataset}'
+                        'in a dry run.')
             calc_fun(dataset, args.save_result, args.dry_run)
         else:
+            logger.info(f'Running model {args.model} on data {args.dataset}')
             calc_fun(dataset, args.save_result)
 
 

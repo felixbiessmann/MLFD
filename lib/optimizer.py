@@ -1,4 +1,5 @@
 import random
+import logging
 import numpy as np
 import pandas as pd
 import anytree as tree
@@ -389,6 +390,8 @@ def iterate_pfd(include_cols: List,
     returns df_importance which is itself returned from the AG feature-
     permutation implementation.
     """
+    logger = logging.getLogger('pfd')
+    logger.debug(f'Training a model on columns {include_cols}.')
     df_sub_train = df_train.loc[:, include_cols]
     df_sub_test = df_test.loc[:, include_cols]
     df_sub_validate = df_validate.loc[:, include_cols]
@@ -403,7 +406,7 @@ def iterate_pfd(include_cols: List,
     metric = 'accuracy'
     if predictor.problem_type == 'regression':
         metric = 'root_mean_squared_error'
-    print(f"Trained a predictor with {metric} {performance[metric]}")
+    logger.info(f"Trained a predictor with {metric} {performance[metric]}")
 
     df_importance = run_feature_permutation(predictor, df_sub_train)
     return df_importance
