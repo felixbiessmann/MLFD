@@ -383,12 +383,13 @@ def iterate_pfd(include_cols: List,
                 df_train: pd.DataFrame,
                 df_validate: pd.DataFrame,
                 df_test: pd.DataFrame,
-                label) -> Tuple[pd.DataFrame, dict, str]:
+                label) -> float:
     """
     Subsets data based on `include_cols`, then trains a predictor and
-    calculate feature importances via feature permutation. Finally,
-    returns df_importance which is itself returned from the AG feature-
-    permutation implementation.
+    computes model performance for further decision making in the optimization
+    process.
+
+    Returns the model's performance.
     """
     logger = logging.getLogger('pfd')
     logger.debug(f'Training a model on columns {include_cols}.')
@@ -407,5 +408,33 @@ def iterate_pfd(include_cols: List,
     if predictor.problem_type == 'regression':
         metric = 'root_mean_squared_error'
 
-    df_importance = run_feature_permutation(predictor, df_sub_train)
+    return performance[metric]
+
+
+def get_importance_pfd(df_train: pd.DataFrame,
+                       df_validate: pd.DataFrame,
+                       df_test: pd.DataFrame,
+                       label) -> Tuple[pd.DataFrame, dict, str]:
+    """
+    Trains a model on all available LHS columns and explains the resulting
+    predictor using feature permutation.
+
+    Returns a tuple of df_importance, model_performance and the performance
+    metric used for the problem type.
+    """
+    logger = logging.getLogger('pfd')
+    logger.debug(f'Training a model on all available columns.')
+
+    df_label_true = df_validate.loc[:, label]
+
+    predictor = train_model(df_train, df_test, label)
+    df_validate = df_validate.drop(columns=[label])
+    df_predicted = predictor.predict(df_validate)
+    performance = predictor.evaluate_predictions(df_label_true, df_predicted)
+
+    metric = 'accuracy'
+    if predictor.problem_type == 'regression':
+        metric = 'root_mean_squared_error'
+
+    df_importance = run_feature_permutation(predictor, df_train)
     return (df_importance, performance, metric)

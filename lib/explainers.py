@@ -9,21 +9,6 @@ SHAPs = List[np.array]
 FlatBenchmarks = List[Tuple[str, float, float]]
 
 
-def get_n_best_features(n: int, global_shaps: np.array) -> List[int]:
-    """
-    Given an array of floats, calculates the absolute value of each component
-    and returns the indices of those components as a sorted list, with the
-    indice of the biggest absolute component first and the smallest absolute
-    component last.
-    """
-    cols = [(i_col, shap) for i_col, shap in enumerate(global_shaps)]
-
-    # sort columns by absolute SHAP values
-    sorted_cols = sorted(cols, key=lambda t: abs(t[1]), reverse=True)
-    list_of_indices = [t[0] for i, t in enumerate(sorted_cols) if i < n]
-    return list_of_indices
-
-
 def run_feature_permutation(predictor: TabularPredictor,
                             df_train: pd.DataFrame,
                             model_name=None) -> pd.DataFrame:
@@ -38,6 +23,20 @@ def run_feature_permutation(predictor: TabularPredictor,
                                                  subsample_size=1000)
     return df_importance
 
+
+def get_n_best_features(n: int, global_shaps: np.array) -> List[int]:
+    """
+    Given an array of floats, calculates the absolute value of each component
+    and returns the indices of those components as a sorted list, with the
+    indice of the biggest absolute component first and the smallest absolute
+    component last.
+    """
+    cols = [(i_col, shap) for i_col, shap in enumerate(global_shaps)]
+
+    # sort columns by absolute SHAP values
+    sorted_cols = sorted(cols, key=lambda t: abs(t[1]), reverse=True)
+    list_of_indices = [t[0] for i, t in enumerate(sorted_cols) if i < n]
+    return list_of_indices
 
 
 # SHAP functions

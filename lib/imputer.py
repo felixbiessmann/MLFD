@@ -28,6 +28,7 @@ def train_model(df_train: pd.DataFrame,
         p = TabularPredictor(label=label, path=f'{d}/{checksum}')
         predictor = p.fit(train_data=df_train,
                           tuning_data=df_test,
+                          time_limit=20,
                           verbosity=verbosity)
     return predictor
 

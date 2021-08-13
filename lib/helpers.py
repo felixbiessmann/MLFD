@@ -1,5 +1,6 @@
 import os
 import pickle
+from typing import List, Any
 from sklearn.model_selection import train_test_split
 from autogluon.tabular import TabularPredictor
 import pandas as pd
@@ -82,7 +83,7 @@ def load_original_data(data_path, data_title, missing_value_token):
     return df
 
 
-def load_splits(data_path, data_title, missing_value_token):
+def load_splits(data_path, data_title, missing_value_token) -> List[pd.DataFrame]:
     """ Loads train, validate, test splits from a directory.
     The data's missing values, which are represented in the data by
     missing_value_token, are replaced with np.nan.
@@ -102,9 +103,7 @@ def load_splits(data_path, data_title, missing_value_token):
 
     dfs = [df_train, df_validate, df_test]
     dfs = [df.replace(missing_value_token, np.nan) for df in dfs]
-    # dfs = [df.dropna(axis=0) for df in dfs]  # drop rows with nans
-
-    return (dfs)
+    return dfs
 
 
 def random_dependency_generator(columns, n=10):
@@ -243,3 +242,8 @@ def df_to_ag_style(df: pd.DataFrame) -> TabularPredictor.Dataset:
     ag_df = TabularPredictor.Dataset(df)
     ag_df.columns = [str(i) for i in df.columns]
     return ag_df
+
+
+def map_index(x: Any, column_map: dict) -> str:
+    """Makes column list index human-readable."""
+    return f'{column_map[x]}'

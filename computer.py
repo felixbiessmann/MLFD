@@ -1,3 +1,4 @@
+import numpy as np
 import timeit
 import logging
 import argparse
@@ -7,12 +8,62 @@ import lib.optimizer as opt
 import lib.constants as c
 
 
-def automatic_pfd(data, save=False, dry_run=False):
+def manual_pfd(data, *args, **kwargs):
     """
+    Use feature permutation to compute the PFD of a dataset. The user is
+    prompted to insert how much mean absolute deviation from the mean
+    function value they want to secrifice for a smaller LHS.
+    """
+    logger = logging.getLogger('pfd')
+    logger.debug(f"Start manual search of PFDs for dataset {data.title}")
+    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
+                                                       data.title,
+                                                       ',')
+    print("Compute a PFD.")
+    print("What is the index of the RHS to investigate?")
+    print(repr(data.column_map))
+    rhs_index = int(input(''))  # select columns based on integers
+    logger.debug(f'User chose rhs_index {rhs_index}.')
+
+    exclude_cols = []
+    include_cols = list(df_train.columns)
+    lhs = [c for c in include_cols if c != rhs_index]
+    logger.info("Begin global predictor training with complete LHS.")
+    df_imp, measured_performance, metric = opt.get_importance_pfd(df_train,
+                                                                  df_validate,
+                                                                  df_test,
+                                                                  rhs_index)
+    df_imp['description'] = df_imp.index.to_series().apply(lambda x: data.column_map.get(x, 'NA'))
+
+    while True:
+        logger.info(f"Trained a predictor with {metric} "
+                    f"{measured_performance}.")
+        print("Found the following importances via feature permutation:")
+        print(df_imp.loc[lhs, ['description', 'importance']].sort_values(
+            'importance', ascending=False))
+        print(f'Excluded: {exclude_cols}')
+
+        print("Which columns do you want to exclude? (q to quit)")
+        i = input('')
+        if i == 'q':
+            break
+
+        exclude_cols = [int(c) for c in i.split(',')]
+        include_cols = [c for c in include_cols if c not in exclude_cols]
+        lhs = [c for c in include_cols if c != rhs_index]
+
+        logger.info(f"Begin predictor training with LHS {lhs}")
+        measured_performance = opt.iterate_pfd(include_cols,
+                                               df_train,
+                                               df_validate,
+                                               df_test,
+                                               rhs_index)
+
+
+def jump_pfd(data, *args, **kwargs):
+    """
+    TODO Build like manual_pfd
     Uses feature permutation to automatically search for minimal PFDs.
-    This is done by taking the model's performance, and subtracting the user's
-    threshold from that. This leaves you with a margin that we try to
-    distribute among the features we remove from the model.
 
     Currently, this approach doesn't work, because AG's feature_permutation
     returns feature importances that aren't additive and thus don't sum up to
@@ -38,9 +89,9 @@ def automatic_pfd(data, save=False, dry_run=False):
     first_run = True
 
     while True:
-        exclude_cols = [c for c in df_train.columns if c not in include_cols]
+        exclude_cols = [c for c in list(df_train.columns)
+                        if c not in include_cols]
         logger.info("Begin predictor training")
-        breakpoint()
         df_importance, performance, metric = opt.iterate_pfd(include_cols,
                                                              df_train,
                                                              df_validate,
@@ -82,12 +133,12 @@ def automatic_pfd(data, save=False, dry_run=False):
                                                        'importance'] - margin
         exclude_cols = [int(x[0][0]) for x in importance_distance.iteritems()
                         if x[1] < 0]
-        breakpoint()
         include_cols = [c for c in include_cols if c not in exclude_cols]
 
 
-def automatic_pfd_v2(data, save=False, dry_run=False):
+def linear_pfd(data, *args, **kwargs):
     """
+    TODO Build like manual_pfd
     Uses feature permutation to automatically search for minimal PFDs.
 
     In AutoGluon, higher performance metrics are always better. This leads to
@@ -145,54 +196,9 @@ def automatic_pfd_v2(data, save=False, dry_run=False):
                         "Stopping the search.")
             break
 
-        breakpoint()
-        exclude_col = int(df_imp.iloc[-1, :].name[0])  # the least important column
+        # the least important column
+        exclude_col = int(df_imp.iloc[-1, :].name[0])
         include_cols = [c for c in include_cols if c != exclude_col]
-
-
-def manual_pfd(data, save=False, dry_run=False):
-    """
-    Use feature permutation to compute the PFD of a dataset. The user is
-    prompted to insert how much mean absolute deviation from the mean
-    function value they want to secrifice for a smaller LHS.
-    """
-    logger = logging.getLogger('pfd')
-    logger.debug(f"Start manual search of PFDs for dataset {data.title}")
-    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
-                                                       data.title,
-                                                       ',')
-    print("Compute a PFD.")
-    print("What is the index of the RHS to investigate?")
-    print(repr(data.column_map))
-    rhs_index = int(input(''))  # select columns based on integers
-    logger.debug(f'User chose rhs_index {rhs_index}')
-    include_cols = list(df_train.columns)
-    while True:
-        exclude_cols = [c for c in df_train.columns if c not in include_cols]
-        logger.info(f"Begin predictor training with LHS {include_cols}")
-        df_importance = opt.iterate_pfd(include_cols,
-                                        df_train,
-                                        df_validate,
-                                        df_test,
-                                        rhs_index)
-
-        print("Found the following importances via feature permutation:")
-
-        def map_index(x):
-            """Makes column list index human-readable"""
-            return f'{x} ({data.column_map[x]})'
-
-        df_importance.index = df_importance.index.map(map_index)
-        print(df_importance.iloc[:, :1])
-        # print("What's your threshold for {metric}?")
-        print(f'Excluded: {exclude_cols}')
-        print("Which columns do you want to exclude? (q to quit)")
-        i = input('')
-        if i == 'q':
-            break
-        exclude_cols = [int(c) for c in i.split(',')]
-
-        include_cols = [c for c in include_cols if c not in exclude_cols]
 
 
 def split_dataset(data, save=True):
@@ -202,6 +208,7 @@ def split_dataset(data, save=True):
 If you continue, splits will be saved to {data.splits_path}.
 This might overwrite and nullify existing results.
 Do you want to proceed? [y/N]''')
+    logger = logging.getLogger('pfd')
     sure = input('')
     if sure == 'y':
         df = pd.read_csv(data.data_path, sep=data.original_separator,
@@ -211,7 +218,6 @@ Do you want to proceed? [y/N]''')
             splits_path = data.splits_path
         helps.split_df(data.title, df, (0.8, 0.1, 0.1), splits_path)
         print('Splitting successful.')
-        logger = logging.getLogger('pfd')
         logger.debug('Splitting has been successful.'
                      f'original data duplicates: {str(sum(df.duplicated()))}')
     else:
@@ -316,9 +322,9 @@ def main(args):
     models = {'split': split_dataset,
               'complete_detect': compute_complete_dep_detector,
               'greedy_detect': compute_greedy_dep_detector,
-              'automatic_pfd_v2': automatic_pfd_v2,
-              'automatic_pfd': automatic_pfd,
-              'manual_pfd': manual_pfd}
+              'manual_pfd': manual_pfd,
+              'linear_pfd': linear_pfd,
+              'jump_pfd': jump_pfd}
     detect_models = ['greedy_detect', 'complete_detect']
 
     dataset = datasets.get(args.dataset, no_valid_data)
