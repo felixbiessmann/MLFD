@@ -17,9 +17,7 @@ def train_model(df_train: pd.DataFrame,
     The function caches models that have been trained on the same data by
     computing the hash of df_train and comparing that to existing models.
 
-    Returns a tuple consisting of the leaderboard of the predictor object,
-    Returns a tuple consisting of the runtime for training, the test dataset
-    and the predictor object.
+    Returns the predictor object.
     """
     d = 'agModels'  # folder to store trained models
     hash_sum = hash_pandas_object(df_train).sum()

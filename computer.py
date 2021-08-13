@@ -10,6 +10,17 @@ import lib.constants as c
 def automatic_pfd(data, save=False, dry_run=False):
     """
     Uses feature permutation to automatically search for minimal PFDs.
+    This is done by taking the model's performance, and subtracting the user's
+    threshold from that. This leaves you with a margin that we try to
+    distribute among the features we remove from the model.
+
+    Currently, this approach doesn't work, because AG's feature_permutation
+    returns feature importances that aren't additive and thus don't sum up to
+    equal the model's loss -- I am only aware of shap.TreeExplainer's ability
+    to explain the log_loss of a function. So this seems to be a dead end.
+
+    In AutoGluon, higher performance metrics are always better. This leads to
+    the circumstance that the MSE is negative!
     """
     logger = logging.getLogger('pfd')
     logger.debug(f"Start automatical search of PFDs for dataset {data.title}")
@@ -22,13 +33,14 @@ def automatic_pfd(data, save=False, dry_run=False):
     logger.debug(f'User chose rhs_index {rhs_index}')
 
     include_cols = list(df_train.columns)
-    measured_performance = 0
-    threshold = 1
+    measured_performance = 1
+    threshold = 0
+    first_run = True
 
-    # TODO this part doesn't work yet -- perfect predictor has accuracy 1
-    while measured_performance < threshold:
+    while True:
         exclude_cols = [c for c in df_train.columns if c not in include_cols]
         logger.info("Begin predictor training")
+        breakpoint()
         df_importance, performance, metric = opt.iterate_pfd(include_cols,
                                                              df_train,
                                                              df_validate,
@@ -38,6 +50,11 @@ def automatic_pfd(data, save=False, dry_run=False):
         logger.info(
             f"Trained a predictor with {metric} {measured_performance}")
         print("Found the following importances via feature permutation:")
+        if measured_performance < threshold:
+            logger.info("The newly trained model's performance of "
+                        f"{measured_performance} is below the thresold of "
+                        f" {threshold}. Stopping the search.")
+            break
 
         def map_index(x):
             """Makes column list index human-readable"""
@@ -46,19 +63,91 @@ def automatic_pfd(data, save=False, dry_run=False):
         df_importance.index = df_importance.index.map(map_index)
         df_imp = df_importance.iloc[:, :1]
         print(df_imp)
-        print(f"What's your threshold for {metric}?")
-        user_threshold = float(input(''))
+        if first_run:
+            print(f"What's your threshold for {metric}?")
+            threshold = float(input(''))
+            first_run = False
 
         # the margin is how much performance we can shave off
-        margin = measured_performance - user_threshold
+        margin = measured_performance - threshold
+        if margin < 0:
+            logger.info(f"The set threshold of {threshold} is below "
+                        "the measured_performance of {measured_performance}."
+                        "Stopping the search.")
+            break
+
         df_importance_cumsum = df_imp.sort_values(
-                'importance', ascending=True).cumsum()
-        se_importance_distance = df_importance_cumsum.loc[:, 'importance'] - margin
-
-        exclude_cols = [x[0][0] for x in se_importance_distance.iteritems()
+            'importance', ascending=True).cumsum()
+        importance_distance = df_importance_cumsum.loc[:,
+                                                       'importance'] - margin
+        exclude_cols = [int(x[0][0]) for x in importance_distance.iteritems()
                         if x[1] < 0]
-
+        breakpoint()
         include_cols = [c for c in include_cols if c not in exclude_cols]
+
+
+def automatic_pfd_v2(data, save=False, dry_run=False):
+    """
+    Uses feature permutation to automatically search for minimal PFDs.
+
+    In AutoGluon, higher performance metrics are always better. This leads to
+    the circumstnace that the MSE is negative! So don't dispair!
+    """
+    logger = logging.getLogger('pfd')
+    logger.debug(f"Start automatical search of PFDs for dataset {data.title}")
+    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
+                                                       data.title,
+                                                       ',')
+    print(repr(data.column_map))
+    print("What is the index of the RHS to investigate?")
+    rhs_index = int(input(''))  # select columns based on integers
+    logger.debug(f'User chose rhs_index {rhs_index}')
+
+    include_cols = list(df_train.columns)
+    measured_performance = 1
+    threshold = 0
+    first_run = True
+
+    while True:
+        logger.info("Begin predictor training")
+        df_importance, performance, metric = opt.iterate_pfd(include_cols,
+                                                             df_train,
+                                                             df_validate,
+                                                             df_test,
+                                                             rhs_index)
+        measured_performance = performance[metric]
+        logger.info(
+            f"Trained a predictor with {metric} {measured_performance}")
+        if measured_performance < threshold:
+            logger.info("The newly trained model's performance of "
+                        f"{measured_performance} is below the threshold of "
+                        f" {threshold}. Stopping the search.")
+            break
+
+        def map_index(x):
+            """Makes column list index human-readable"""
+            return f'{x} ({data.column_map[x]})'
+
+        df_importance.index = df_importance.index.map(map_index)
+        df_imp = df_importance.iloc[:, :1]
+        print("Found the following importances via feature permutation:")
+        print(df_imp)
+        if first_run:
+            print(f"What's your threshold for {metric}?")
+            threshold = float(input(''))
+            first_run = False
+
+        # how much performance can we shave off?
+        margin = measured_performance - threshold
+        if margin < 0:
+            logger.info(f"The set threshold of {threshold} is below "
+                        "the measured_performance of {measured_performance}."
+                        "Stopping the search.")
+            break
+
+        breakpoint()
+        exclude_col = int(df_imp.iloc[-1, :].name[0])  # the least important column
+        include_cols = [c for c in include_cols if c != exclude_col]
 
 
 def manual_pfd(data, save=False, dry_run=False):
@@ -227,6 +316,7 @@ def main(args):
     models = {'split': split_dataset,
               'complete_detect': compute_complete_dep_detector,
               'greedy_detect': compute_greedy_dep_detector,
+              'automatic_pfd_v2': automatic_pfd_v2,
               'automatic_pfd': automatic_pfd,
               'manual_pfd': manual_pfd}
     detect_models = ['greedy_detect', 'complete_detect']
