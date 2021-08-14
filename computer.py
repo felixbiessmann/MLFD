@@ -1,11 +1,43 @@
-import numpy as np
 import timeit
 import logging
 import argparse
 import pandas as pd
+from typing import Tuple
 import lib.helpers as helps
 import lib.optimizer as opt
 import lib.constants as c
+
+
+def global_predictor_explained(data: c.Dataset,
+                               df_train: pd.DataFrame,
+                               df_validate: pd.DataFrame,
+                               df_test: pd.DataFrame
+                               ) -> Tuple[pd.DataFrame, dict, str, int]:
+    """
+    Trains a global predictor for a given dataset and explains it using
+    feature_permutation.
+
+    Returns a Tuple with the Feature-Importance-Dataframe, the
+    performance-dict, the metric the predictor is evaluated on and the index
+    of the RHS column.
+    """
+    logger = logging.getLogger('pfd')
+    print("Compute a PFD.")
+    print("What is the index of the RHS to investigate?")
+    print(repr(data.column_map))
+    rhs = int(input(''))  # select column based on integers
+    logger.debug(f'User chose rhs {rhs}')
+
+    logger.info("Begin global predictor training with complete LHS.")
+    df_imp, measured_performance, metric = opt.get_importance_pfd(df_train,
+                                                                  df_validate,
+                                                                  df_test,
+                                                                  rhs)
+    # add column-description to importance-dataframe
+    df_imp['description'] = df_imp.index.to_series().apply(
+        lambda x: data.column_map.get(x, 'NA'))
+
+    return (df_imp, measured_performance, metric, rhs)
 
 
 def manual_pfd(data, *args, **kwargs):
@@ -19,26 +51,18 @@ def manual_pfd(data, *args, **kwargs):
     df_train, df_validate, df_test = helps.load_splits(data.splits_path,
                                                        data.title,
                                                        ',')
-    print("Compute a PFD.")
-    print("What is the index of the RHS to investigate?")
-    print(repr(data.column_map))
-    rhs_index = int(input(''))  # select columns based on integers
-    logger.debug(f'User chose rhs_index {rhs_index}.')
+    df_imp, measured_performance, metric, rhs = global_predictor_explained(
+        data, df_train, df_validate, df_test)
 
     exclude_cols = []
     include_cols = list(df_train.columns)
-    lhs = [c for c in include_cols if c != rhs_index]
-    logger.info("Begin global predictor training with complete LHS.")
-    df_imp, measured_performance, metric = opt.get_importance_pfd(df_train,
-                                                                  df_validate,
-                                                                  df_test,
-                                                                  rhs_index)
-    df_imp['description'] = df_imp.index.to_series().apply(lambda x: data.column_map.get(x, 'NA'))
+    lhs = [c for c in include_cols if c != rhs]
 
     while True:
         logger.info(f"Trained a predictor with {metric} "
                     f"{measured_performance}.")
-        print("Found the following importances via feature permutation:")
+        print("These are the feature importances found via "
+              "feature permutation:")
         print(df_imp.loc[lhs, ['description', 'importance']].sort_values(
             'importance', ascending=False))
         print(f'Excluded: {exclude_cols}')
@@ -50,77 +74,71 @@ def manual_pfd(data, *args, **kwargs):
 
         exclude_cols = [int(c) for c in i.split(',')]
         include_cols = [c for c in include_cols if c not in exclude_cols]
-        lhs = [c for c in include_cols if c != rhs_index]
+        lhs = [c for c in include_cols if c != rhs]
 
         logger.info(f"Begin predictor training with LHS {lhs}")
         measured_performance = opt.iterate_pfd(include_cols,
                                                df_train,
                                                df_validate,
                                                df_test,
-                                               rhs_index)
+                                               rhs)
 
 
 def jump_pfd(data, *args, **kwargs):
+    # TODO read up how this fits the theory of permutation feature importance
+    # TODO properly implement this method
     """
-    TODO Build like manual_pfd
-    Uses feature permutation to automatically search for minimal PFDs.
+    Uses refined searching stategies to greedily jump to a node in the
+    search lattice.
 
-    Currently, this approach doesn't work, because AG's feature_permutation
-    returns feature importances that aren't additive and thus don't sum up to
-    equal the model's loss -- I am only aware of shap.TreeExplainer's ability
-    to explain the log_loss of a function. So this seems to be a dead end.
+    AG's feature_permutation returns feature importances that aren't
+    additive and thus don't sum up to equal the model's loss function.
+    Which is why I normalize the permutation feature importances to the
+    model's measured_performance.
 
-    In AutoGluon, higher performance metrics are always better. This leads to
-    the circumstance that the MSE is negative!
+    Note that in AutoGluon, higher performance metrics are always better.
+    This leads to the circumstance that the MSE is negative!
+
+    Also, shap.TreeExplainer is capable of explaining a model's log_loss,
+    which might be worthwhile investigating in future versions.
     """
     logger = logging.getLogger('pfd')
     logger.debug(f"Start automatical search of PFDs for dataset {data.title}")
+
     df_train, df_validate, df_test = helps.load_splits(data.splits_path,
                                                        data.title,
                                                        ',')
-    print(repr(data.column_map))
-    print("What is the index of the RHS to investigate?")
-    rhs_index = int(input(''))  # select columns based on integers
-    logger.debug(f'User chose rhs_index {rhs_index}')
 
+    df_imp, measured_performance, metric, rhs = global_predictor_explained(
+        data, df_train, df_validate, df_test)
+    exclude_cols = []
     include_cols = list(df_train.columns)
+    lhs = [c for c in include_cols if c != rhs]
+
     measured_performance = 1
     threshold = 0
-    first_run = True
+
+    logger.info(f"Trained a predictor with {metric} "
+                f"{measured_performance}.")
+    print("These are the feature importances found via "
+          "feature permutation:")
+    print(df_imp.loc[lhs, ['description', 'importance']].sort_values(
+        'importance', ascending=False))
+    print(f"What's your threshold for {metric}?")
+    threshold = float(input(''))
+
+    logger.debug("User set threshold of {threshold}")
+    # TODO continue here
 
     while True:
-        exclude_cols = [c for c in list(df_train.columns)
-                        if c not in include_cols]
-        logger.info("Begin predictor training")
-        df_importance, performance, metric = opt.iterate_pfd(include_cols,
-                                                             df_train,
-                                                             df_validate,
-                                                             df_test,
-                                                             rhs_index)
-        measured_performance = performance[metric]
-        logger.info(
-            f"Trained a predictor with {metric} {measured_performance}")
-        print("Found the following importances via feature permutation:")
+        margin = measured_performance - threshold
         if measured_performance < threshold:
             logger.info("The newly trained model's performance of "
-                        f"{measured_performance} is below the thresold of "
+                        f"{measured_performance} is below the threshold of "
                         f" {threshold}. Stopping the search.")
             break
 
-        def map_index(x):
-            """Makes column list index human-readable"""
-            return f'{x} ({data.column_map[x]})'
-
-        df_importance.index = df_importance.index.map(map_index)
-        df_imp = df_importance.iloc[:, :1]
-        print(df_imp)
-        if first_run:
-            print(f"What's your threshold for {metric}?")
-            threshold = float(input(''))
-            first_run = False
-
         # the margin is how much performance we can shave off
-        margin = measured_performance - threshold
         if margin < 0:
             logger.info(f"The set threshold of {threshold} is below "
                         "the measured_performance of {measured_performance}."
@@ -131,14 +149,22 @@ def jump_pfd(data, *args, **kwargs):
             'importance', ascending=True).cumsum()
         importance_distance = df_importance_cumsum.loc[:,
                                                        'importance'] - margin
+
+        logger.info("Training a predictor next to check threshold.")
+        logger.info("Begin predictor training")
+        measured_performance = opt.iterate_pfd(include_cols,
+                                               df_train,
+                                               df_validate,
+                                               df_test,
+                                               rhs)
         exclude_cols = [int(x[0][0]) for x in importance_distance.iteritems()
                         if x[1] < 0]
         include_cols = [c for c in include_cols if c not in exclude_cols]
 
 
 def linear_pfd(data, *args, **kwargs):
+    # TODO implement this like manual_pfd
     """
-    TODO Build like manual_pfd
     Uses feature permutation to automatically search for minimal PFDs.
 
     In AutoGluon, higher performance metrics are always better. This leads to
@@ -151,7 +177,7 @@ def linear_pfd(data, *args, **kwargs):
                                                        ',')
     print(repr(data.column_map))
     print("What is the index of the RHS to investigate?")
-    rhs_index = int(input(''))  # select columns based on integers
+    rhs_index = int(input(''))  # select column based on integers
     logger.debug(f'User chose rhs_index {rhs_index}')
 
     include_cols = list(df_train.columns)
