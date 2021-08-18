@@ -12,10 +12,10 @@ def global_predictor_explained(data: c.Dataset,
                                df_train: pd.DataFrame,
                                df_validate: pd.DataFrame,
                                df_test: pd.DataFrame
-                               ) -> Tuple[pd.DataFrame, dict, str, int]:
+                               ) -> Tuple[pd.DataFrame, float, str, int]:
     """
-    Trains a global predictor for a given dataset and explains it using
-    feature_permutation.
+    Asks the user for a RHS and trains a global predictor for a given dataset.
+    The predictor is then explains it using feature_permutation.
 
     Returns a Tuple with the Feature-Importance-Dataframe, the
     performance-dict, the metric the predictor is evaluated on and the index
@@ -37,7 +37,7 @@ def global_predictor_explained(data: c.Dataset,
     df_imp['description'] = df_imp.index.to_series().apply(
         lambda x: data.column_map.get(x, 'NA'))
 
-    return (df_imp, measured_performance, metric, rhs)
+    return (df_imp, measured_performance[metric], metric, rhs)
 
 
 def manual_pfd(data, *args, **kwargs):
@@ -54,6 +54,7 @@ def manual_pfd(data, *args, **kwargs):
     df_imp, measured_performance, metric, rhs = global_predictor_explained(
         data, df_train, df_validate, df_test)
 
+    measured_performance = measured_performance
     exclude_cols = []
     include_cols = list(df_train.columns)
     lhs = [c for c in include_cols if c != rhs]
@@ -84,9 +85,59 @@ def manual_pfd(data, *args, **kwargs):
                                                rhs)
 
 
+def linear_pfd(data, *args, **kwargs):
+    # TODO implement this like manual_pfd
+    """
+    Uses feature permutation to automatically search for minimal PFDs.
+
+    In AutoGluon, higher performance metrics are always better. This leads to
+    the circumstnace that the MSE is negative! So don't dispair!
+    """
+    logger = logging.getLogger('pfd')
+    logger.debug(f"Start linear search of PFDs for dataset {data.title}")
+    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
+                                                       data.title,
+                                                       ',')
+
+    df_imp, measured_performance, metric, rhs = global_predictor_explained(
+        data, df_train, df_validate, df_test)
+
+    include_cols = list(df_train.columns)
+    lhs = [c for c in include_cols if c != rhs]
+
+    logger.info(f"Trained a predictor with {metric} "
+                f"{measured_performance}.")
+    print("These are the feature importances found via "
+          "feature permutation:")
+    print(df_imp.loc[lhs, ['description', 'importance']].sort_values(
+        'importance', ascending=False))
+    print(f"What's your threshold for {metric}?")
+    threshold = float(input(''))
+
+    for i in range(len(df_train.columns)):
+        if measured_performance < threshold:
+            logger.info("The newly trained model's performance of "
+                        f"{measured_performance} is below the threshold of "
+                        f"{threshold}. Stopping the search.")
+            break
+
+        # the i-least important column
+        breakpoint()
+        exclude_col = int(df_imp.iloc[-(i+1), :].name)
+        include_cols = [c for c in include_cols if c != exclude_col]
+        lhs = [c for c in include_cols if c != rhs]
+
+        logger.info(f"Begin predictor training with LHS {lhs}")
+        measured_performance = opt.iterate_pfd(include_cols,
+                                               df_train,
+                                               df_validate,
+                                               df_test,
+                                               rhs)
+        logger.info(
+            f"Trained a predictor with {metric} {measured_performance}")
+
+
 def jump_pfd(data, *args, **kwargs):
-    # TODO read up how this fits the theory of permutation feature importance
-    # TODO properly implement this method
     """
     Uses refined searching stategies to greedily jump to a node in the
     search lattice.
@@ -94,7 +145,10 @@ def jump_pfd(data, *args, **kwargs):
     AG's feature_permutation returns feature importances that aren't
     additive and thus don't sum up to equal the model's loss function.
     Which is why I normalize the permutation feature importances to the
-    model's measured_performance.
+    model's measured_performance. This is not theoretically sound though
+    -- there is no reason to think that FIs calculated for features
+    [x_1, x_2, x_3, x_4] are the same FIs calculated for features
+    [x_2, x_3, x_4] when using feature_permutation.
 
     Note that in AutoGluon, higher performance metrics are always better.
     This leads to the circumstance that the MSE is negative!
@@ -115,10 +169,8 @@ def jump_pfd(data, *args, **kwargs):
     include_cols = list(df_train.columns)
     lhs = [c for c in include_cols if c != rhs]
 
-    threshold = 0
-
     logger.info(f"Trained a predictor with {metric} "
-                f"{measured_performance[metric]}.")
+                f"{measured_performance}.")
     print("These are the feature importances found via "
           "feature permutation:")
     print(df_imp.loc[lhs, ['description', 'importance']].sort_values(
@@ -129,19 +181,19 @@ def jump_pfd(data, *args, **kwargs):
     logger.debug("User set threshold of {threshold}")
 
     # the margin is how much performance we can shave off
-    margin = measured_performance[metric] - threshold
+    margin = measured_performance - threshold
     if margin < 0:
         logger.info(f"The set threshold of {threshold} is below "
                     "the measured_performance of {measured_performance}. "
                     "Stopping the search.")
 
-    if measured_performance[metric] < threshold:
+    if measured_performance < threshold:
         logger.info("The newly trained model's performance of "
                     f"{measured_performance} is below the threshold of "
                     f" {threshold}. Stopping the search.")
 
     df_imp['normalized_importance'] = (df_imp.loc[:, 'importance']
-                                       / df_imp.loc[:, 'importance'].sum()) * measured_performance[metric]
+                                       / df_imp.loc[:, 'importance'].sum()) * measured_performance
     df_importance_cumsum = df_imp.sort_values(
         'normalized_importance', ascending=True).cumsum()
     importance_distance = df_importance_cumsum.loc[:,
@@ -168,71 +220,6 @@ def jump_pfd(data, *args, **kwargs):
 
 
 def binary_pfd(data, *args, **kwargs):
-    # TODO implement this like manual_pfd
-    """
-    Uses feature permutation to automatically search for minimal PFDs.
-
-    In AutoGluon, higher performance metrics are always better. This leads to
-    the circumstnace that the MSE is negative! So don't dispair!
-    """
-    logger = logging.getLogger('pfd')
-    logger.debug(f"Start automatical search of PFDs for dataset {data.title}")
-    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
-                                                       data.title,
-                                                       ',')
-    print(repr(data.column_map))
-    print("What is the index of the RHS to investigate?")
-    rhs_index = int(input(''))  # select column based on integers
-    logger.debug(f'User chose rhs_index {rhs_index}')
-
-    include_cols = list(df_train.columns)
-    measured_performance = 1
-    threshold = 0
-    first_run = True
-
-    while True:
-        logger.info("Begin predictor training")
-        df_importance, performance, metric = opt.iterate_pfd(include_cols,
-                                                             df_train,
-                                                             df_validate,
-                                                             df_test,
-                                                             rhs_index)
-        measured_performance = performance[metric]
-        logger.info(
-            f"Trained a predictor with {metric} {measured_performance}")
-        if measured_performance < threshold:
-            logger.info("The newly trained model's performance of "
-                        f"{measured_performance} is below the threshold of "
-                        f" {threshold}. Stopping the search.")
-            break
-
-        def map_index(x):
-            """Makes column list index human-readable"""
-            return f'{x} ({data.column_map[x]})'
-
-        df_importance.index = df_importance.index.map(map_index)
-        df_imp = df_importance.iloc[:, :1]
-        print("Found the following importances via feature permutation:")
-        print(df_imp)
-        if first_run:
-            print(f"What's your threshold for {metric}?")
-            threshold = float(input(''))
-            first_run = False
-
-        # how much performance can we shave off?
-        margin = measured_performance - threshold
-        if margin < 0:
-            logger.info(f"The set threshold of {threshold} is below "
-                        "the measured_performance of {measured_performance}."
-                        "Stopping the search.")
-            break
-
-        # the least important column
-        exclude_col = int(df_imp.iloc[-1, :].name[0])
-        include_cols = [c for c in include_cols if c != exclude_col]
-
-
-def linear_pfd(data, *args, **kwargs):
     # TODO implement this like manual_pfd
     """
     Uses feature permutation to automatically search for minimal PFDs.
