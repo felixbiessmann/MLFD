@@ -115,11 +115,10 @@ def jump_pfd(data, *args, **kwargs):
     include_cols = list(df_train.columns)
     lhs = [c for c in include_cols if c != rhs]
 
-    measured_performance = 1
     threshold = 0
 
     logger.info(f"Trained a predictor with {metric} "
-                f"{measured_performance}.")
+                f"{measured_performance[metric]}.")
     print("These are the feature importances found via "
           "feature permutation:")
     print(df_imp.loc[lhs, ['description', 'importance']].sort_values(
@@ -128,38 +127,109 @@ def jump_pfd(data, *args, **kwargs):
     threshold = float(input(''))
 
     logger.debug("User set threshold of {threshold}")
-    # TODO continue here
+
+    # the margin is how much performance we can shave off
+    margin = measured_performance[metric] - threshold
+    if margin < 0:
+        logger.info(f"The set threshold of {threshold} is below "
+                    "the measured_performance of {measured_performance}. "
+                    "Stopping the search.")
+
+    if measured_performance[metric] < threshold:
+        logger.info("The newly trained model's performance of "
+                    f"{measured_performance} is below the threshold of "
+                    f" {threshold}. Stopping the search.")
+
+    df_imp['normalized_importance'] = (df_imp.loc[:, 'importance']
+                                       / df_imp.loc[:, 'importance'].sum()) * measured_performance[metric]
+    df_importance_cumsum = df_imp.sort_values(
+        'normalized_importance', ascending=True).cumsum()
+    importance_distance = df_importance_cumsum.loc[:,
+                                                   'normalized_importance'] - margin
+
+    logger.debug("Calculated the following importance distance "
+                 f"{importance_distance}")
+    exclude_cols = [int(x[0]) for x in importance_distance.iteritems()
+                    if x[1] < 0]
+    include_cols = [c for c in include_cols if c not in exclude_cols]
+    lhs = [c for c in include_cols if c != rhs]
+
+    logger.info("Training a predictor next to check threshold.")
+    logger.info("Begin predictor training")
+    measured_performance = opt.iterate_pfd(include_cols,
+                                           df_train,
+                                           df_validate,
+                                           df_test,
+                                           rhs)
+    logger.info("Using Feature Permutation Importances, jumped "
+                f"to LHS {lhs}, resulting in a Model with {metric} "
+                f"{round(measured_performance, 3)}. The threshold aimed for "
+                f"was a {metric} of {threshold}.")
+
+
+def binary_pfd(data, *args, **kwargs):
+    # TODO implement this like manual_pfd
+    """
+    Uses feature permutation to automatically search for minimal PFDs.
+
+    In AutoGluon, higher performance metrics are always better. This leads to
+    the circumstnace that the MSE is negative! So don't dispair!
+    """
+    logger = logging.getLogger('pfd')
+    logger.debug(f"Start automatical search of PFDs for dataset {data.title}")
+    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
+                                                       data.title,
+                                                       ',')
+    print(repr(data.column_map))
+    print("What is the index of the RHS to investigate?")
+    rhs_index = int(input(''))  # select column based on integers
+    logger.debug(f'User chose rhs_index {rhs_index}')
+
+    include_cols = list(df_train.columns)
+    measured_performance = 1
+    threshold = 0
+    first_run = True
 
     while True:
-        margin = measured_performance - threshold
+        logger.info("Begin predictor training")
+        df_importance, performance, metric = opt.iterate_pfd(include_cols,
+                                                             df_train,
+                                                             df_validate,
+                                                             df_test,
+                                                             rhs_index)
+        measured_performance = performance[metric]
+        logger.info(
+            f"Trained a predictor with {metric} {measured_performance}")
         if measured_performance < threshold:
             logger.info("The newly trained model's performance of "
                         f"{measured_performance} is below the threshold of "
                         f" {threshold}. Stopping the search.")
             break
 
-        # the margin is how much performance we can shave off
+        def map_index(x):
+            """Makes column list index human-readable"""
+            return f'{x} ({data.column_map[x]})'
+
+        df_importance.index = df_importance.index.map(map_index)
+        df_imp = df_importance.iloc[:, :1]
+        print("Found the following importances via feature permutation:")
+        print(df_imp)
+        if first_run:
+            print(f"What's your threshold for {metric}?")
+            threshold = float(input(''))
+            first_run = False
+
+        # how much performance can we shave off?
+        margin = measured_performance - threshold
         if margin < 0:
             logger.info(f"The set threshold of {threshold} is below "
                         "the measured_performance of {measured_performance}."
                         "Stopping the search.")
             break
 
-        df_importance_cumsum = df_imp.sort_values(
-            'importance', ascending=True).cumsum()
-        importance_distance = df_importance_cumsum.loc[:,
-                                                       'importance'] - margin
-
-        logger.info("Training a predictor next to check threshold.")
-        logger.info("Begin predictor training")
-        measured_performance = opt.iterate_pfd(include_cols,
-                                               df_train,
-                                               df_validate,
-                                               df_test,
-                                               rhs)
-        exclude_cols = [int(x[0][0]) for x in importance_distance.iteritems()
-                        if x[1] < 0]
-        include_cols = [c for c in include_cols if c not in exclude_cols]
+        # the least important column
+        exclude_col = int(df_imp.iloc[-1, :].name[0])
+        include_cols = [c for c in include_cols if c != exclude_col]
 
 
 def linear_pfd(data, *args, **kwargs):
