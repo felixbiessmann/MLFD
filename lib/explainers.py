@@ -2,7 +2,7 @@ import pandas as pd
 import shap
 import numpy as np
 from autogluon.tabular import TabularPredictor
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 
 SHAPs = List[np.array]
@@ -11,7 +11,8 @@ FlatBenchmarks = List[Tuple[str, float, float]]
 
 def run_feature_permutation(predictor: TabularPredictor,
                             df_train: pd.DataFrame,
-                            model_name=None) -> pd.DataFrame:
+                            model_name: Union[str, None],
+                            **kwargs) -> pd.DataFrame:
     """
     Use feature permutation to derive feature importances from an AutoGluon
     model. The AG documentation refers this website to explain feature
@@ -19,8 +20,9 @@ def run_feature_permutation(predictor: TabularPredictor,
     """
     df_importance = predictor.feature_importance(df_train,
                                                  model=model_name,
-                                                 num_shuffle_sets=10,
-                                                 subsample_size=1000)
+                                                 num_shuffle_sets=kwargs['num_shuffle_sets'],
+                                                 subsample_size=kwargs['subsample_size'])
+                                                 #**kwargs)
     return df_importance
 
 

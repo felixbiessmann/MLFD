@@ -436,5 +436,61 @@ def get_importance_pfd(df_train: pd.DataFrame,
     if predictor.problem_type == 'regression':
         metric = 'root_mean_squared_error'
 
-    df_importance = run_feature_permutation(predictor, df_train)
+    # subsample_size=5000 and num_shuffle_sets=10 are the minimum values
+    # suggested in the AG docs.
+    # However, these seem to only be a baseline for the adult dataset.
+    # I found these heuristics to work well.
+    # n_rows, n_cols = df_train.shape
+    # n_sets = round(0.66 * n_cols)
+    # n_samples = round(0.15 * n_rows)
+    df_importance = run_feature_permutation(predictor,
+                                            df_train,
+                                            model_name=None,
+                                            num_shuffle_sets=10,
+                                            subsample_size=5000)
     return (df_importance, performance, metric)
+
+
+def get_pfd_iterator(df_train, df_validate, df_test, rhs):
+    """
+    For the binary search, wraps around iterate_pfd and returns a function
+    that only takes include_cols and mid as arguemnts to iterate_pfd.
+    """
+    def wrap_iterate_pfd(data: pd.Series, mid):
+        include_cols = data.index.to_list()[:mid] + [rhs]
+        return iterate_pfd(include_cols, df_train, df_validate, df_test, rhs)
+
+    return wrap_iterate_pfd
+
+
+def run_binary_search(data: pd.Series,
+                      tau: float,
+                      performance_function) -> List[int]:
+    """
+    Left is always 0, because we want to remove as many
+    columns as possible.
+    """
+    logger = logging.getLogger('pfd')
+    logger.info("Start binary search for optimal LHS.")
+    left = 0
+    right = len(data)
+    if left > right:
+        raise ValueError('data is empty.')
+    else:
+        while left <= right:
+            mid = (left + right) // 2
+            logger.info(f"Checking LHS {data.index.to_list()[:mid]}")
+            perf = performance_function(data, mid)
+            logger.info(f'Measured performance of {perf}')
+            logger.debug(f"left: {left}     mid: {mid}     right: {right}")
+            if perf > tau:
+                logger.debug('performance > threshold, moving to the left.')
+                right = mid - 1
+            elif perf < tau:
+                logger.debug('performance < threshold, moving to the right.')
+                left = mid + 1
+            elif perf == tau:
+                # perfect solution
+                break
+        logger.info(f'Found optimal LHS {data.index.to_list()[:mid]}')
+        return data.index.to_list()[:mid]

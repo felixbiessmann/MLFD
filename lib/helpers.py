@@ -122,7 +122,7 @@ def random_dependency_generator(columns, n=10):
     """
     dependencies_dict = {}
 
-    for i in range(0, n):
+    for _ in range(0, n):
         # at least 2 columns are necessary to form a dependency
         rand_length = random.randint(2, len(columns))
         lhs = random.sample(columns, rand_length)
