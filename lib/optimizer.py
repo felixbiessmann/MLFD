@@ -383,7 +383,8 @@ def iterate_pfd(include_cols: List,
                 df_train: pd.DataFrame,
                 df_validate: pd.DataFrame,
                 df_test: pd.DataFrame,
-                label) -> float:
+                label: str,
+                precision: int = 5) -> float:
     """
     Subsets data based on `include_cols`, then trains a predictor and
     computes model performance for further decision making in the optimization
@@ -408,7 +409,7 @@ def iterate_pfd(include_cols: List,
     if predictor.problem_type == 'regression':
         metric = 'root_mean_squared_error'
 
-    return performance[metric]
+    return round(performance[metric], precision)
 
 
 def get_importance_pfd(df_train: pd.DataFrame,
@@ -437,12 +438,7 @@ def get_importance_pfd(df_train: pd.DataFrame,
         metric = 'root_mean_squared_error'
 
     # subsample_size=5000 and num_shuffle_sets=10 are the minimum values
-    # suggested in the AG docs.
-    # However, these seem to only be a baseline for the adult dataset.
-    # I found these heuristics to work well.
-    # n_rows, n_cols = df_train.shape
-    # n_sets = round(0.66 * n_cols)
-    # n_samples = round(0.15 * n_rows)
+    # suggested in the AG docs to cumpute accurate importances.
     df_importance = run_feature_permutation(predictor,
                                             df_train,
                                             model_name=None,
@@ -467,19 +463,21 @@ def run_binary_search(data: pd.Series,
                       tau: float,
                       performance_function) -> List[int]:
     """
-    Left is always 0, because we want to remove as many
-    columns as possible.
+    The idea behind using binary search for the feature-importance list
+    is that mid is the right boundary of the slice of the columns, ordered
+    by importance.
     """
     logger = logging.getLogger('pfd')
     logger.info("Start binary search for optimal LHS.")
     left = 0
+    mid = 0
     right = len(data)
     if left > right:
         raise ValueError('data is empty.')
     else:
         while left <= right:
             mid = (left + right) // 2
-            logger.info(f"Checking LHS {data.index.to_list()[:mid]}")
+            logger.info(f"Checking LHS {sorted(data.index.to_list()[:mid])}")
             perf = performance_function(data, mid)
             logger.info(f'Measured performance of {perf}')
             logger.debug(f"left: {left}     mid: {mid}     right: {right}")
@@ -492,5 +490,5 @@ def run_binary_search(data: pd.Series,
             elif perf == tau:
                 # perfect solution
                 break
-        logger.info(f'Found optimal LHS {data.index.to_list()[:mid]}')
-        return data.index.to_list()[:mid]
+        logger.info(f'Found optimal LHS {sorted(data.index.to_list()[:mid])}')
+        return sorted(data.index.values[:mid])

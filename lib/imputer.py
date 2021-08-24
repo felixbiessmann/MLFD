@@ -29,7 +29,8 @@ def train_model(df_train: pd.DataFrame,
         predictor = p.fit(train_data=df_train,
                           tuning_data=df_test,
                           time_limit=20,
-                          verbosity=verbosity)
+                          verbosity=verbosity,
+                          presets='medium_quality_faster_train')
     return predictor
 
 

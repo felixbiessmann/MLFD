@@ -8,7 +8,7 @@ METANOME_DATA_PATH = f'{root}/MLFD_fd_detection/backend/WEB-INF/classes/inputDat
 class Dataset:
     def __init__(self, title, fd_path, continuous,
                  column_map, original_separator,
-                 missing_value_token, origin):
+                 missing_value_token, origin, cleaning=False):
         self.title = title
         self.figures_path = f'{root}/figures/{title}/'
         self.results_path = f'{root}/figures/results/{title}/'
@@ -22,6 +22,7 @@ class Dataset:
         self.original_separator = original_separator
         self.missing_value_token = missing_value_token
         self.dep_optimizer_results_path = f'{root}/figures/results/{title}'
+        self.cleaning = cleaning
         self._origin = origin
 
 
@@ -288,44 +289,31 @@ NURSERY = Dataset(title='nursery',
                   missing_value_token='',
                   origin='https://archive.ics.uci.edu/ml/machine-learning-databases/nursery/nursery.data')
 
-BEERS = Dataset(title='beers-and-breweries',
-                fd_path='',
-                continuous=[4, 5, 6],
-                column_map={0: "tid",
-                            1: "id",
-                            2: "beer-name",
-                            3: "style",
-                            4: "ounces",
-                            5: "abv",
-                            6: "ibu",
-                            7: "brewery_id",
-                            8: "brewery-name",
-                            9: "city",
-                            10: "state"},
-                original_separator=',',
-                missing_value_token='',
-                origin='Dataset Felix N.')
-
-DEBS_2015_1k = Dataset(title='dirty_debs2015_1k',
-                       fd_path='',
-                       continuous=[4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16],
-                       column_map={0: "medallion",
-                                   1: "hack_license",
-                                   2: "pickup_datetime",
-                                   3: "dropoff_datetime",
-                                   4: "trip_time_in_secs",
-                                   5: "trip_distance",
-                                   6: "pickup_longitude",
-                                   7: "pickup_latitude",
-                                   8: "dropoff_longitude",
-                                   9: "dropoff_latitude",
-                                   10: "payment_type",
-                                   11: "fare_amount",
-                                   12: "surcharge",
-                                   13: "mta_tax",
-                                   14: "tip_amount",
-                                   15: "tolls_amount",
-                                   16: "total_amount"},
-                       original_separator=',',
-                       missing_value_token='',
-                       origin='Dataset Felix N.')
+MOVIES = Dataset(title='movies',
+                 fd_path='',
+                 continuous=[],
+                 column_map={0:  "Id",
+                             1:  "Name",
+                             2:  "Year",
+                             3:  "Release Date",
+                             4:  "Director",
+                             5: "Creator",
+                             6:       "Actors",
+                             7:       "Cast",
+                             8:       "Language",
+                             9:       "Country",
+                             10:      "Duration",
+                             11:      "RatingValue",
+                             12:      "RatingCount",
+                             13:      "ReviewCount",
+                             14:      "Genre",
+                             15:      "Filming Locations",
+                             16:      "Description"},
+                 original_separator=',',
+                 missing_value_token='',
+                 origin='Dataset obtained from Felix Neutatz. The dataset '
+                 'information on movies that has been scraped from '
+                 'different websites. This results in different formats '
+                 'for the same fields. The clean version uses the format '
+                 'of rottentomatoes.'
+                 )

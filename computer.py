@@ -82,7 +82,7 @@ def manual_pfd(data, *args, **kwargs):
                                                df_train,
                                                df_validate,
                                                df_test,
-                                               rhs)
+                                               str(rhs))
 
 
 def linear_pfd(data, *args, **kwargs):
@@ -164,7 +164,6 @@ def binary_pfd(data, *args, **kwargs):
     threshold = float(input(''))
 
     data = df_imp.loc[:, 'importance']
-    data = data.sort_values()
     iterate_pfd = opt.get_pfd_iterator(df_train, df_validate, df_test, rhs)
     opt.run_binary_search(data, threshold, iterate_pfd)
 
@@ -254,10 +253,11 @@ def jump_pfd(data, *args, **kwargs):
 def split_dataset(data, save=True):
     """Splits a dataset into train, validate and test subsets.
     Be cautious when using, this might overwrite existing data"""
-    print(f'''You are about to split dataset {data.title}.
-If you continue, splits will be saved to {data.splits_path}.
-This might overwrite and nullify existing results.
-Do you want to proceed? [y/N]''')
+    print(f'''
+          You are about to split dataset {data.title}.
+          If you continue, splits will be saved to {data.splits_path}.
+          This might overwrite and nullify existing results.
+          Do you want to proceed? [y/N]''')
     logger = logging.getLogger('pfd')
     sure = input('')
     if sure == 'y':
@@ -268,8 +268,8 @@ Do you want to proceed? [y/N]''')
             splits_path = data.splits_path
         helps.split_df(data.title, df, (0.8, 0.1, 0.1), splits_path)
         print('Splitting successful.')
-        logger.debug('Splitting has been successful.'
-                     f'original data duplicates: {str(sum(df.duplicated()))}')
+        logger.info('Splitting has been successful. '
+                    f'Original data duplicates: {str(sum(df.duplicated()))}')
     else:
         logger.info('User aborted splitting.')
 

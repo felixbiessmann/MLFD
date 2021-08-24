@@ -1,9 +1,11 @@
 import pytest
 import lib.constants as c
 from lib.optimizer import (
-        DepOptimizer,
-        RootNode
+    DepOptimizer,
+    RootNode,
+    run_binary_search
 )
+import pandas as pd
 
 
 @pytest.fixture
@@ -105,3 +107,11 @@ def test_get_complete_candidates(Detector):
 def test_get_min_dep(Detector):
     Detector.search_dependencies('complete', dry_run=True)
     Detector.get_minimal_dependencies()
+
+
+def test_run_binary_search():
+    se_importance = pd.Series([0.05, 0.00, 0.00, 0.21, 0.11, 0.09, 0.20, 0.30, 0.05])
+    se_importance = se_importance.sort_values()
+    p_fun = lambda se, lhs_limit: sum(se.iloc[:lhs_limit])
+    opt_lhs = run_binary_search(se_importance, 0.3, p_fun)
+    assert opt_lhs == [0, 1, 2, 4, 5, 8]
