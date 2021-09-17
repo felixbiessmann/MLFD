@@ -1,6 +1,6 @@
 import os
 import pickle
-from typing import List, Any
+from typing import List, Any, Tuple
 from sklearn.model_selection import train_test_split
 from autogluon.tabular import TabularPredictor
 import pandas as pd
@@ -28,7 +28,7 @@ def save_pickle(obj, path):
     print(message)
 
 
-def split_df(data_title, df, split_ratio, data_path=''):
+def split_df(df, split_ratio, random_state):
     """ Splits a dataframe into train-, validate - and test-subsets.
     If a data_path is provided, splits will be saved to the harddrive.
 
@@ -36,34 +36,28 @@ def split_df(data_title, df, split_ratio, data_path=''):
     is an empty string.
 
     Keyword arguments:
-    data_title - - a string naming the data
-    df - - a pandas data frame
-    data_path - - file-path to folder where splits should be saved
-    split_ratio - - train/test/validate set ratio, e.g. [0.8, 0.1, 0.1]
+    df -- a pandas data frame
+    split_ratio -- train/test/validate set ratio, e.g. [0.8, 0.1, 0.1]
+    random_state -- an integer that ensures that splitting is reproducible
+    across clean and dirty data
     """
-    import os
-
     train_ratio, validate_ratio, test_ratio = split_ratio
 
-    rest_df, test_df = train_test_split(df, test_size=test_ratio)
-    train_df, validate_df = train_test_split(rest_df, test_size=validate_ratio)
+    rest_df, test_df = train_test_split(df,
+                                        test_size=test_ratio,
+                                        random_state=random_state)
+    train_df, validate_df = train_test_split(rest_df,
+                                             test_size=validate_ratio,
+                                             random_state=random_state)
+    return(train_df, validate_df, test_df)
 
-    if data_path != '':
-        for name, df in [('train', train_df),
-                         ('test', test_df),
-                         ('validate', validate_df)]:
-            path = f'{data_path}{name}/'
-            if not os.path.exists(path):
-                os.mkdir(path)
-            try:
-                save_path = f'{path}{data_title}_{name}.csv'
-                df.to_csv(save_path, sep=',',
-                          index=False, header=None)
-                print(f'{name} set successfully written to {save_path}.')
-            except TypeError:
-                print("Something went wrong writing the splits to files.")
-    else:
-        return(train_df, validate_df, test_df)
+
+def save_dfs(save_tuples: List[Tuple[str, pd.DataFrame]]):
+    import os
+    refined_save_tuples = []
+    pass
+
+
 
 
 def check_split_for_duplicates(list_of_dfs):

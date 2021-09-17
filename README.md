@@ -23,6 +23,12 @@ python get_binaries.py
 
 which will create a new folder calles `MLFD_fd_detection/` and download the metanome binaries and test datasets.
 
+To add new datasets to the s3 bucket, run
+
+```
+aws s3 cp --recursive MLFD_fd_detection/data s3://mlfd-data/data
+```
+
 ## Testing
 I use `pytest` to carry out all tests. The tests are stored in the `lib/` directory and are named `test_$LIBRARY.py`.
 

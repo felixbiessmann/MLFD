@@ -1,4 +1,5 @@
 import timeit
+import random
 import logging
 import argparse
 import pandas as pd
@@ -38,6 +39,18 @@ def global_predictor_explained(data: c.Dataset,
         lambda x: data.column_map.get(x, 'NA'))
 
     return (df_imp, measured_performance[metric], metric, rhs)
+
+
+def clean_data(data: c.Dataset, *args, **kwargs):
+    """
+    Train a model on the dirty (default) train-test split and calculate
+    cleaning performance by comparing the dirty (default) validate-split
+    to the clean validate-split.
+
+    Depending on the type of comparison between the validate sets, this is
+    either an error-detection experiment, or a cleaning experiment.
+    """
+
 
 
 def manual_pfd(data, *args, **kwargs):
@@ -251,8 +264,15 @@ def jump_pfd(data, *args, **kwargs):
 
 
 def split_dataset(data, save=True):
-    """Splits a dataset into train, validate and test subsets.
-    Be cautious when using, this might overwrite existing data"""
+    """
+    Splits a dataset into train, validate and test subsets.
+    When a dataset is a dataset used in the cleaning experiment,
+    this function returns two validate-splits: the default one
+    from the dirty data, and the _clean one from the clean data.
+
+    Be cautious when using, this might overwrite existing data.
+    """
+    import os
     print(f'''
           You are about to split dataset {data.title}.
           If you continue, splits will be saved to {data.splits_path}.
@@ -261,17 +281,64 @@ def split_dataset(data, save=True):
     logger = logging.getLogger('pfd')
     sure = input('')
     if sure == 'y':
-        df = pd.read_csv(data.data_path, sep=data.original_separator,
-                         header=None)
-        splits_path = ''
-        if save:
-            splits_path = data.splits_path
-        helps.split_df(data.title, df, (0.8, 0.1, 0.1), splits_path)
-        print('Splitting successful.')
+        split_ratio = (0.8, 0.1, 0.1)
+        splits_path = data.splits_path
+        rndint = random.randint(0, 10000)
+        df_clean = pd.read_csv(data.data_path, sep=data.original_separator,
+                               header=None)
+        save_dict = {}
+        clean_train, clean_validate, clean_test = helps.split_df(df_clean,
+                                                                 split_ratio,
+                                                                 random_state=rndint)
+        save_dict['train'] = clean_train
+        save_dict['test'] = clean_test
+        save_dict['validate'] = clean_validate
         logger.info('Splitting has been successful. '
-                    f'Original data duplicates: {str(sum(df.duplicated()))}')
+                    'Original data duplicates: '
+                    f'{str(sum(df_clean.duplicated()))}')
+        if data.cleaning:
+            logger.info('Selected dataset is a dataset used for a cleaning '
+                        'experiment. Splitting dirty and clean data.')
+            df_dirty = pd.read_csv(data.dirty_data_path,
+                                   sep=data.original_separator,
+                                   header=None)
+            dirty_train, dirty_validate, dirty_test = helps.split_df(df_dirty,
+                                                                     split_ratio,
+                                                                     random_state=rndint)
+            save_dict['train'] = dirty_train
+            save_dict['test'] = dirty_test
+            save_dict['validate_clean'] = save_dict['validate']
+            save_dict['validate'] = dirty_validate
+            logger.info('Splitting dirty data has been successful. '
+                        'Original data duplicates: '
+                        f'{str(sum(df_dirty.duplicated()))}')
+
+        for name, df in save_dict.items():
+            path = f'{data.splits_path}{name}/'
+            if not os.path.exists(path):
+                os.mkdir(path)
+            try:
+                save_path = f'{path}{data.title}_{name}.csv'
+                df.to_csv(save_path, sep=',',
+                          index=False, header=None)
+                logger.info(f'{name} set successfully written to {save_path}.')
+            except TypeError:
+                logger.error("Something went wrong saving the splits.")
     else:
         logger.info('User aborted splitting.')
+
+
+def cleaning_performance(data, save=False, dry_run=False):
+    """
+    Train a model on dirty data. Use it to calculate cleaning
+    peformance by comparing y_pred to y_true from the clean data.
+    """
+    logger = logging.getLogger('pfd')
+    logger.debug(f"Start automatical search of PFDs for dataset {data.title}")
+
+    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
+                                                       data.title,
+                                                       ',')
 
 
 def compute_complete_dep_detector(data, save=False, dry_run=False):
@@ -367,6 +434,10 @@ def main(args):
         c.IRIS.title: c.IRIS,
         c.LETTER.title: c.LETTER,
         c.NURSERY.title: c.NURSERY,
+        c.FLIGHTS.title: c.FLIGHTS,
+        c.HOSPITAL_1k.title: c.HOSPITAL_1k,
+        c.HOSPITAL_10k.title: c.HOSPITAL_10k,
+        c.HOSPITAL_100k.title: c.HOSPITAL_100k
     }
 
     models = {'split': split_dataset,

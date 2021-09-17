@@ -17,7 +17,7 @@ class Dataset:
         self.column_map = column_map
         self.random_fd_path = f'{self.results_path}random_fds.p'
         self.data_path = f'{data_root}/{title}.csv'
-        self.dirty_data_path = f'{data_root}/dirty_{title}.csv'
+        self.dirty_data_path = f'{data_root}/{title}_dirty.csv'
         self.splits_path = data_root
         self.original_separator = original_separator
         self.missing_value_token = missing_value_token
@@ -292,28 +292,130 @@ NURSERY = Dataset(title='nursery',
 MOVIES = Dataset(title='movies',
                  fd_path='',
                  continuous=[],
-                 column_map={0:  "Id",
-                             1:  "Name",
-                             2:  "Year",
-                             3:  "Release Date",
-                             4:  "Director",
+                 column_map={0: "Id",
+                             1: "Name",
+                             2: "Year",
+                             3: "Release Date",
+                             4: "Director",
                              5: "Creator",
-                             6:       "Actors",
-                             7:       "Cast",
-                             8:       "Language",
-                             9:       "Country",
-                             10:      "Duration",
-                             11:      "RatingValue",
-                             12:      "RatingCount",
-                             13:      "ReviewCount",
-                             14:      "Genre",
-                             15:      "Filming Locations",
-                             16:      "Description"},
+                             6: "Actors",
+                             7: "Cast",
+                             8: "Language",
+                             9: "Country",
+                             10: "Duration",
+                             11: "RatingValue",
+                             12: "RatingCount",
+                             13: "ReviewCount",
+                             14: "Genre",
+                             15: "Filming Locations",
+                             16: "Description"},
                  original_separator=',',
                  missing_value_token='',
                  origin='Dataset obtained from Felix Neutatz. The dataset '
-                 'information on movies that has been scraped from '
+                 'contains information on movies that has been scraped from '
                  'different websites. This results in different formats '
                  'for the same fields. The clean version uses the format '
-                 'of rottentomatoes.'
+                 'of rottentomatoes.',
+                 cleaning=True
                  )
+
+
+FLIGHTS = Dataset(title='flights',
+                  fd_path='',
+                  continuous=[],
+                  column_map={0: "RowId",
+                              1: "Source",
+                              2: "Flight",
+                              3: "ScheduleDeparture",
+                              4: "ActualDeparture",
+                              5: "DepartureGate",
+                              6: "ScheduleArrival",
+                              7: "ActualArrival",
+                              8: "ArrivalGate"},
+                  original_separator=',',
+                  missing_value_token='',
+                  origin='Dataset obtained from Felix Neutatz. The dataset '
+                  'contains information on flights that has been scraped from '
+                  'different sources/websites. This results in different '
+                  'formats for the same fields. The clean version uses only '
+                  'one format.',
+                  cleaning=True
+                  )
+
+HOSPITAL_1k = Dataset(title='hospital_1k',
+                      fd_path='',
+                      continuous=[],
+                      column_map={0: "PrNo",
+                                  1: "HospitalName",
+                                  2: "Address",
+                                  3: "City",
+                                  4: "State",
+                                  5: "Zip",
+                                  6: "Countryname",
+                                  7: "Phone",
+                                  8: "HospitalType",
+                                  9: "Hospitalowner",
+                                  10: "EmergencyService",
+                                  11: "Condition",
+                                  12: "MC",
+                                  13: "MeasureName",
+                                  14: "Score",
+                                  15: "Sample",
+                                  16: "StateAvg"},
+                      original_separator=',',
+                      missing_value_token='',
+                      origin='Dataset obtained from Felix Neutatz.',
+                      cleaning=True
+                      )
+
+HOSPITAL_10k = Dataset(title='hospital_10k',
+                       fd_path='',
+                       continuous=[],
+                       column_map={0: "PrNo",
+                                   1: "HospitalName",
+                                   2: "Address",
+                                   3: "City",
+                                   4: "State",
+                                   5: "Zip",
+                                   6: "Countryname",
+                                   7: "Phone",
+                                   8: "HospitalType",
+                                   9: "Hospitalowner",
+                                   10: "EmergencyService",
+                                   11: "Condition",
+                                   12: "MC",
+                                   13: "MeasureName",
+                                   14: "Score",
+                                   15: "Sample",
+                                   16: "StateAvg"},
+                       original_separator=',',
+                       missing_value_token='',
+                       origin='Dataset obtained from Felix Neutatz.',
+                       cleaning=True
+                       )
+
+HOSPITAL_100k = Dataset(title='hospital_100k',
+                        fd_path='',
+                        continuous=[],
+                        column_map={0: "PrNo",
+                                    1: "HospitalName",
+                                    2: "Address",
+                                    3: "City",
+                                    4: "State",
+                                    5: "Zip",
+                                    6: "Countryname",
+                                    7: "Phone",
+                                    8: "HospitalType",
+                                    9: "Hospitalowner",
+                                    10: "EmergencyService",
+                                    11: "Condition",
+                                    12: "MC",
+                                    13: "MeasureName",
+                                    14: "Score",
+                                    15: "Sample",
+                                    16: "StateAvg"},
+                        original_separator=',',
+                        missing_value_token='',
+                        origin='Dataset obtained from Felix Neutatz.',
+                        cleaning=True
+                        )
