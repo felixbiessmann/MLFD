@@ -3,10 +3,12 @@ import random
 import logging
 import argparse
 import pandas as pd
+from sklearn.metrics import f1_score
 from typing import Tuple
 import lib.helpers as helps
 import lib.optimizer as opt
 import lib.constants as c
+import lib.imputer as imp
 
 
 def global_predictor_explained(data: c.Dataset,
@@ -50,7 +52,40 @@ def clean_data(data: c.Dataset, *args, **kwargs):
     Depending on the type of comparison between the validate sets, this is
     either an error-detection experiment, or a cleaning experiment.
     """
+    logger = logging.getLogger('pfd')
+    logger.debug(f"Start cleaning experiment with dataset {data.title}.")
+    if not data.cleaning:
+        logger.info(f"The dataset {data.title} is not suitable for a cleaning "
+                    "experiment. Please choose a dataset that has a clean "
+                    "and a dirty version of the data available.")
+        return False
 
+    df_train, df_validate, df_test, df_validate_clean = helps.load_splits(data)
+
+    print("What is the index of the RHS to investigate?")
+    print(repr(data.column_map))
+    label = int(input(''))  # select column based on integers
+    logger.debug(f'User chose rhs {label}')
+
+    logger.info("Begin global predictor training with complete LHS.")
+
+    predictor = imp.train_model(df_train, df_test, label)
+
+    df_label_true = df_validate.loc[:, label]
+    df_clean_label_true = df_validate_clean.loc[:, label]
+
+    df_validate = df_validate.drop(columns=[label])
+    df_predicted = pd.Series(predictor.predict(df_validate))
+
+    performance_dirty = helps.cleaning_performance(df_label_true,
+                                                   df_predicted)
+    performance_clean = helps.cleaning_performance(df_clean_label_true,
+                                                   df_predicted)
+
+    logger.info("Calculated a cleaning performance on the dirty data "
+                f"of f1-score {round(performance_dirty, 5)}.")
+    logger.info("Calculated a cleaning performance on the clean data "
+                f"of f1-score {round(performance_clean, 5)}.")
 
 
 def manual_pfd(data, *args, **kwargs):
@@ -61,13 +96,10 @@ def manual_pfd(data, *args, **kwargs):
     """
     logger = logging.getLogger('pfd')
     logger.debug(f"Start manual search of PFDs for dataset {data.title}")
-    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
-                                                       data.title,
-                                                       ',')
+    df_train, df_validate, df_test = helps.load_splits(data)
     df_imp, measured_performance, metric, rhs = global_predictor_explained(
         data, df_train, df_validate, df_test)
 
-    measured_performance = measured_performance
     exclude_cols = []
     include_cols = list(df_train.columns)
     lhs = [c for c in include_cols if c != rhs]
@@ -107,9 +139,7 @@ def linear_pfd(data, *args, **kwargs):
     """
     logger = logging.getLogger('pfd')
     logger.debug(f"Start linear search of PFDs for dataset {data.title}")
-    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
-                                                       data.title,
-                                                       ',')
+    df_train, df_validate, df_test = helps.load_splits(data)
 
     df_imp, measured_performance, metric, rhs = global_predictor_explained(
         data, df_train, df_validate, df_test)
@@ -157,9 +187,7 @@ def binary_pfd(data, *args, **kwargs):
     """
     logger = logging.getLogger('pfd')
     logger.debug(f"Start linear search of PFDs for dataset {data.title}")
-    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
-                                                       data.title,
-                                                       ',')
+    df_train, df_validate, df_test = helps.load_splits(data)
 
     df_imp, measured_performance, metric, rhs = global_predictor_explained(
         data, df_train, df_validate, df_test)
@@ -203,9 +231,7 @@ def jump_pfd(data, *args, **kwargs):
     logger = logging.getLogger('pfd')
     logger.debug(f"Start automatical search of PFDs for dataset {data.title}")
 
-    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
-                                                       data.title,
-                                                       ',')
+    df_train, df_validate, df_test = helps.load_splits(data)
 
     df_imp, measured_performance, metric, rhs = global_predictor_explained(
         data, df_train, df_validate, df_test)
@@ -272,7 +298,6 @@ def split_dataset(data, save=True):
 
     Be cautious when using, this might overwrite existing data.
     """
-    import os
     print(f'''
           You are about to split dataset {data.title}.
           If you continue, splits will be saved to {data.splits_path}.
@@ -282,7 +307,6 @@ def split_dataset(data, save=True):
     sure = input('')
     if sure == 'y':
         split_ratio = (0.8, 0.1, 0.1)
-        splits_path = data.splits_path
         rndint = random.randint(0, 10000)
         df_clean = pd.read_csv(data.data_path, sep=data.original_separator,
                                header=None)
@@ -313,32 +337,9 @@ def split_dataset(data, save=True):
                         'Original data duplicates: '
                         f'{str(sum(df_dirty.duplicated()))}')
 
-        for name, df in save_dict.items():
-            path = f'{data.splits_path}{name}/'
-            if not os.path.exists(path):
-                os.mkdir(path)
-            try:
-                save_path = f'{path}{data.title}_{name}.csv'
-                df.to_csv(save_path, sep=',',
-                          index=False, header=None)
-                logger.info(f'{name} set successfully written to {save_path}.')
-            except TypeError:
-                logger.error("Something went wrong saving the splits.")
+        helps.save_dfs(save_dict, data)
     else:
         logger.info('User aborted splitting.')
-
-
-def cleaning_performance(data, save=False, dry_run=False):
-    """
-    Train a model on dirty data. Use it to calculate cleaning
-    peformance by comparing y_pred to y_true from the clean data.
-    """
-    logger = logging.getLogger('pfd')
-    logger.debug(f"Start automatical search of PFDs for dataset {data.title}")
-
-    df_train, df_validate, df_test = helps.load_splits(data.splits_path,
-                                                       data.title,
-                                                       ',')
 
 
 def compute_complete_dep_detector(data, save=False, dry_run=False):
@@ -446,7 +447,9 @@ def main(args):
               'manual_pfd': manual_pfd,
               'binary_pfd': binary_pfd,
               'linear_pfd': linear_pfd,
-              'jump_pfd': jump_pfd}
+              'jump_pfd': jump_pfd,
+              'clean_data': clean_data
+              }
     detect_models = ['greedy_detect', 'complete_detect']
 
     dataset = datasets.get(args.dataset, no_valid_data)

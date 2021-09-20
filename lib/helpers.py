@@ -1,11 +1,22 @@
 import os
 import pickle
-from typing import List, Any, Tuple
+from typing import List, Any, Dict
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
 from autogluon.tabular import TabularPredictor
 import pandas as pd
 import numpy as np
 import random
+
+
+def cleaning_performance(y_clean: pd.Series, y_predicted: pd.Series):
+    """
+    Calculate the f1-score between the clean labels and the predicted
+    labels.
+    """
+    y_delta = y_clean == y_predicted
+    y_true = pd.Series([True for _ in y_delta])
+    return f1_score(y_true, y_delta)
 
 
 def subset_df(df: pd.DataFrame, exclude_cols: list) -> pd.DataFrame:
@@ -29,7 +40,8 @@ def save_pickle(obj, path):
 
 
 def split_df(df, split_ratio, random_state):
-    """ Splits a dataframe into train-, validate - and test-subsets.
+    """
+    Splits a dataframe into train-, validate - and test-subsets.
     If a data_path is provided, splits will be saved to the harddrive.
 
     Returns a tuple(df_train, df_validate, df_test) if the data_path
@@ -52,12 +64,30 @@ def split_df(df, split_ratio, random_state):
     return(train_df, validate_df, test_df)
 
 
-def save_dfs(save_tuples: List[Tuple[str, pd.DataFrame]]):
+def save_dfs(save_dict: Dict, data):
+    """
+    Saves dataframes to the disc.
+
+    Keyword arguments:
+    save_dict -- dict of data_name: DataFrame entries
+    data -- the dataset whose data is saved to the disc
+    """
     import os
-    refined_save_tuples = []
+    import logging
+    logger = logging.getLogger('pfd')
+
+    for name, df in save_dict.items():
+        path = f'{data.splits_path}{name}/'
+        if not os.path.exists(path):
+            os.mkdir(path)
+        try:
+            save_path = f'{path}{data.title}_{name}.csv'
+            df.to_csv(save_path, sep=',',
+                      index=False, header=None)
+            logger.info(f'{name} set successfully written to {save_path}.')
+        except TypeError:
+            logger.error("Something went wrong saving the splits.")
     pass
-
-
 
 
 def check_split_for_duplicates(list_of_dfs):
@@ -77,8 +107,9 @@ def load_original_data(data_path, data_title, missing_value_token):
     return df
 
 
-def load_splits(data_path, data_title, missing_value_token) -> List[pd.DataFrame]:
-    """ Loads train, validate, test splits from a directory.
+def load_splits(data) -> List:
+    """
+    Loads train, validate, test splits from a directory.
     The data's missing values, which are represented in the data by
     missing_value_token, are replaced with np.nan.
 
@@ -87,16 +118,25 @@ def load_splits(data_path, data_title, missing_value_token) -> List[pd.DataFrame
     data_title -- name of the dataset and it's associated splits
     missing_value_token -- specifies how missing values are represented
     in the dataset
-    """
-    df_train = pd.read_csv(data_path+'train/' +
-                           data_title+'_train.csv', header=None)
-    df_validate = pd.read_csv(
-        data_path+'validate/'+data_title+'_validate.csv', header=None)
-    df_test = pd.read_csv(data_path+'test/' +
-                          data_title+'_test.csv', header=None)
 
+    Returns a list of df_train, df_validate, df_test and, if loading splits
+    of a cleaning dataset, df_validate_clean
+    """
+    df_train = pd.read_csv(data.splits_path+'train/' +
+                           data.title+'_train.csv', header=None)
+    df_validate = pd.read_csv(
+        data.splits_path+'validate/'+data.title+'_validate.csv', header=None)
+    df_test = pd.read_csv(data.splits_path+'test/' +
+                          data.title+'_test.csv', header=None)
     dfs = [df_train, df_validate, df_test]
-    dfs = [df.replace(missing_value_token, np.nan) for df in dfs]
+
+    if data.cleaning:
+        df_validate_clean = pd.read_csv(data.splits_path+'validate_clean/' +
+                                        data.title+'_validate_clean.csv',
+                                        header=None)
+        dfs.append(df_validate_clean)
+
+    dfs = [df.replace(data.missing_value_token, np.nan) for df in dfs]
     return dfs
 
 

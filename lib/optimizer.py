@@ -39,10 +39,7 @@ class DepOptimizer():
         df = load_original_data(self.data.splits_path,
                                 self.data.title,
                                 self.data.missing_value_token)
-        df_train, df_validate, df_test = load_splits(
-            self.data.splits_path,
-            self.data.title,
-            self.data.missing_value_token)
+        df_train, df_validate, df_test = load_splits(self.data)
 
         no_dupl = check_split_for_duplicates([df])
         no_dupl_splits = check_split_for_duplicates(

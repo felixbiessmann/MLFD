@@ -38,6 +38,10 @@ def ml_imputer(df_train,
                df_validate,
                df_test,
                label_column: str) -> pd.DataFrame:
+    """
+    Trains a model and imputes values in df_validate.
+    Returns a DataFrame with two columns, df_validate and df_imputed.
+    """
 
     train_data = df_to_ag_style(df_train)
     test_data = df_to_ag_style(df_test)

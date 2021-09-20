@@ -17,7 +17,7 @@ class simpleInput:
         self.full_df = pd.concat([self.df_train,
                                   self.df_validate,
                                   self.df_test],
-                                 ignore_index=True)
+                                  ignore_index=True)
 
 
 @pytest.fixture
