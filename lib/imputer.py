@@ -22,15 +22,15 @@ def train_model(df_train: pd.DataFrame,
     d = 'agModels'  # folder to store trained models
     hash_sum = hash_pandas_object(df_train).sum()
     checksum = hash(str(hash_sum) + str(label) + str(random_state))
-    try:
-        predictor = TabularPredictor.load(f'{d}/{checksum}')
-    except FileNotFoundError:
-        p = TabularPredictor(label=label, path=f'{d}/{checksum}')
-        predictor = p.fit(train_data=df_train,
-                          tuning_data=df_test,
-                          time_limit=20,
-                          verbosity=verbosity,
-                          presets='medium_quality_faster_train')
+    # try:
+    #    predictor = TabularPredictor.load(f'{d}/{checksum}')
+    # except FileNotFoundError:
+    p = TabularPredictor(label=label, path=f'{d}/{checksum}')
+    predictor = p.fit(train_data=df_train,
+                      tuning_data=df_test,
+                      time_limit=20,
+                      verbosity=verbosity,
+                      presets='medium_quality_faster_train')
     return predictor
 
 

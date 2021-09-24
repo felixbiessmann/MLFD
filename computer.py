@@ -43,7 +43,7 @@ def global_predictor_explained(data: c.Dataset,
     return (df_imp, measured_performance[metric], metric, rhs)
 
 
-def clean_data(data: c.Dataset, *args, **kwargs):
+def clean_data(data: c.Dataset, save=False, *args, **kwargs):
     """
     Train a model on the dirty (default) train-test split and calculate
     cleaning performance by comparing the dirty (default) validate-split
@@ -54,6 +54,8 @@ def clean_data(data: c.Dataset, *args, **kwargs):
     """
     logger = logging.getLogger('pfd')
     logger.debug(f"Start cleaning experiment with dataset {data.title}.")
+    logger.debug("For each column, a model for cleaning will be trained on "
+                 "all other columns.")
     if not data.cleaning:
         logger.info(f"The dataset {data.title} is not suitable for a cleaning "
                     "experiment. Please choose a dataset that has a clean "
@@ -61,31 +63,45 @@ def clean_data(data: c.Dataset, *args, **kwargs):
         return False
 
     df_train, df_validate, df_test, df_validate_clean = helps.load_splits(data)
+    result = []
 
-    print("What is the index of the RHS to investigate?")
-    print(repr(data.column_map))
-    label = int(input(''))  # select column based on integers
-    logger.debug(f'User chose rhs {label}')
+    for label in data.column_map.keys():
+        r = {'label': label}
+        logger.info(f'Investigating RHS {label}')
+        logger.info("Begin global predictor training with complete LHS.")
 
-    logger.info("Begin global predictor training with complete LHS.")
+        try:
+            predictor = imp.train_model(df_train, df_test, label)
 
-    predictor = imp.train_model(df_train, df_test, label)
+            df_label_true = df_validate.loc[:, label]
+            df_clean_label_true = df_validate_clean.loc[:, label]
 
-    df_label_true = df_validate.loc[:, label]
-    df_clean_label_true = df_validate_clean.loc[:, label]
+            df_validate_reduced = df_validate.drop(columns=[label])
+            df_predicted = pd.Series(predictor.predict(df_validate_reduced))
 
-    df_validate = df_validate.drop(columns=[label])
-    df_predicted = pd.Series(predictor.predict(df_validate))
+            performance_dirty = helps.cleaning_performance(df_label_true,
+                                                           df_predicted)
+            performance_clean = helps.cleaning_performance(df_clean_label_true,
+                                                           df_predicted)
+            r['performance_dirty'] = performance_dirty
+            r['performance_clean'] = performance_clean
 
-    performance_dirty = helps.cleaning_performance(df_label_true,
-                                                   df_predicted)
-    performance_clean = helps.cleaning_performance(df_clean_label_true,
-                                                   df_predicted)
+            logger.info("Calculated a cleaning performance on the dirty data "
+                        f"of f1-score {round(performance_dirty, 5)}.")
+            logger.info("Calculated a cleaning performance on the clean data "
+                        f"of f1-score {round(performance_clean, 5)}.")
+            result.append(r)
+        except ValueError:
+            logger.error("Some weird-ass bug happened when training a model for "
+                         f"RHS {label}. I suspect this has to do with how indexing "
+                         "is done at the moment.")
 
-    logger.info("Calculated a cleaning performance on the dirty data "
-                f"of f1-score {round(performance_dirty, 5)}.")
-    logger.info("Calculated a cleaning performance on the clean data "
-                f"of f1-score {round(performance_clean, 5)}.")
+    if save:
+        path = data.results_path + "clean_data.p"
+        helps.save_pickle(result, path)
+    else:
+        logger.info('\n~~~~~~~~~~~~~~~~~~~~\n')
+        logger.info(result)
 
 
 def manual_pfd(data, *args, **kwargs):

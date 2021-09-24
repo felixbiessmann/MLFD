@@ -24,37 +24,33 @@ the various elements of the figures.
 
 
 def label_size():
-    """Size of axis labels
-    """
-    return 8  # 10pt is latex standard font-size
+    """Size of axis labels """
+    return 6  # 10pt is latex standard font-size
 
 
 def font_size():
-    """Size of all texts shown in plots
-    """
-    return 8
+    """Size of all texts shown in plots """
+    return 6
 
 
 def ticks_size():
-    """Size of axes' ticks
-    """
-    return 8
+    """Size of axes' ticks' labels """
+    return 6
 
 
 def axis_lw():
-    """Line width of the axes
-    """
+    """Line width of the axes """
     return 0.6
 
 
 def plot_lw():
-    """Line width of the plotted curves
-    """
+    """Line width of the plotted curves """
     return 1.5
 
 
 def figure_setup():
-    """Set all the sizes to the correct values and use
+    """
+    Set all the sizes to the correct values and use
     tex fonts for all texts.
     """
     params = {'text.usetex': True,
@@ -78,7 +74,8 @@ def figure_setup():
 
 
 def save_fig(fig, file_name, fmt=None, dpi=300, tight=True):
-    """Save a Matplotlib figure as EPS/PNG/PDF to the given path and trim it.
+    """
+    Save a Matplotlib figure as EPS/PNG/PDF to the given path and trim it.
 
     Keyword Attributes:
     fig -- Pyplot fig-Object ready to be saved
@@ -118,4 +115,3 @@ def save_fig(fig, file_name, fmt=None, dpi=300, tight=True):
                         (tmp_name, file_name), shell=True)
     elif fmt == 'pdf':
         subprocess.call('cp %s %s' % (tmp_name, file_name), shell=True)
-    #     subprocess.call('pdfcrop %s %s' % (tmp_name, file_name), shell=True)
