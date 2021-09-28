@@ -19,6 +19,18 @@ def cleaning_performance(y_clean: pd.Series, y_predicted: pd.Series):
     return f1_score(y_true, y_delta)
 
 
+def error_detection_performance(y_clean: pd.Series,
+                                y_predicted: pd.Series,
+                                y_dirty: pd.Series):
+    """
+    Calculate the f1-score for finding the correct position of errors in
+    y_dirty.
+    """
+    y_error_position_true = y_clean != y_dirty
+    y_error_position_pred = y_clean != y_predicted
+    return f1_score(y_error_position_true, y_error_position_pred)
+
+
 def subset_df(df: pd.DataFrame, exclude_cols: list) -> pd.DataFrame:
     exclude_cols = [int(x) for x in exclude_cols]
     new_cols = [x for x in list(df.columns) if x not in exclude_cols]
@@ -97,13 +109,22 @@ def check_split_for_duplicates(list_of_dfs):
     return no_duplicates
 
 
-def load_original_data(data_path, data_title, missing_value_token):
+def load_original_data(data, load_dirty=False):
     """
     Loads the original dataframe. Missing values are replaced with
-    np.nan
+    np.nan. If load_dirty is set to True, the dirty dataset of a
+    cleaning experiment is loaded. Otherwise, the default clean dataset
+    is loaded.
     """
-    df = pd.read_csv(f'{data_path}{data_title}.csv', header=None)
-    df = df.replace(missing_value_token, np.nan)
+    if load_dirty:
+        df = pd.read_csv(data.dirty_data_path,
+                         sep=data.original_separator,
+                         header=None)
+    else:
+        df = pd.read_csv(data.data_path,
+                         sep=data.original_separator,
+                         header=None)
+    df = df.replace(data.missing_value_token, np.nan)
     return df
 
 

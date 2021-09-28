@@ -7,8 +7,7 @@ from typing import List, Tuple
 from lib.imputer import run_ml_imputer_on_fd_set, train_model
 from lib.helpers import (load_splits,
                          load_original_data,
-                         check_split_for_duplicates,
-                         subset_df)
+                         check_split_for_duplicates)
 from lib.explainers import run_feature_permutation
 
 
@@ -36,9 +35,7 @@ class DepOptimizer():
     def load_data(self):
         """ Loads train/validate/test splits. Sets class-attributes
         df_train, df_validate, df_test and df_columns. """
-        df = load_original_data(self.data.splits_path,
-                                self.data.title,
-                                self.data.missing_value_token)
+        df = load_original_data(self.data)
         df_train, df_validate, df_test = load_splits(self.data)
 
         no_dupl = check_split_for_duplicates([df])

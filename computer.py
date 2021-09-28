@@ -3,7 +3,6 @@ import random
 import logging
 import argparse
 import pandas as pd
-from sklearn.metrics import f1_score
 from typing import Tuple
 import lib.helpers as helps
 import lib.optimizer as opt
@@ -63,6 +62,8 @@ def clean_data(data: c.Dataset, save=False, *args, **kwargs):
         return False
 
     df_train, df_validate, df_test, df_validate_clean = helps.load_splits(data)
+    df_clean = helps.load_original_data(data, load_dirty=False)
+    df_dirty = helps.load_original_data(data, load_dirty=True)
     result = []
 
     for label in data.column_map.keys():
@@ -73,23 +74,29 @@ def clean_data(data: c.Dataset, save=False, *args, **kwargs):
         try:
             predictor = imp.train_model(df_train, df_test, label)
 
+            df_label_true = df_dirty.loc[:, label]
+            df_clean_label_true = df_clean.loc[:, label]
+
             df_label_true = df_validate.loc[:, label]
             df_clean_label_true = df_validate_clean.loc[:, label]
 
-            df_validate_reduced = df_validate.drop(columns=[label])
-            df_predicted = pd.Series(predictor.predict(df_validate_reduced))
+            df_dirty_reduced = df_dirty.drop(columns=[label])
+            se_predicted = pd.Series(predictor.predict(df_dirty_reduced))
 
-            performance_dirty = helps.cleaning_performance(df_label_true,
-                                                           df_predicted)
-            performance_clean = helps.cleaning_performance(df_clean_label_true,
-                                                           df_predicted)
-            r['performance_dirty'] = performance_dirty
-            r['performance_clean'] = performance_clean
+            r['cleaning_dirty'] = helps.cleaning_performance(df_label_true,
+                                                             se_predicted)
+            r['cleaning_clean'] = helps.cleaning_performance(df_clean_label_true,
+                                                             se_predicted)
+            r['error_detection'] = helps.error_detection_performance(df_clean_label_true,
+                                                                     se_predicted,
+                                                                     df_label_true)
 
             logger.info("Calculated a cleaning performance on the dirty data "
-                        f"of f1-score {round(performance_dirty, 5)}.")
+                        f"of f1-score {round(r['cleaning_dirty'], 5)}.")
             logger.info("Calculated a cleaning performance on the clean data "
-                        f"of f1-score {round(performance_clean, 5)}.")
+                        f"of f1-score {round(r['cleaning_clean'], 5)}.")
+            logger.info("Calculated a error detection performance "
+                        f"of f1-score {round(r['error_detection'], 5)}.")
             result.append(r)
         except ValueError:
             logger.error("Some weird-ass bug happened when training a model for "
@@ -324,8 +331,7 @@ def split_dataset(data, save=True):
     if sure == 'y':
         split_ratio = (0.8, 0.1, 0.1)
         rndint = random.randint(0, 10000)
-        df_clean = pd.read_csv(data.data_path, sep=data.original_separator,
-                               header=None)
+        df_clean = helps.load_original_data(data)
         save_dict = {}
         clean_train, clean_validate, clean_test = helps.split_df(df_clean,
                                                                  split_ratio,
@@ -339,9 +345,7 @@ def split_dataset(data, save=True):
         if data.cleaning:
             logger.info('Selected dataset is a dataset used for a cleaning '
                         'experiment. Splitting dirty and clean data.')
-            df_dirty = pd.read_csv(data.dirty_data_path,
-                                   sep=data.original_separator,
-                                   header=None)
+            df_dirty = helps.load_original_data(data, load_dirty=True)
             dirty_train, dirty_validate, dirty_test = helps.split_df(df_dirty,
                                                                      split_ratio,
                                                                      random_state=rndint)

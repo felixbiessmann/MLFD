@@ -9,25 +9,6 @@ import lib.plot_utils as pu
 import lib.constants as c
 
 
-def load_result(path_to_pickle):
-    """
-    Returns a pickled result from RESULTS_PATH.
-    Also checks when the result was last modified.
-    """
-    file_last_modified(path_to_pickle)
-    return pickle.load(open(path_to_pickle, 'rb'))
-
-
-def file_last_modified(path_to_file):
-    """
-    Prints a string to indicate when a file has been
-    modified the last time.
-    """
-    mod_time = time.localtime(os.path.getmtime(path_to_file))
-    time_str = time.strftime("%a, %d. %b %Y %H:%M:%S", mod_time)
-    print(time_str + ": Last change to " + os.path.basename(path_to_file))
-
-
 def main(args):
     """
     Plot figures for the Master Thesis. Just call this script
@@ -67,7 +48,8 @@ def main(args):
              'mse_ml_overfit': plot_mse_ml_overfit,
              'f1_random_overfit': plot_f1_random_ml_overfit,
              'dep_detector_lhs_stability': plot_dep_detector_lhs_stability,
-             'f1_clean_and_dirty': plot_f1_clean_and_dirty
+             'f1_cleaning': plot_f1_cleaning,
+             'f1_error_detection': plot_f1_error_detection
              }
 
     data = datasets.get(args.data, no_valid_data)
@@ -101,6 +83,25 @@ def main(args):
                 plt.show()
         else:
             plot_fun()
+
+
+def load_result(path_to_pickle):
+    """
+    Returns a pickled result from RESULTS_PATH.
+    Also checks when the result was last modified.
+    """
+    file_last_modified(path_to_pickle)
+    return pickle.load(open(path_to_pickle, 'rb'))
+
+
+def file_last_modified(path_to_file):
+    """
+    Prints a string to indicate when a file has been
+    modified the last time.
+    """
+    mod_time = time.localtime(os.path.getmtime(path_to_file))
+    time_str = time.strftime("%a, %d. %b %Y %H:%M:%S", mod_time)
+    print(time_str + ": Last change to " + os.path.basename(path_to_file))
 
 
 def plot_dep_detector_lhs_stability(data):
@@ -374,13 +375,12 @@ def plot_mse_ml_fd(data):
     return (fig, ax)
 
 
-def plot_f1_clean_and_dirty(data):
+def plot_f1_error_detection(data):
     cleaning_results = load_result(
         data.results_path+"clean_data.p")
 
     labels = [data.column_map[c['label']] for c in cleaning_results]
-    performance_clean = [round(c['performance_clean'], 2) for c in cleaning_results]
-    performance_dirty = [round(c['performance_dirty'], 2) for c in cleaning_results]
+    perf_error_detection = [round(c['error_detection'], 2) for c in cleaning_results]
 
     pu.figure_setup()
     fig_size = pu.get_fig_size(25, 5)
@@ -389,8 +389,34 @@ def plot_f1_clean_and_dirty(data):
 
     x = np.arange(len(labels))
     width = 0.35  # the width of the bars
-    rects1 = ax.bar(x - width/2, performance_clean, width, label='Clean Validation Set')
-    rects2 = ax.bar(x + width/2, performance_dirty, width, label='Dirty Validation Set')
+    ax.bar(x - width/2, perf_error_detection, width)
+
+    ax.set_ylabel('F1-Score')
+    ax.set_title('Model performance for error detection')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
+
+    return(fig, ax)
+
+
+def plot_f1_cleaning(data):
+    cleaning_results = load_result(
+        data.results_path+"clean_data.p")
+
+    labels = [data.column_map[c['label']] for c in cleaning_results]
+    perf_cleaning_clean = [round(c['cleaning_clean'], 2) for c in cleaning_results]
+    perf_cleaning_dirty = [round(c['cleaning_dirty'], 2) for c in cleaning_results]
+
+    pu.figure_setup()
+    fig_size = pu.get_fig_size(25, 5)
+    fig = plt.figure(figsize=list(fig_size))
+    ax = fig.add_subplot(111)
+
+    x = np.arange(len(labels))
+    width = 0.35  # the width of the bars
+    rects1 = ax.bar(x - width/2, perf_cleaning_clean, width, label='Clean Validation Set')
+    rects2 = ax.bar(x + width/2, perf_cleaning_dirty, width, label='Dirty Validation Set')
 
     ax.set_ylabel('F1-Score')
     ax.set_title('Model performance for cleaning (dirty) and after training (clean)')
@@ -401,10 +427,6 @@ def plot_f1_clean_and_dirty(data):
     ax.bar_label(rects1, padding=3)
     ax.bar_label(rects2, padding=3)
 
-    # plt.show()
-
-    # ax.set(xlabel='F1-Score ({})'.format(data.title.capitalize()),
-    #        xlim=[0.0, 1.0])
     return(fig, ax)
 
 
