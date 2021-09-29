@@ -74,22 +74,25 @@ def clean_data(data: c.Dataset, save=False, *args, **kwargs):
         try:
             predictor = imp.train_model(df_train, df_test, label)
 
-            df_label_true = df_dirty.loc[:, label]
+            logger.debug("Successfully trained the model.")
+            df_dirty_label_true = df_dirty.loc[:, label]
             df_clean_label_true = df_clean.loc[:, label]
 
-            df_label_true = df_validate.loc[:, label]
-            df_clean_label_true = df_validate_clean.loc[:, label]
-
             df_dirty_reduced = df_dirty.drop(columns=[label])
+            logger.debug("Predicting values.")
             se_predicted = pd.Series(predictor.predict(df_dirty_reduced))
+            logger.debug("Successfully predicted values.")
 
-            r['cleaning_dirty'] = helps.cleaning_performance(df_label_true,
+            logger.debug('Measuring model performance on dirty data.')
+            r['cleaning_dirty'] = helps.cleaning_performance(df_dirty_label_true,
                                                              se_predicted)
+            logger.debug('Measuring cleaning-performance on clean data.')
             r['cleaning_clean'] = helps.cleaning_performance(df_clean_label_true,
                                                              se_predicted)
+            logger.debug('Measuring error-detection performance on clean data.')
             r['error_detection'] = helps.error_detection_performance(df_clean_label_true,
                                                                      se_predicted,
-                                                                     df_label_true)
+                                                                     df_dirty_label_true)
 
             logger.info("Calculated a cleaning performance on the dirty data "
                         f"of f1-score {round(r['cleaning_dirty'], 5)}.")

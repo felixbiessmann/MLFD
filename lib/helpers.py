@@ -27,8 +27,8 @@ def error_detection_performance(y_clean: pd.Series,
     y_dirty.
     """
     y_error_position_true = y_clean != y_dirty
-    y_error_position_pred = y_clean != y_predicted
-    return f1_score(y_error_position_true, y_error_position_pred)
+    y_error_position_predicted = y_dirty != y_predicted
+    return f1_score(y_error_position_true, y_error_position_predicted)
 
 
 def subset_df(df: pd.DataFrame, exclude_cols: list) -> pd.DataFrame:

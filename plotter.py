@@ -36,7 +36,9 @@ def main(args):
         c.BREASTCANCER.title: c.BREASTCANCER,
         c.IRIS.title: c.IRIS,
         c.LETTER.title: c.LETTER,
-        c.HOSPITAL_1k.title: c.HOSPITAL_1k
+        c.HOSPITAL_1k.title: c.HOSPITAL_1k,
+        c.HOSPITAL_10k.title: c.HOSPITAL_10k,
+        c.HOSPITAL_100k.title: c.HOSPITAL_100k
     }
     plots = {'f1_fd_imputer': plot_f1_fd_imputer,
              'f1_ml_imputer': plot_f1_ml_imputer,
@@ -68,10 +70,10 @@ def main(args):
                     '''Could not create {0}-plot for dataset
                     {1}: File not found.'''.format(plot_name, data.title)
     else:
-        if data != 0:
-            plot_fun = plots.get(args.figure, no_valid_figure)
+        plot_fun = plots.get(args.figure, no_valid_figure)
 
-        if (plot_fun != no_valid_figure) and (data != 0):
+        if ((plot_fun.__code__.co_code != no_valid_figure.__code__.co_code)
+                and (data != 0)):
             fig, ax = plot_fun(data)
 
             ax.set_axisbelow(True)
@@ -79,6 +81,7 @@ def main(args):
 
             if args.save:
                 pu.save_fig(fig, data.figures_path + args.save)
+                print(f'Successfully saved the figure to {data.figures_path}.')
             else:
                 plt.show()
         else:
@@ -101,7 +104,7 @@ def file_last_modified(path_to_file):
     """
     mod_time = time.localtime(os.path.getmtime(path_to_file))
     time_str = time.strftime("%a, %d. %b %Y %H:%M:%S", mod_time)
-    print(time_str + ": Last change to " + os.path.basename(path_to_file))
+    print(time_str + ": Last change to " + path_to_file)
 
 
 def plot_dep_detector_lhs_stability(data):
@@ -154,8 +157,8 @@ def plot_f1_ml_imputer(data):
                        if ('f1' in y.keys())]
 
     res_bigger_zero = [(res[0],
-         ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
-         for res in res_bigger_zero]
+                        ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
+                       for res in res_bigger_zero]
 
     res_bigger_zero.sort()
     print(res_bigger_zero)
@@ -183,8 +186,8 @@ def plot_f1_fd_imputer(data):
                        if ('f1' in y.keys())]
 
     res_bigger_zero = [(res[0],
-         ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
-         for res in res_bigger_zero]
+                        ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
+                       for res in res_bigger_zero]
 
     res_bigger_zero.sort()
     print(res_bigger_zero)
@@ -213,9 +216,9 @@ def plot_mse_fd_imputer(data):
                        if ('mse' in y.keys())]
 
     res_bigger_zero = [(res[0],
-         ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
-         for res in res_bigger_zero
-         if res[0] != '']
+                        ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
+                       for res in res_bigger_zero
+                       if res[0] != '']
 
     print(res_bigger_zero)
     res_bigger_zero.sort(reverse=True)
@@ -244,8 +247,8 @@ def plot_mse_ml_imputer(data):
                        if ('mse' in y.keys())]
 
     res_bigger_zero = [(res[0],
-         ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
-         for res in res_bigger_zero]
+                        ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
+                       for res in res_bigger_zero]
 
     res_bigger_zero.sort(reverse=True)
     print(res_bigger_zero)
@@ -260,7 +263,7 @@ def plot_mse_ml_imputer(data):
     ax.barh(lhs_names, mse_fd)
 
     ax.set(xlabel='MSE ({})'.format(data.title.capitalize()))
-           # xlim=[0.0, 1000.0])
+    # xlim=[0.0, 1000.0])
     return(fig, ax)
 
 
@@ -380,7 +383,8 @@ def plot_f1_error_detection(data):
         data.results_path+"clean_data.p")
 
     labels = [data.column_map[c['label']] for c in cleaning_results]
-    perf_error_detection = [round(c['error_detection'], 2) for c in cleaning_results]
+    perf_error_detection = [round(c['error_detection'], 2)
+                            for c in cleaning_results]
 
     pu.figure_setup()
     fig_size = pu.get_fig_size(25, 5)
@@ -405,8 +409,10 @@ def plot_f1_cleaning(data):
         data.results_path+"clean_data.p")
 
     labels = [data.column_map[c['label']] for c in cleaning_results]
-    perf_cleaning_clean = [round(c['cleaning_clean'], 2) for c in cleaning_results]
-    perf_cleaning_dirty = [round(c['cleaning_dirty'], 2) for c in cleaning_results]
+    perf_cleaning_clean = [round(c['cleaning_clean'], 2)
+                           for c in cleaning_results]
+    perf_cleaning_dirty = [round(c['cleaning_dirty'], 2)
+                           for c in cleaning_results]
 
     pu.figure_setup()
     fig_size = pu.get_fig_size(25, 5)
@@ -415,11 +421,14 @@ def plot_f1_cleaning(data):
 
     x = np.arange(len(labels))
     width = 0.35  # the width of the bars
-    rects1 = ax.bar(x - width/2, perf_cleaning_clean, width, label='Clean Validation Set')
-    rects2 = ax.bar(x + width/2, perf_cleaning_dirty, width, label='Dirty Validation Set')
+    rects1 = ax.bar(x - width/2, perf_cleaning_clean,
+                    width, label='Clean Validation Set')
+    rects2 = ax.bar(x + width/2, perf_cleaning_dirty,
+                    width, label='Dirty Validation Set')
 
     ax.set_ylabel('F1-Score')
-    ax.set_title('Model performance for cleaning (dirty) and after training (clean)')
+    ax.set_title(
+        'Model performance for cleaning (dirty) and after training (clean)')
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend()
@@ -462,13 +471,14 @@ if __name__ == '__main__':
         description=main.__doc__)
     # 'Script for plotting figures for Philipp Jung\'s Master Thesis.\n')
 
-    parser.add_argument(
-        '-s', '--save', help='specify filename and -type to save the figure.')
+    parser.add_argument('-s',
+                        '--save',
+                        help='specify filename and -type to save the figure.')
     parser.add_argument('-f', '--figure', help='specify a figure to plot.')
     parser.add_argument(
         '-d', '--data', help='specify a dataset to use results of.')
     parser.add_argument('-a', '--all', help='plot and save all possible plots',
-            action='store_true')
+                        action='store_true')
 
     args = parser.parse_args()
     main(args)
