@@ -10,6 +10,69 @@ import lib.constants as c
 import lib.imputer as imp
 
 
+def clean_data(data: c.Dataset, save=False, *args, **kwargs):
+    """
+    Train a model on the dirty (default) train-test split. Then, calculate
+    cleaning performance by comparing predicted labels on the dirty dataset
+    to the clean labels from the clean dataset.
+
+    Depending on the type of comparison between the validate sets, this is
+    either an error-detection experiment, or a cleaning experiment.
+    """
+    logger = logging.getLogger('pfd')
+    logger.debug(f"Start cleaning experiment with dataset {data.title}.")
+    logger.debug("For each column, a model for cleaning will be trained on "
+                 "all other columns.")
+    if not data.cleaning:
+        logger.info(f"The dataset {data.title} is not suitable for a cleaning "
+                    "experiment. Please choose a dataset that has a clean "
+                    "and a dirty version of the data available.")
+        return False
+
+    df_train, df_validate, df_test, df_validate_clean = helps.load_splits(data)
+    df_clean = helps.load_original_data(data, load_dirty=False)
+    df_dirty = helps.load_original_data(data, load_dirty=True)
+    result = []
+
+    for label in data.column_map.keys():
+        r = {'label': label}
+        logger.info(f'Investigating RHS {label}')
+
+        predictor = imp.train_model(df_train, df_test, label)
+        logger.info("Trained global predictor with complete LHS.")
+
+        logger.debug("Successfully trained the model.")
+        df_dirty_y_true = df_dirty.loc[:, label]
+        df_clean_y_true = df_clean.loc[:, label]
+
+        df_dirty_reduced = df_dirty.drop(columns=[label])
+        logger.debug("Predicting values.")
+        se_predicted = pd.Series(predictor.predict(df_dirty_reduced))
+        logger.debug("Successfully predicted values.")
+
+        logger.debug('Measuring cleaning-performance.')
+        r['cleaning_clean'] = helps.cleaning_performance(df_clean_y_true,
+                                                         se_predicted,
+                                                         df_dirty_y_true)
+        logger.debug('Measuring error-detection performance.')
+        r['error_detection'] = helps.error_detection_performance(df_clean_y_true,
+                                                                 se_predicted,
+                                                                 df_dirty_y_true)
+
+        logger.info("Calculated a cleaning performance of "
+                    f"f1-score {round(r['cleaning_clean'], 5)}.")
+        logger.info("Calculated a error detection performance "
+                    f"of f1-score {round(r['error_detection'], 5)}.")
+        result.append(r)
+
+    if save:
+        path = data.results_path + "clean_data.p"
+        helps.save_pickle(result, path)
+    else:
+        logger.info('\n~~~~~~~~~~~~~~~~~~~~\n')
+        logger.info(result)
+
+
 def global_predictor_explained(data: c.Dataset,
                                df_train: pd.DataFrame,
                                df_validate: pd.DataFrame,
@@ -40,78 +103,6 @@ def global_predictor_explained(data: c.Dataset,
         lambda x: data.column_map.get(x, 'NA'))
 
     return (df_imp, measured_performance[metric], metric, rhs)
-
-
-def clean_data(data: c.Dataset, save=False, *args, **kwargs):
-    """
-    Train a model on the dirty (default) train-test split and calculate
-    cleaning performance by comparing the dirty (default) validate-split
-    to the clean validate-split.
-
-    Depending on the type of comparison between the validate sets, this is
-    either an error-detection experiment, or a cleaning experiment.
-    """
-    logger = logging.getLogger('pfd')
-    logger.debug(f"Start cleaning experiment with dataset {data.title}.")
-    logger.debug("For each column, a model for cleaning will be trained on "
-                 "all other columns.")
-    if not data.cleaning:
-        logger.info(f"The dataset {data.title} is not suitable for a cleaning "
-                    "experiment. Please choose a dataset that has a clean "
-                    "and a dirty version of the data available.")
-        return False
-
-    df_train, df_validate, df_test, df_validate_clean = helps.load_splits(data)
-    df_clean = helps.load_original_data(data, load_dirty=False)
-    df_dirty = helps.load_original_data(data, load_dirty=True)
-    result = []
-
-    for label in data.column_map.keys():
-        r = {'label': label}
-        logger.info(f'Investigating RHS {label}')
-        logger.info("Begin global predictor training with complete LHS.")
-
-        try:
-            predictor = imp.train_model(df_train, df_test, label)
-
-            logger.debug("Successfully trained the model.")
-            df_dirty_label_true = df_dirty.loc[:, label]
-            df_clean_label_true = df_clean.loc[:, label]
-
-            df_dirty_reduced = df_dirty.drop(columns=[label])
-            logger.debug("Predicting values.")
-            se_predicted = pd.Series(predictor.predict(df_dirty_reduced))
-            logger.debug("Successfully predicted values.")
-
-            logger.debug('Measuring model performance on dirty data.')
-            r['cleaning_dirty'] = helps.cleaning_performance(df_dirty_label_true,
-                                                             se_predicted)
-            logger.debug('Measuring cleaning-performance on clean data.')
-            r['cleaning_clean'] = helps.cleaning_performance(df_clean_label_true,
-                                                             se_predicted)
-            logger.debug('Measuring error-detection performance on clean data.')
-            r['error_detection'] = helps.error_detection_performance(df_clean_label_true,
-                                                                     se_predicted,
-                                                                     df_dirty_label_true)
-
-            logger.info("Calculated a cleaning performance on the dirty data "
-                        f"of f1-score {round(r['cleaning_dirty'], 5)}.")
-            logger.info("Calculated a cleaning performance on the clean data "
-                        f"of f1-score {round(r['cleaning_clean'], 5)}.")
-            logger.info("Calculated a error detection performance "
-                        f"of f1-score {round(r['error_detection'], 5)}.")
-            result.append(r)
-        except ValueError:
-            logger.error("Some weird-ass bug happened when training a model for "
-                         f"RHS {label}. I suspect this has to do with how indexing "
-                         "is done at the moment.")
-
-    if save:
-        path = data.results_path + "clean_data.p"
-        helps.save_pickle(result, path)
-    else:
-        logger.info('\n~~~~~~~~~~~~~~~~~~~~\n')
-        logger.info(result)
 
 
 def manual_pfd(data, *args, **kwargs):

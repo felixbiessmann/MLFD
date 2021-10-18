@@ -1,34 +1,72 @@
 import os
-import pickle
-from typing import List, Any, Dict
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import f1_score
-from autogluon.tabular import TabularPredictor
-import pandas as pd
-import numpy as np
 import random
+import pickle
+import logging
+import numpy as np
+import pandas as pd
+from typing import List, Any, Dict
+from sklearn.metrics import f1_score, classification_report
+from autogluon.tabular import TabularPredictor
+from sklearn.model_selection import train_test_split
 
 
-def cleaning_performance(y_clean: pd.Series, y_predicted: pd.Series):
+def cleaning_performance(y_clean: pd.Series,
+                         y_pred: pd.Series,
+                         y_dirty: pd.Series,
+                         assume_errors_known=True):
     """
     Calculate the f1-score between the clean labels and the predicted
     labels.
+
+    As defined by Rekasinas et al. 2017 (Holoclean), we compute:
+    - Precision as the fraction of correct repairs over the total number
+      of repairs performed.
+    - Recall as the fraction of (correct repairs of real errors) over the
+      total number of errors.
+
+    Also, most data-cleaning publications work under the assumption that all
+    errors have been successfully detected. (see Mahdavi 2020)
+
+    TODO: Return classification report instead of just f1_score.
     """
-    y_delta = y_clean == y_predicted
-    y_true = pd.Series([True for _ in y_delta])
-    return f1_score(y_true, y_delta)
+    y_error_position_true = y_clean != y_dirty
+    if assume_errors_known:
+        y_clean = y_clean.loc[y_error_position_true]
+        y_pred = y_pred.loc[y_error_position_true]
+        y_dirty = y_dirty.loc[y_error_position_true]
+
+    tp = sum(np.logical_and(y_dirty != y_clean, y_pred == y_clean))
+    fp = sum(np.logical_and(y_dirty == y_clean, y_pred != y_clean))
+    fn = sum(np.logical_and(y_dirty != y_clean, y_pred != y_clean))
+    tn = sum(np.logical_and(y_dirty == y_clean, y_pred == y_clean))
+
+    p = 0 if (tp + fp) == 0 else tp / (tp + fp)
+    r = 0 if (tp + fn) == 0 else tp / (tp + fn)
+    f1_score = 0 if (p+r) == 0 else 2 * (p*r)/(p+r)
+
+    return f1_score
 
 
 def error_detection_performance(y_clean: pd.Series,
-                                y_predicted: pd.Series,
+                                y_pred: pd.Series,
                                 y_dirty: pd.Series):
     """
     Calculate the f1-score for finding the correct position of errors in
     y_dirty.
+
+    TODO: Return classification report instead of just f1_score.
     """
+    logger = logging.getLogger('pfd')
     y_error_position_true = y_clean != y_dirty
-    y_error_position_predicted = y_dirty != y_predicted
-    return f1_score(y_error_position_true, y_error_position_predicted)
+    y_error_position_pred = y_dirty != y_pred
+    rep = classification_report(y_error_position_true, y_error_position_pred)
+    i_errors_true = [i for i, x in enumerate(
+        y_error_position_true) if x is True]
+    i_errors_pred = [i for i, x in enumerate(
+        y_error_position_pred) if x is True]
+    logger.debug(f'Counted {len(i_errors_true)} errors in the original data.')
+    logger.debug(f'And {len(i_errors_pred)} errors were predicted.')
+    return f1_score(y_error_position_true, y_error_position_pred)
 
 
 def subset_df(df: pd.DataFrame, exclude_cols: list) -> pd.DataFrame:

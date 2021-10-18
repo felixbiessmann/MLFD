@@ -1,7 +1,9 @@
 import pandas as pd
+from hashlib import sha256
 from pandas.util import hash_pandas_object
 from lib.helpers import get_performance, df_to_ag_style
 from autogluon.tabular import TabularPredictor
+import logging
 
 
 def train_model(df_train: pd.DataFrame,
@@ -18,19 +20,28 @@ def train_model(df_train: pd.DataFrame,
     computing the hash of df_train and comparing that to existing models.
 
     Returns the predictor object.
+
+    TODO: Optimize this bad boy for experiments. Would be k-fold
+    cross-validation instead of train-test split and a AG-preset that opts
+    for highest quality model. Also no or very high time_limit.
     """
+    logger = logging.getLogger('pfd')
     d = 'agModels'  # folder to store trained models
     hash_sum = hash_pandas_object(df_train).sum()
-    checksum = hash(str(hash_sum) + str(label) + str(random_state))
-    # try:
-    #    predictor = TabularPredictor.load(f'{d}/{checksum}')
-    # except FileNotFoundError:
-    p = TabularPredictor(label=label, path=f'{d}/{checksum}')
-    predictor = p.fit(train_data=df_train,
-                      tuning_data=df_test,
-                      time_limit=20,
-                      verbosity=verbosity,
-                      presets='medium_quality_faster_train')
+    m = sha256()
+    m.update(bytes(str(hash_sum) + str(label) + str(random_state), 'utf-8'))
+    checksum = m.hexdigest()
+    logger.info(f'Calculated a checksum of {checksum}.')
+    try:
+        predictor = TabularPredictor.load(f'{d}/{checksum}')
+    except FileNotFoundError:
+        logger.info("Didn't find a model to load form the cache.")
+        p = TabularPredictor(label=label, path=f'{d}/{checksum}')
+        predictor = p.fit(train_data=df_train,
+                          tuning_data=df_test,
+                          time_limit=20,
+                          verbosity=verbosity,
+                          presets='medium_quality_faster_train')
     return predictor
 
 

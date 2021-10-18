@@ -385,6 +385,8 @@ def plot_f1_error_detection(data):
     labels = [data.column_map[c['label']] for c in cleaning_results]
     perf_error_detection = [round(c['error_detection'], 2)
                             for c in cleaning_results]
+    perf_cleaning = [round(c['cleaning_clean'], 2)
+                     for c in cleaning_results]
 
     pu.figure_setup()
     fig_size = pu.get_fig_size(25, 5)
@@ -393,13 +395,19 @@ def plot_f1_error_detection(data):
 
     x = np.arange(len(labels))
     width = 0.35  # the width of the bars
-    ax.bar(x - width/2, perf_error_detection, width)
+    rects1 = ax.bar(x - width/2, perf_cleaning,
+                    width, label='Cleaning')
+    rects2 = ax.bar(x + width/2, perf_error_detection,
+                    width, label='Error Detection')
 
     ax.set_ylabel('F1-Score')
-    ax.set_title('Model performance for error detection')
+    ax.set_title('Performance Cleaning \& Error Detection')
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend()
+
+    ax.bar_label(rects1, padding=3)
+    ax.bar_label(rects2, padding=3)
 
     return(fig, ax)
 
