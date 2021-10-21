@@ -2,6 +2,7 @@ import timeit
 import random
 import logging
 import argparse
+import numpy as np
 import pandas as pd
 from typing import Tuple
 import lib.helpers as helps
@@ -32,7 +33,11 @@ def clean_data(data: c.Dataset, save=False, *args, **kwargs):
     df_train, df_validate, df_test, df_validate_clean = helps.load_splits(data)
     df_clean = helps.load_original_data(data, load_dirty=False)
     df_dirty = helps.load_original_data(data, load_dirty=True)
+
     result = []
+    global_pred_y = np.array([])
+    global_clean_y = df_clean.to_numpy().flatten()
+    global_dirty_y = df_dirty.to_numpy().flatten()
 
     for label in data.column_map.keys():
         r = {'label': label}
@@ -48,6 +53,7 @@ def clean_data(data: c.Dataset, save=False, *args, **kwargs):
         df_dirty_reduced = df_dirty.drop(columns=[label])
         logger.debug("Predicting values.")
         se_predicted = pd.Series(predictor.predict(df_dirty_reduced))
+        global_pred_y = np.append(global_pred_y, se_predicted)
         logger.debug("Successfully predicted values.")
 
         logger.debug('Measuring cleaning-performance.')
@@ -64,6 +70,12 @@ def clean_data(data: c.Dataset, save=False, *args, **kwargs):
         logger.info("Calculated a error detection performance "
                     f"of f1-score {round(r['error_detection'], 5)}.")
         result.append(r)
+
+    global_detection = helps.error_detection_performance(global_clean_y,
+                                                         global_pred_y,
+                                                         global_dirty_y)
+    logger.info('Global error detection performance of F1-Score '
+                f'{global_detection}.')
 
     if save:
         path = data.results_path + "clean_data.p"
