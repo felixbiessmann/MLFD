@@ -6,6 +6,46 @@ from autogluon.tabular import TabularPredictor
 import logging
 
 
+def calculate_model_hash(df, label, random_state) -> str:
+    """ Calculate the hash of a dataframe and label."""
+    logger = logging.getLogger('pfd')
+    hash_sum = hash_pandas_object(df).sum()
+    m = sha256()
+    m.update(bytes(str(hash_sum) + str(label) + str(random_state), 'utf-8'))
+    checksum = m.hexdigest()
+    logger.info(f'Calculated a data-checksum of {checksum}.')
+    return checksum
+
+
+def train_cleaning_model(df_dirty: pd.DataFrame,
+                         label: str,
+                         random_state: int = 0,
+                         problem_type: str = '',
+                         **kwargs) -> TabularPredictor:
+    """
+    Train an autogluon model for the purpose of cleaning data.
+    Optionally, you can set verbosity to control how much output AutoGluon
+    produces during training.
+
+    The function caches models that have been trained on the same data. If
+    you wish to prevent this, set random_state at random.
+
+    Returns the predictor object.
+    """
+    d = 'agModels'  # folder to store trained models
+    logger = logging.getLogger('pfd')
+    checksum = calculate_model_hash(df_dirty, label, random_state)
+    model_path = f'{d}/{checksum}'
+    try:
+        predictor = TabularPredictor.load(model_path)
+    except FileNotFoundError:
+        logger.info("Didn't find a model to load from the cache.")
+        p = TabularPredictor(label=label, path=model_path, problem_type=problem_type)
+        predictor = p.fit(train_data=df_dirty,
+                          **kwargs)
+    return predictor
+
+
 def train_model(df_train: pd.DataFrame,
                 df_test: pd.DataFrame,
                 label: str,
@@ -27,16 +67,14 @@ def train_model(df_train: pd.DataFrame,
     """
     logger = logging.getLogger('pfd')
     d = 'agModels'  # folder to store trained models
-    hash_sum = hash_pandas_object(df_train).sum()
-    m = sha256()
-    m.update(bytes(str(hash_sum) + str(label) + str(random_state), 'utf-8'))
-    checksum = m.hexdigest()
+    checksum = calculate_model_hash(df_train, label, random_state)
+    model_path = f'{d}/{checksum}'
     logger.info(f'Calculated a checksum of {checksum}.')
     try:
-        predictor = TabularPredictor.load(f'{d}/{checksum}')
+        predictor = TabularPredictor.load(model_path)
     except FileNotFoundError:
-        logger.info("Didn't find a model to load form the cache.")
-        p = TabularPredictor(label=label, path=f'{d}/{checksum}')
+        logger.info("Didn't find a model to load from the cache.")
+        p = TabularPredictor(label=label, path=model_path)
         predictor = p.fit(train_data=df_train,
                           tuning_data=df_test,
                           time_limit=20,

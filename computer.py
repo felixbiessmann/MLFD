@@ -43,7 +43,11 @@ def clean_data(data: c.Dataset, save=False, *args, **kwargs):
         r = {'label': label}
         logger.info(f'Investigating RHS {label}')
 
-        predictor = imp.train_model(df_train, df_test, label)
+        predictor = imp.train_cleaning_model(df_dirty,
+                                             label,
+                                             random_state=0,
+                                             verbosity=0,
+                                             preset='best_quality')
         logger.info("Trained global predictor with complete LHS.")
 
         logger.debug("Successfully trained the model.")
@@ -494,7 +498,6 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-
     parser.add_argument('-m', '--model')
     parser.add_argument('-d', '--dataset')
     parser.add_argument('-c', '--column')

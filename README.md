@@ -100,4 +100,4 @@ Liegt der Schwellenwert eines Kindsknotens über [^0] dem des Elternknotens, wir
     └── [0, 1, 3, 4] 0.11918173381240424
 ```
 
-[^0]Im diskreten Fall unter
+[^0] Im diskreten Fall: darunter
