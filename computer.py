@@ -1,7 +1,9 @@
 import timeit
+import datetime
 import random
 import logging
 import argparse
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from typing import Tuple
@@ -9,9 +11,10 @@ import lib.helpers as helps
 import lib.optimizer as opt
 import lib.constants as c
 import lib.imputer as imp
+from sklearn.metrics import precision_recall_curve
 
 
-def clean_data(data: c.Dataset, save=False, *args, **kwargs):
+def clean_data(data: c.Dataset, save=True, *args, **kwargs):
     """
     Train a model on the dirty (default) train-test split. Then, calculate
     cleaning performance by comparing predicted labels on the dirty dataset
@@ -20,6 +23,14 @@ def clean_data(data: c.Dataset, save=False, *args, **kwargs):
     Depending on the type of comparison between the validate sets, this is
     either an error-detection experiment, or a cleaning experiment.
     """
+
+    config = {"random_state": 0,
+              "verbosity": 0,
+              "precision_threshold": 0.95,
+              "numerical_confidence_quantile": 0.7,
+              "force_multiclass": True,
+              "time_limit": 60}
+
     logger = logging.getLogger('pfd')
     logger.debug(f"Start cleaning experiment with dataset {data.title}.")
     logger.debug("For each column, a model for cleaning will be trained on "
@@ -30,11 +41,11 @@ def clean_data(data: c.Dataset, save=False, *args, **kwargs):
                     "and a dirty version of the data available.")
         return False
 
-    df_train, df_validate, df_test, df_validate_clean = helps.load_splits(data)
     df_clean = helps.load_original_data(data, load_dirty=False)
     df_dirty = helps.load_original_data(data, load_dirty=True)
 
     result = []
+    result.append(config)
     global_pred_y = np.array([])
     global_clean_y = df_clean.to_numpy().flatten()
     global_dirty_y = df_dirty.to_numpy().flatten()
@@ -43,25 +54,28 @@ def clean_data(data: c.Dataset, save=False, *args, **kwargs):
         r = {'label': label}
         logger.info(f'Investigating RHS {label}')
 
-        predictor = imp.train_cleaning_model(df_dirty,
-                                             label,
-                                             random_state=0,
-                                             verbosity=0,
-                                             preset='best_quality')
-        logger.info("Trained global predictor with complete LHS.")
+        imputer, r['model_checksum'] = imp.train_cleaning_model(df_dirty,
+                                                                label,
+                                                                **config)
+        logger.info("Trained global imputer with complete LHS.")
 
         logger.debug("Successfully trained the model.")
         df_dirty_y_true = df_dirty.loc[:, label]
         df_clean_y_true = df_clean.loc[:, label]
 
-        df_dirty_reduced = df_dirty.drop(columns=[label])
         logger.debug("Predicting values.")
-        se_predicted = pd.Series(predictor.predict(df_dirty_reduced))
+        df_predicted = imputer.predict(df_dirty)
+
+        se_predicted = pd.Series(df_predicted.loc[:, str(label)+'_imputed'])
+
+        # replace missing predictions with dirty data
+        se_predicted[pd.isna(se_predicted)] = df_dirty_y_true[pd.isna(se_predicted)]
+
         global_pred_y = np.append(global_pred_y, se_predicted)
         logger.debug("Successfully predicted values.")
 
         logger.debug('Measuring cleaning-performance.')
-        r['cleaning_clean'] = helps.cleaning_performance(df_clean_y_true,
+        r['error_cleaning'] = helps.cleaning_performance(df_clean_y_true,
                                                          se_predicted,
                                                          df_dirty_y_true)
         logger.debug('Measuring error-detection performance.')
@@ -70,23 +84,32 @@ def clean_data(data: c.Dataset, save=False, *args, **kwargs):
                                                                  df_dirty_y_true)
 
         logger.info("Calculated a cleaning performance of "
-                    f"f1-score {round(r['cleaning_clean'], 5)}.")
+                    f"f1-score {round(r['error_cleaning'], 5)}.")
         logger.info("Calculated a error detection performance "
                     f"of f1-score {round(r['error_detection'], 5)}.")
         result.append(r)
 
     global_detection = helps.error_detection_performance(global_clean_y,
-                                                         global_pred_y,
+                                                         pd.Series(global_pred_y),
                                                          global_dirty_y)
+    global_cleaning = helps.cleaning_performance(pd.Series(global_clean_y),
+                                                 pd.Series(global_pred_y),
+                                                 pd.Series(global_dirty_y))
     logger.info('Global error detection performance of F1-Score '
                 f'{global_detection}.')
+    logger.info('Global error cleaning performance of F1-Score '
+                f'{global_cleaning}.')
+    result.append({'global_error_detection': global_detection,
+                   'global_error_cleaning': global_cleaning})
 
-    if save:
-        path = data.results_path + "clean_data.p"
-        helps.save_pickle(result, path)
-    else:
-        logger.info('\n~~~~~~~~~~~~~~~~~~~~\n')
-        logger.info(result)
+    # always save results
+    now = round(datetime.datetime.now().timestamp())
+    result.append({'run_at_timestamp': now})
+    path = f"{data.results_path}{now}_clean_data.p"
+    helps.save_pickle(result, path)
+
+    logger.info('\n\n~~~~~~~~~~~~~~~~~~~~\n')
+    logger.info(result)
 
 
 def global_predictor_explained(data: c.Dataset,

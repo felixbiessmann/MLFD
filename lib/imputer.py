@@ -1,9 +1,11 @@
+import datawig
 import pandas as pd
 from hashlib import sha256
 from pandas.util import hash_pandas_object
 from lib.helpers import get_performance, df_to_ag_style
 from autogluon.tabular import TabularPredictor
 import logging
+from typing import Tuple
 
 
 def calculate_model_hash(df, label, random_state) -> str:
@@ -18,10 +20,9 @@ def calculate_model_hash(df, label, random_state) -> str:
 
 
 def train_cleaning_model(df_dirty: pd.DataFrame,
-                         label: str,
+                         label: int,
                          random_state: int = 0,
-                         problem_type: str = '',
-                         **kwargs) -> TabularPredictor:
+                         **kwargs) -> Tuple[datawig.AutoGluonImputer, str]:
     """
     Train an autogluon model for the purpose of cleaning data.
     Optionally, you can set verbosity to control how much output AutoGluon
@@ -30,20 +31,33 @@ def train_cleaning_model(df_dirty: pd.DataFrame,
     The function caches models that have been trained on the same data. If
     you wish to prevent this, set random_state at random.
 
-    Returns the predictor object.
+    Returns a tuple (predictor object, model_checksum).
     """
-    d = 'agModels'  # folder to store trained models
+    lhs = list(df_dirty.columns)
+    del lhs[label - 1]
     logger = logging.getLogger('pfd')
     checksum = calculate_model_hash(df_dirty, label, random_state)
-    model_path = f'{d}/{checksum}'
+
+    imputer = datawig.AutoGluonImputer(
+        model_name=checksum,
+        input_columns=lhs,
+        output_column=label,
+        precision_threshold=kwargs['precision_threshold'],
+        numerical_confidence_quantile=kwargs['numerical_confidence_quantile'],
+        force_multiclass=kwargs['force_multiclass']
+    )
+
     try:
-        predictor = TabularPredictor.load(model_path)
+        imputer = datawig.AutoGluonImputer.load(output_path='./',
+                                                model_name=checksum)
     except FileNotFoundError:
         logger.info("Didn't find a model to load from the cache.")
-        p = TabularPredictor(label=label, path=model_path, problem_type=problem_type)
-        predictor = p.fit(train_data=df_dirty,
-                          **kwargs)
-    return predictor
+        imputer.fit(train_df=df_dirty,
+                    time_limit=kwargs['time_limit'],
+                    # preset='best_quality'
+                    )
+        imputer.save()
+    return imputer, checksum
 
 
 def train_model(df_train: pd.DataFrame,

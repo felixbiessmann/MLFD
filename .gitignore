@@ -25,6 +25,7 @@ figures/results/*
 
 ## datawig
 imputer_model/
+datawigModels/
 
 # metanome binaries
 MLFD_fd_detection/

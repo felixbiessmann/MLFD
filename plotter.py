@@ -1,12 +1,15 @@
 import os
 import time
+import datawig
 import argparse
+from pathlib import Path
+import lib.helpers as helps
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 import numpy as np
 import pickle
 import lib.plot_utils as pu
 import lib.constants as c
+from sklearn.metrics import precision_recall_curve, auc
 
 
 def main(args):
@@ -40,41 +43,36 @@ def main(args):
         c.HOSPITAL_10k.title: c.HOSPITAL_10k,
         c.HOSPITAL_100k.title: c.HOSPITAL_100k
     }
-    plots = {'f1_fd_imputer': plot_f1_fd_imputer,
-             'f1_ml_imputer': plot_f1_ml_imputer,
-             'f1_ml_fd': plot_f1_ml_fd,
-             'mse_ml_fd': plot_mse_ml_fd,
-             'mse_ml_imputer': plot_mse_ml_imputer,
-             'mse_fd_imputer': plot_mse_fd_imputer,
-             'f1_ml_overfit': plot_f1_ml_overfit,
-             'mse_ml_overfit': plot_mse_ml_overfit,
-             'f1_random_overfit': plot_f1_random_ml_overfit,
-             'dep_detector_lhs_stability': plot_dep_detector_lhs_stability,
-             'f1_cleaning': plot_f1_cleaning,
-             'f1_error_detection': plot_f1_error_detection
+    plots = {
+             'f1_cleaning_detection': plot_f1_cleaning_detection_local,
+             'f1_cleaning_detection_global': plot_f1_cleaning_detection_global,
+             'prec_rec_local': plot_prec_rec_local,
+             'auc_cleaning_global': plot_auc_cleaning_global
              }
 
+    result_name = args.name
     data = datasets.get(args.data, no_valid_data)
-    if args.all:
-        for data in datasets.values():
-            for plot_name in plots:
-                plot_fun = plots[plot_name]
-                try:
-                    fig, ax = plot_fun(data)
-                    ax.set_axisbelow(True)
-                    plt.tight_layout()
-                    path = data.figures_path + plot_name + '.pdf'
-                    pu.save_fig(fig, path)
-                    plt.close(fig)
-                except OSError:
-                    '''Could not create {0}-plot for dataset
-                    {1}: File not found.'''.format(plot_name, data.title)
+    if args.all:  # plot everything and save it.
+        raise NotImplementedError('Need to handle result_name.')
+        # for data in datasets.values():
+        #     for plot_name in plots:
+        #         plot_fun = plots[plot_name]
+        #         try:
+        #             fig, ax = plot_fun(data, result_name)
+        #             ax.set_axisbelow(True)
+        #             plt.tight_layout()
+        #             path = data.figures_path + plot_name + '.pdf'
+        #             pu.save_fig(fig, path)
+        #             plt.close(fig)
+        #         except OSError:
+        #             f'''Could not create {plot_name}-plot for dataset
+        #             {data.title}: File not found.'''
     else:
         plot_fun = plots.get(args.figure, no_valid_figure)
 
         if ((plot_fun.__code__.co_code != no_valid_figure.__code__.co_code)
-                and (data != 0)):
-            fig, ax = plot_fun(data)
+                and (data != 0)):  # plot one specific plot
+            fig, ax = plot_fun(data, result_name)
 
             ax.set_axisbelow(True)
             plt.tight_layout()
@@ -84,11 +82,11 @@ def main(args):
                 print(f'Successfully saved the figure to {data.figures_path}.')
             else:
                 plt.show()
-        else:
+        else:  # runs no_valid_figure()
             plot_fun()
 
 
-def load_result(path_to_pickle):
+def load_result(path_to_pickle: Path):
     """
     Returns a pickled result from RESULTS_PATH.
     Also checks when the result was last modified.
@@ -97,296 +95,131 @@ def load_result(path_to_pickle):
     return pickle.load(open(path_to_pickle, 'rb'))
 
 
-def file_last_modified(path_to_file):
+def file_last_modified(path_to_file: Path):
     """
     Prints a string to indicate when a file has been
     modified the last time.
     """
     mod_time = time.localtime(os.path.getmtime(path_to_file))
     time_str = time.strftime("%a, %d. %b %Y %H:%M:%S", mod_time)
-    print(time_str + ": Last change to " + path_to_file)
+    print(time_str + ": Last change to " + str(path_to_file))
 
 
-def plot_dep_detector_lhs_stability(data):
-    """ Plots the dependency of lhs-stability on the amount of training-cycles
-    Datawig is trained with for the fifth column of the iris dataset as RHS."""
-    minimal_lhs_dict = load_result(
-        data.results_path+'dep_detector_lhs_stability.p')
-    cycle_lhs = {}
-    last_cycle = 0  # search highest no of cycles
-    for cycle in minimal_lhs_dict:
-        cycle_lhs[cycle] = [lhs for lhs in minimal_lhs_dict[cycle]]
-        if cycle > last_cycle:
-            last_cycle = cycle
-            final_lhs = cycle_lhs[cycle]
+def plot_prec_rec_local(data, result_name: str):
+    df_clean = helps.load_original_data(data, load_dirty=False)
+    df_dirty = helps.load_original_data(data, load_dirty=True)
 
-    distances = {}
-    for cycle in cycle_lhs:
-        distance = 0
-        for lhs in cycle_lhs[cycle]:
-            if lhs not in final_lhs:
-                distance += 1
-        distances[cycle] = int(distance)
+    results = load_result(Path(f"{data.results_path}{result_name}.p"))
+    local_results = list(filter(lambda x: x.get('label'), results))
+    prec, rec = {}, {}
+    for r in local_results:
+        df_clean_y_true = df_clean.loc[:, r['label']]
+        imputer = datawig.AutoGluonImputer.load(output_path='./',
+                                                model_name=r['model_checksum'])
 
-    cycles, dist = list(distances.keys()), list(distances.values())
-    print(dist)
-    print(cycles)
-    pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 4)
-    fig = plt.figure(figsize=list(fig_size))
-    ax = fig.add_subplot(111)
-    ax.plot(cycles, dist)
-    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+        df_probas = imputer.predict(df_dirty, return_probas=True)
 
-    ax.set(xlabel='Training-Cycles',
-           ylabel='Undetected minimal LHSs ({})'.format(data.title.capitalize()))
-    return(fig, ax)
+        for i in imputer.predictor.class_labels:
+            prec[i], rec[i], _ = precision_recall_curve(df_clean_y_true == i,
+                                                        df_probas.loc[:, i],
+                                                        pos_label=True)
+            plt.plot(rec[i], prec[i], lw=2, label='class {}'.format(i))
+
+        plt.xlabel("recall")
+        plt.ylabel("precision")
+        plt.legend(loc="best")
+        plt.title("Precision - Recall Curve")
+        plt.show()
 
 
-def plot_f1_ml_imputer(data):
+def plot_auc_cleaning_global(data, *kwargs):
     """
-    Plot the output of computer.py's compute_ml_imputer to visualize
-    how the Auto-ML library performs on a set of FDs.
+    Plot the trend of cleaning models over time using auc
+    of the precision-recall curve.
     """
-    ml_imputer_res = load_result(data.results_path+'ml_imputer_results.p')
-    res_bigger_zero = [(y['f1'],
-                        sorted(list(map(int, y['lhs']))),
-                        str(rhs))
-                       for rhs in ml_imputer_res
-                       for y in ml_imputer_res[rhs]
-                       if ('f1' in y.keys())]
+    df_clean = helps.load_original_data(data, load_dirty=False)
+    df_dirty = helps.load_original_data(data, load_dirty=True)
 
-    res_bigger_zero = [(res[0],
-                        ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
-                       for res in res_bigger_zero]
+    local_results, timestamps = list(), list()
 
-    res_bigger_zero.sort()
-    print(res_bigger_zero)
+    p = Path(data.results_path)
+    for r_path in p.glob('*.p'):
+        result = load_result(r_path)
+        local_result = list(filter(lambda x: x.get('label'), result))
+        ts = list(map(lambda x: x.get('run_at_timestamp'), filter(lambda x: x.get('run_at_timestamp'), result)))
 
-    f1_fd, lhs_names = zip(*res_bigger_zero[-7:])
+        local_results.append(local_result)
+        timestamps.append(ts)
 
+    prec, rec = {}, {}
+    avg_areas_under_curve_per_run, aucs = list(), list()
+
+    for local_result in local_results:  # for each cleaning run
+        for r in local_result:  # for each RHS
+            aucs = list()
+            df_clean_y_true = df_clean.loc[:, r['label']]
+            imputer = datawig.AutoGluonImputer.load(output_path='./',
+                                                    model_name=r['model_checksum'])
+
+            df_probas = imputer.predict(df_dirty, return_probas=True)
+            for i in imputer.predictor.class_labels:  # for each class
+                prec[i], rec[i], _ = precision_recall_curve(df_clean_y_true == i,
+                                                            df_probas.loc[:, i],
+                                                            pos_label=True)
+                aucs.append(auc(rec[i], prec[i]))
+        avg_areas_under_curve_per_run.append(np.average(aucs))
     pu.figure_setup()
     fig_size = pu.get_fig_size(10, 4)
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
-    ax.barh(lhs_names, f1_fd)
+    ax.scatter(timestamps, avg_areas_under_curve_per_run, label='AUC Cleaning')
+    ax.legend()
 
-    ax.set(xlabel='F1-Score ({})'.format(data.title.capitalize()),
-           xlim=[0.0, 1.0])
+    ax.set(xlabel='Timestamp',
+           ylabel='AUC Cleaning Performance')
     return(fig, ax)
 
 
-def plot_f1_fd_imputer(data):
-    fd_imputer_res = load_result(data.results_path+'fd_imputer_results.p')
-    res_bigger_zero = [(y['f1'],
-                        sorted(list(map(int, y['lhs']))),
-                        str(rhs))
-                       for rhs in fd_imputer_res
-                       for y in fd_imputer_res[rhs]
-                       if ('f1' in y.keys())]
+def plot_f1_cleaning_detection_global(data, *kwargs):
+    """
+    Plot the trend of cleaning models over time.
+    """
+    p = Path(data.results_path)
+    all_results = []
+    for r_path in p.glob('*.p'):
+        all_results = all_results + load_result(r_path)
+    global_results = list(filter(lambda x: x.get('global_error_detection'),
+                          all_results))
+    timestamps = list(map(lambda x: x.get('run_at_timestamp'), filter(lambda x: x.get('run_at_timestamp'), all_results)))
 
-    res_bigger_zero = [(res[0],
-                        ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
-                       for res in res_bigger_zero]
-
-    res_bigger_zero.sort()
-    print(res_bigger_zero)
-
-    f1_fd, lhs_names = zip(*res_bigger_zero[-7:])
+    detection = [x['global_error_detection'] for x in global_results]
+    cleaning = [x['global_error_cleaning'] for x in global_results]
 
     pu.figure_setup()
     fig_size = pu.get_fig_size(10, 4)
     fig = plt.figure(figsize=list(fig_size))
     ax = fig.add_subplot(111)
-    ax.barh(lhs_names, f1_fd)
+    ax.scatter(timestamps, detection, label='F1 Error Detection')
+    ax.scatter(timestamps, cleaning, label='F1 Data Cleaning')
+    ax.legend()
 
-    ax.set(xlabel='F1-Score ({})'.format(data.title.capitalize()),
-           xlim=[0.0, 1.0])
+    ax.set(xlabel='Timestamp',
+           ylabel='Cleaning Performance')
     return(fig, ax)
 
 
-def plot_mse_fd_imputer(data):
-    ml_imputer_res = load_result(data.results_path+'fd_imputer_results.p')
+def plot_f1_cleaning_detection_local(data, result_name: str):
+    """ Plot the result stored at $data's $results_path with the name
+    $result_name. """
+    results = load_result(Path(f"{data.results_path}{result_name}.p"))
 
-    res_bigger_zero = [(y['mse'],
-                        sorted(list(map(int, y['lhs']))),
-                        str(rhs))
-                       for rhs in ml_imputer_res
-                       for y in ml_imputer_res[rhs]
-                       if ('mse' in y.keys())]
+    local_results = list(filter(lambda x: x.get('label'), results))
 
-    res_bigger_zero = [(res[0],
-                        ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
-                       for res in res_bigger_zero
-                       if res[0] != '']
-
-    print(res_bigger_zero)
-    res_bigger_zero.sort(reverse=True)
-    if len(res_bigger_zero) > 0:
-        mse_fd, lhs_names = zip(*res_bigger_zero[-7:])
-    else:
-        mse_fd, lhs_names = (list(np.zeros(10)), list(np.zeros(10)))
-    pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 4)
-    fig = plt.figure(figsize=list(fig_size))
-    ax = fig.add_subplot(111)
-    ax.barh(lhs_names, mse_fd)
-
-    ax.set(xlabel='MSE ({})'.format(data.title.capitalize()))
-    return(fig, ax)
-
-
-def plot_mse_ml_imputer(data):
-    ml_imputer_res = load_result(data.results_path+'ml_imputer_results.p')
-
-    res_bigger_zero = [(y['mse'],
-                        sorted(list(map(int, y['lhs']))),
-                        str(rhs))
-                       for rhs in ml_imputer_res
-                       for y in ml_imputer_res[rhs]
-                       if ('mse' in y.keys())]
-
-    res_bigger_zero = [(res[0],
-                        ''.join(str(res[1])[1:-1]).replace('\'', '')+r'$\rightarrow$'+str(res[2]))
-                       for res in res_bigger_zero]
-
-    res_bigger_zero.sort(reverse=True)
-    print(res_bigger_zero)
-    if len(res_bigger_zero) > 0:
-        mse_fd, lhs_names = zip(*res_bigger_zero[-7:])
-    else:
-        mse_fd, lhs_names = (list(np.zeros(10)), list(np.zeros(10)))
-    pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 4)
-    fig = plt.figure(figsize=list(fig_size))
-    ax = fig.add_subplot(111)
-    ax.barh(lhs_names, mse_fd)
-
-    ax.set(xlabel='MSE ({})'.format(data.title.capitalize()))
-    # xlim=[0.0, 1000.0])
-    return(fig, ax)
-
-
-def plot_mse_ml_overfit(data):
-    ml_imputer_res = load_result(
-        data.results_path+"ml_imputer_results.p")
-    overf_ml_imputer_res = load_result(
-        data.results_path+"overfitted_ml_results.p")
-
-    f1_ml = [y['mse'] for x in ml_imputer_res for y in ml_imputer_res[x]
-             if 'mse' in y.keys()]
-    f1_overfit = [y['mse'] for x in overf_ml_imputer_res
-                  for y in overf_ml_imputer_res[x]
-                  if 'mse' in y.keys()]
-
-    pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 4)
-    fig = plt.figure(figsize=list(fig_size))
-    ax = fig.add_subplot(111)
-
-    ax.scatter(f1_overfit, f1_ml, c='C0')
-    ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='C1', linewidth=1)
-    ax.set(xlabel='MSE ML Imputer Overfitted ({})'.format(data.title.capitalize()),
-           ylabel='MSE ML Imputer ({})'.format(data.title.capitalize()),
-           xlim=[-0.001, 0.02],
-           ylim=[-0.001, 0.02])
-    return (fig, ax)
-
-
-def plot_f1_ml_overfit(data):
-    ml_imputer_res = load_result(
-        data.results_path+"ml_imputer_results.p")
-    overf_ml_imputer_res = load_result(
-        data.results_path+"overfitted_ml_results.p")
-
-    f1_ml = [y['f1'] for x in ml_imputer_res for y in ml_imputer_res[x]
-             if 'f1' in y.keys()]
-    f1_overfit = [y['f1'] for x in overf_ml_imputer_res
-                  for y in overf_ml_imputer_res[x]
-                  if 'f1' in y.keys()]
-
-    pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 4)
-    fig = plt.figure(figsize=list(fig_size))
-    ax = fig.add_subplot(111)
-
-    ax.scatter(f1_overfit, f1_ml, c='C0')
-    ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='C1', linewidth=1)
-    ax.set(xlabel='F1-Score ML Imputer Overfitted ({})'.format(data.title.capitalize()),
-           ylabel='F1-Score ML Imputer ({})'.format(data.title.capitalize()),
-           xlim=[-0.1, 1.1],
-           ylim=[-0.1, 1.1])
-    return (fig, ax)
-
-
-def plot_f1_random_ml_overfit(data):
-    ml_imputer_results = load_result(
-        data.results_path+"random_ml_imputer_results.p")
-    overf_ml_imputer_res = load_result(
-        data.results_path+"random_overfit_ml_imputer_results.p")
-
-    f1_ml = [y['f1'] for x in ml_imputer_results for y in ml_imputer_results[x]
-             if 'f1' in y.keys()]
-    f1_overfit = [y['f1'] for x in overf_ml_imputer_res
-                  for y in overf_ml_imputer_res[x]
-                  if 'f1' in y.keys()]
-
-    pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 4)
-    fig = plt.figure(figsize=list(fig_size))
-    ax = fig.add_subplot(111)
-
-    ax.scatter(f1_overfit, f1_ml, c='C0')
-    ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), c='C1')
-    ax.set(xlabel='F1-Score ML Imputer Overfitted ({})'.format(data.title.capitalize()),
-           ylabel='F1-Score ML Imputer ({})'.format(data.title.capitalize()),
-           xlim=[-0.1, 1.1],
-           ylim=[-0.1, 1.1])
-    return (fig, ax)
-
-
-def plot_mse_ml_fd(data):
-    fd_imputer_results = load_result(
-        data.results_path+"fd_imputer_results.p")
-    ml_imputer_results = load_result(
-        data.results_path+"ml_imputer_results.p")
-
-    mse_fd = [y['mse'] for x in fd_imputer_results
-              for y in fd_imputer_results[x] if 'mse' in y.keys()]
-    mse_ml = [y['mse'] for x in ml_imputer_results
-              for y in ml_imputer_results[x] if 'mse' in y.keys()]
-
-    rel_mse = []
-    for i, x in enumerate(mse_fd):
-        if x != '':
-            rel_mse.append(mse_fd[i]/mse_ml[i])
-        else:
-            rel_mse.append(np.nan)
-
-    pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 4)
-    fig = plt.figure(figsize=list(fig_size))
-    ax = fig.add_subplot(111)
-
-    ax.scatter(list(range(0, len(rel_mse))), rel_mse, c='C0')
-    ax.plot(np.linspace(-2, len(rel_mse)), [1]*50, c='C1')
-
-    ax.set(title='Mean Squared Error of Two Imputers on '+data.title.capitalize(),
-           xlabel='FD LHS Combination',
-           ylabel='$MSE_{FD}$ / MSE ML',
-           xlim=[-0.1, 11])
-    return (fig, ax)
-
-
-def plot_f1_error_detection(data):
-    cleaning_results = load_result(
-        data.results_path+"clean_data.p")
-
-    labels = [data.column_map[c['label']] for c in cleaning_results]
+    labels = [data.column_map[c['label']] for c in local_results]
     perf_error_detection = [round(c['error_detection'], 2)
-                            for c in cleaning_results]
-    perf_cleaning = [round(c['cleaning_clean'], 2)
-                     for c in cleaning_results]
+                            for c in local_results]
+    perf_cleaning = [round(c['error_cleaning'], 2)
+                     for c in local_results]
 
     pu.figure_setup()
     fig_size = pu.get_fig_size(25, 5)
@@ -412,68 +245,6 @@ def plot_f1_error_detection(data):
     return(fig, ax)
 
 
-def plot_f1_cleaning(data):
-    cleaning_results = load_result(
-        data.results_path+"clean_data.p")
-
-    labels = [data.column_map[c['label']] for c in cleaning_results]
-    perf_cleaning_clean = [round(c['cleaning_clean'], 2)
-                           for c in cleaning_results]
-    perf_cleaning_dirty = [round(c['cleaning_dirty'], 2)
-                           for c in cleaning_results]
-
-    pu.figure_setup()
-    fig_size = pu.get_fig_size(25, 5)
-    fig = plt.figure(figsize=list(fig_size))
-    ax = fig.add_subplot(111)
-
-    x = np.arange(len(labels))
-    width = 0.35  # the width of the bars
-    rects1 = ax.bar(x - width/2, perf_cleaning_clean,
-                    width, label='Clean Validation Set')
-    rects2 = ax.bar(x + width/2, perf_cleaning_dirty,
-                    width, label='Dirty Validation Set')
-
-    ax.set_ylabel('F1-Score')
-    ax.set_title(
-        'Model performance for cleaning (dirty) and after training (clean)')
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels)
-    ax.legend()
-
-    ax.bar_label(rects1, padding=3)
-    ax.bar_label(rects2, padding=3)
-
-    return(fig, ax)
-
-
-def plot_f1_ml_fd(data):
-    fd_imputer_results = load_result(
-        data.results_path+"fd_imputer_results.p")
-    ml_imputer_results = load_result(
-        data.results_path+"ml_imputer_results.p")
-
-    f1_fd = [y['f1'] for x in fd_imputer_results
-             for y in fd_imputer_results[x] if 'f1' in y.keys()]
-    f1_ml = [y['f1'] for x in ml_imputer_results
-             for y in ml_imputer_results[x] if 'f1' in y.keys()]
-
-    pu.figure_setup()
-    fig_size = pu.get_fig_size(10, 4)
-    fig = plt.figure(figsize=list(fig_size))
-    ax = fig.add_subplot(111)
-
-    ax.scatter(f1_fd, f1_ml, color='C0')
-    ax.plot(np.linspace(-2, 2), np.linspace(-2, 2), lw=pu.plot_lw(),
-            color='C1', linewidth=1)
-
-    ax.set(xlabel='F1-Score FD Imputer ({})'.format(data.title.capitalize()),
-           ylabel='F1-Score ML Imputer ({})'.format(data.title.capitalize()),
-           xlim=[-0.1, 1.1],
-           ylim=[-0.1, 1.1])
-    return(fig, ax)
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=main.__doc__)
@@ -483,9 +254,11 @@ if __name__ == '__main__':
                         '--save',
                         help='specify filename and -type to save the figure.')
     parser.add_argument('-f', '--figure', help='specify a figure to plot.')
-    parser.add_argument(
-        '-d', '--data', help='specify a dataset to use results of.')
-    parser.add_argument('-a', '--all', help='plot and save all possible plots',
+    parser.add_argument('-d', '--data',
+                        help='specify a dataset to use results of.')
+    parser.add_argument('-n', '--name', help='name of the result file.')
+    parser.add_argument('-a', '--all',
+                        help='plot and save all possible plots.',
                         action='store_true')
 
     args = parser.parse_args()

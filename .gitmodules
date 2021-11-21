@@ -1,0 +1,3 @@
+[submodule "datawig"]
+	path = datawig
+	url = git@github.com:awslabs/datawig.git

@@ -60,12 +60,8 @@ def error_detection_performance(y_clean: pd.Series,
     y_error_position_true = y_clean != y_dirty
     y_error_position_pred = y_dirty != y_pred
     rep = classification_report(y_error_position_true, y_error_position_pred)
-    i_errors_true = [i for i, x in enumerate(
-        y_error_position_true) if x is True]
-    i_errors_pred = [i for i, x in enumerate(
-        y_error_position_pred) if x is True]
-    logger.debug(f'Counted {len(i_errors_true)} errors in the original data.')
-    logger.debug(f'And {len(i_errors_pred)} errors were predicted.')
+    logger.debug(f'Counted {sum(y_error_position_true)} errors in the original data.')
+    logger.debug(f'And {sum(y_error_position_pred)} errors were predicted.')
     return f1_score(y_error_position_true, y_error_position_pred)
 
 
@@ -147,7 +143,7 @@ def check_split_for_duplicates(list_of_dfs):
     return no_duplicates
 
 
-def load_original_data(data, load_dirty=False):
+def load_original_data(data, load_dirty=False) -> pd.DataFrame:
     """
     Loads the original dataframe. Missing values are replaced with
     np.nan. If load_dirty is set to True, the dirty dataset of a
