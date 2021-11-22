@@ -119,16 +119,28 @@ def plot_prec_rec_local(data, result_name: str):
 
         df_probas = imputer.predict(df_dirty, return_probas=True)
 
+        # pu.figure_setup()
+        # fig_size = pu.get_fig_size(10, 4)
+        fig = plt.figure(figsize=(10, 4))
+        ax = fig.add_subplot(111)
         for i in imputer.predictor.class_labels:
             prec[i], rec[i], _ = precision_recall_curve(df_clean_y_true == i,
                                                         df_probas.loc[:, i],
                                                         pos_label=True)
-            plt.plot(rec[i], prec[i], lw=2, label='class {}'.format(i))
+            ax.plot(rec[i], prec[i], label=f'class {i}')
 
-        plt.xlabel("recall")
-        plt.ylabel("precision")
-        plt.legend(loc="best")
-        plt.title("Precision - Recall Curve")
+        ax.legend()
+        ax.set(xlabel='Recall', ylabel='Precision')
+        ax.set_title("Data Cleaning Performance Column "
+                     f"{data.column_map[r['label']]}")
+        ax.set_axisbelow(True)
+        plt.tight_layout()
+        # pu.save_fig(fig, data.figures_path + args.save)
+        # print(f'Successfully saved the figure to {data.figures_path}.')
+
+
+        # plt.legend(loc="best")
+        # plt.title("Precision - Recall Curve")
         plt.show()
 
 
