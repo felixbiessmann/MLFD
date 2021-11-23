@@ -1,5 +1,6 @@
 import os
 import time
+from functools import reduce
 import datawig
 import argparse
 from pathlib import Path
@@ -47,7 +48,8 @@ def main(args):
              'f1_cleaning_detection': plot_f1_cleaning_detection_local,
              'f1_cleaning_detection_global': plot_f1_cleaning_detection_global,
              'prec_rec_local': plot_prec_rec_local,
-             'auc_cleaning_global': plot_auc_cleaning_global
+             'auc_cleaning_global': plot_auc_cleaning_global,
+             'prec_threshold': plot_prec_threshold,
              }
 
     result_name = args.name
@@ -129,22 +131,58 @@ def plot_prec_rec_local(data, result_name: str):
                                                         pos_label=True)
             ax.plot(rec[i], prec[i], label=f'class {i}')
 
-        ax.legend()
+        plt.legend(loc="best")
         ax.set(xlabel='Recall', ylabel='Precision')
         ax.set_title("Data Cleaning Performance Column "
                      f"{data.column_map[r['label']]}")
         ax.set_axisbelow(True)
         plt.tight_layout()
-        # pu.save_fig(fig, data.figures_path + args.save)
+        # p = Path(data.figures_path + result_name)
+        # p.mkdir(parents=True, exist_ok=True)
+        # fig.savefig(p + result_name + '.png', dpi=300, tight=True)
         # print(f'Successfully saved the figure to {data.figures_path}.')
 
-
-        # plt.legend(loc="best")
         # plt.title("Precision - Recall Curve")
         plt.show()
 
 
-def plot_auc_cleaning_global(data, *kwargs):
+def plot_prec_threshold(data, *args):
+    global_results, prec_thresh = list(), list()
+
+    p = Path(data.results_path)
+    for r_path in p.glob('*.p'):
+        result = load_result(r_path)
+        glob = list(filter(lambda x: x.get('global_error_detection'), result))
+        global_results.append(glob)
+
+    for r_path in p.glob('*.p'):
+        result = load_result(r_path)
+        conf = result[0].get('precision_threshold')
+        prec_thresh.append(conf)
+
+    pu.figure_setup()
+    fig_size = pu.get_fig_size(10, 4)
+    fig = plt.figure(figsize=list(fig_size))
+    ax = fig.add_subplot(111)
+
+    clean = [r[0]['global_error_cleaning'] for r in global_results]
+    detect = [r[0]['global_error_detection'] for r in global_results]
+    ax.scatter(prec_thresh,
+               clean,
+               label='Error Cleaning Complete Dataset')
+    ax.scatter(prec_thresh,
+               detect,
+               label='Error Detecting Complete Dataset')
+    ax.legend()
+
+    ax.set_title('Effect Of Precision Threshold on Cleaning and Detection Performance')
+    ax.set(xlabel='Precision Threshold',
+           ylabel='F1 Score')
+    return(fig, ax)
+
+
+
+def plot_auc_cleaning_global(data, *args):
     """
     Plot the trend of cleaning models over time using auc
     of the precision-recall curve.

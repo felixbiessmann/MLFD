@@ -24,92 +24,96 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
     either an error-detection experiment, or a cleaning experiment.
     """
 
-    config = {"random_state": 0,
-              "verbosity": 0,
-              "precision_threshold": 0.95,
-              "numerical_confidence_quantile": 0.7,
-              "force_multiclass": True,
-              "time_limit": 60}
+    for p in np.linspace(0, 1, 25):
 
-    logger = logging.getLogger('pfd')
-    logger.debug(f"Start cleaning experiment with dataset {data.title}.")
-    logger.debug("For each column, a model for cleaning will be trained on "
-                 "all other columns.")
-    if not data.cleaning:
-        logger.info(f"The dataset {data.title} is not suitable for a cleaning "
-                    "experiment. Please choose a dataset that has a clean "
-                    "and a dirty version of the data available.")
-        return False
+        config = {"random_state": 0,
+                  "verbosity": 0,
+                  "precision_threshold": p,
+                  "numerical_confidence_quantile": 0.7,
+                  "force_multiclass": True,  # prevents regression from happening at all
+                  "time_limit": 60,  # how long autogluon trains
+                  "replace_nans": False,  # replace values that weren't imputed with NaNs
+                  }
 
-    df_clean = helps.load_original_data(data, load_dirty=False)
-    df_dirty = helps.load_original_data(data, load_dirty=True)
+        logger = logging.getLogger('pfd')
+        logger.debug(f"Start cleaning experiment with dataset {data.title}.")
+        logger.debug("For each column, a model for cleaning will be trained on "
+                     "all other columns.")
+        if not data.cleaning:
+            logger.info(f"The dataset {data.title} is not suitable for a cleaning "
+                        "experiment. Please choose a dataset that has a clean "
+                        "and a dirty version of the data available.")
+            return False
 
-    result = []
-    result.append(config)
-    global_pred_y = np.array([])
-    global_clean_y = df_clean.to_numpy().flatten()
-    global_dirty_y = df_dirty.to_numpy().flatten()
+        df_clean = helps.load_original_data(data, load_dirty=False)
+        df_dirty = helps.load_original_data(data, load_dirty=True)
 
-    for label in data.column_map.keys():
-        r = {'label': label}
-        logger.info(f'Investigating RHS {label}')
+        result = []
+        result.append(config)
+        global_pred_y = np.array([])
+        global_clean_y = df_clean.to_numpy().flatten()
+        global_dirty_y = df_dirty.to_numpy().flatten()
 
-        imputer, r['model_checksum'] = imp.train_cleaning_model(df_dirty,
-                                                                label,
-                                                                **config)
-        logger.info("Trained global imputer with complete LHS.")
+        for label in data.column_map.keys():
+            r = {'label': label}
+            logger.info(f'Investigating RHS {label}')
 
-        logger.debug("Successfully trained the model.")
-        df_dirty_y_true = df_dirty.loc[:, label]
-        df_clean_y_true = df_clean.loc[:, label]
+            imputer, r['model_checksum'] = imp.train_cleaning_model(df_dirty,
+                                                                    label,
+                                                                    **config)
+            logger.info("Trained global imputer with complete LHS.")
 
-        logger.debug("Predicting values.")
-        df_predicted = imputer.predict(df_dirty)
+            logger.debug("Successfully trained the model.")
+            df_dirty_y_true = df_dirty.loc[:, label]
+            df_clean_y_true = df_clean.loc[:, label]
 
-        se_predicted = pd.Series(df_predicted.loc[:, str(label)+'_imputed'])
+            logger.debug("Predicting values.")
+            df_predicted = imputer.predict(df_dirty)
 
-        # replace missing predictions with dirty data
-        se_predicted[pd.isna(se_predicted)] = df_dirty_y_true[pd.isna(se_predicted)]
+            se_predicted = pd.Series(df_predicted.loc[:, str(label)+'_imputed'])
 
-        global_pred_y = np.append(global_pred_y, se_predicted)
-        logger.debug("Successfully predicted values.")
+            if config['replace_nans']:
+                se_predicted[pd.isna(se_predicted)] = df_dirty_y_true[pd.isna(se_predicted)]
 
-        logger.debug('Measuring cleaning-performance.')
-        r['error_cleaning'] = helps.cleaning_performance(df_clean_y_true,
-                                                         se_predicted,
-                                                         df_dirty_y_true)
-        logger.debug('Measuring error-detection performance.')
-        r['error_detection'] = helps.error_detection_performance(df_clean_y_true,
-                                                                 se_predicted,
-                                                                 df_dirty_y_true)
+            global_pred_y = np.append(global_pred_y, se_predicted)
+            logger.debug("Successfully predicted values.")
 
-        logger.info("Calculated a cleaning performance of "
-                    f"f1-score {round(r['error_cleaning'], 5)}.")
-        logger.info("Calculated a error detection performance "
-                    f"of f1-score {round(r['error_detection'], 5)}.")
-        result.append(r)
+            logger.debug('Measuring cleaning-performance.')
+            r['error_cleaning'] = helps.cleaning_performance(df_clean_y_true,
+                                                             se_predicted,
+                                                             df_dirty_y_true)
+            logger.debug('Measuring error-detection performance.')
+            r['error_detection'] = helps.error_detection_performance(df_clean_y_true,
+                                                                     se_predicted,
+                                                                     df_dirty_y_true)
 
-    global_detection = helps.error_detection_performance(global_clean_y,
-                                                         pd.Series(global_pred_y),
-                                                         global_dirty_y)
-    global_cleaning = helps.cleaning_performance(pd.Series(global_clean_y),
-                                                 pd.Series(global_pred_y),
-                                                 pd.Series(global_dirty_y))
-    logger.info('Global error detection performance of F1-Score '
-                f'{global_detection}.')
-    logger.info('Global error cleaning performance of F1-Score '
-                f'{global_cleaning}.')
-    result.append({'global_error_detection': global_detection,
-                   'global_error_cleaning': global_cleaning})
+            logger.info("Calculated a cleaning performance of "
+                        f"f1-score {round(r['error_cleaning'], 5)}.")
+            logger.info("Calculated a error detection performance "
+                        f"of f1-score {round(r['error_detection'], 5)}.")
+            result.append(r)
 
-    # always save results
-    now = round(datetime.datetime.now().timestamp())
-    result.append({'run_at_timestamp': now})
-    path = f"{data.results_path}{now}_clean_data.p"
-    helps.save_pickle(result, path)
+        global_detection = helps.error_detection_performance(global_clean_y,
+                                                             pd.Series(global_pred_y),
+                                                             global_dirty_y)
+        global_cleaning = helps.cleaning_performance(pd.Series(global_clean_y),
+                                                     pd.Series(global_pred_y),
+                                                     pd.Series(global_dirty_y))
+        logger.info('Global error detection performance of F1-Score '
+                    f'{global_detection}.')
+        logger.info('Global error cleaning performance of F1-Score '
+                    f'{global_cleaning}.')
+        result.append({'global_error_detection': global_detection,
+                       'global_error_cleaning': global_cleaning})
 
-    logger.info('\n\n~~~~~~~~~~~~~~~~~~~~\n')
-    logger.info(result)
+        # always save results
+        now = round(datetime.datetime.now().timestamp())
+        result.append({'run_at_timestamp': now})
+        path = f"{data.results_path}{now}_clean_data.p"
+        helps.save_pickle(result, path)
+
+        logger.info('\n\n~~~~~~~~~~~~~~~~~~~~\n')
+        logger.info(result)
 
 
 def global_predictor_explained(data: c.Dataset,

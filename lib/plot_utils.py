@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 import matplotlib.pyplot as plt
 import os
 import subprocess
@@ -99,6 +100,9 @@ def save_fig(fig, file_name, fmt=None, dpi=300, tight=True):
     file_name = os.path.abspath(file_name)
     with tempfile.NamedTemporaryFile() as tmp_file:
         tmp_name = tmp_file.name + extension
+
+    # check if directory exists
+    # Path().mkdir(parents=True, exist_ok=True)
 
     # save figure
     if tight:
