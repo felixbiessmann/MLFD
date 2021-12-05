@@ -6,6 +6,7 @@ from lib.helpers import get_performance, df_to_ag_style
 from autogluon.tabular import TabularPredictor
 import logging
 from typing import Tuple
+import numpy as np
 
 
 def calculate_model_hash(df, label, random_state) -> str:
@@ -42,12 +43,12 @@ def train_cleaning_model(df_dirty: pd.DataFrame,
         model_name=checksum,
         input_columns=lhs,
         output_column=label,
-        precision_threshold=kwargs['precision_threshold'],
-        numerical_confidence_quantile=kwargs['numerical_confidence_quantile'],
         force_multiclass=kwargs['force_multiclass']
     )
 
     try:
+        if kwargs.get('force_retrain'):
+            raise FileNotFoundError
         imputer = datawig.AutoGluonImputer.load(output_path='./',
                                                 model_name=checksum)
     except FileNotFoundError:
@@ -58,6 +59,30 @@ def train_cleaning_model(df_dirty: pd.DataFrame,
                     )
         imputer.save()
     return imputer, checksum
+
+
+def make_cleaning_prediction(df_dirty,
+                             probas,
+                             target_col) -> pd.DataFrame:
+    """
+    When cleaning, the task is defined such that the ids of the dirty rows
+    are known. When cleaning, it is thus always incorrect to return the class
+    that is known to be dirty.
+
+    The strategy I use here is:
+    1) Check the most probable class. If the class is not the dirty class,
+    return it.
+    2) If the returned class is the dirty class, return the second most likely
+    class.
+    """
+    dirty_label_mask = pd.DataFrame()
+    for c in probas.columns:
+        dirty_label_mask[c] = df_dirty[target_col] == c
+    probas[dirty_label_mask] = -1  # dirty labels are never chosen
+
+    i_classes = np.argmax(probas.values, axis=1)
+    cleaning_predictions = [probas.columns[i] for i in i_classes]
+    return pd.Series(cleaning_predictions)
 
 
 def train_model(df_train: pd.DataFrame,

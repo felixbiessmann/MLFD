@@ -26,6 +26,20 @@ class Dataset:
         self._origin = origin
 
 
+IR = Dataset(title='ir',
+            original_separator=',',
+            fd_path='',
+            continuous=[1, 2, 3, 4],
+            column_map={0: "sepal length in cm",
+                           1: "sepal width in cm",
+                           2: "petal length in cm",
+                           3: "petal width in cm",
+                           4: "class"},
+            missing_value_token='',
+            origin='https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data',
+            cleaning=True
+            )
+
 ABALONE = Dataset(title='abalone',
                   original_separator=',',
                   fd_path='HyFD-1.2-SNAPSHOT.jar2019-08-25T084553_fds',

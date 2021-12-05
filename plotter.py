@@ -1,6 +1,5 @@
 import os
 import time
-from functools import reduce
 import datawig
 import argparse
 from pathlib import Path
@@ -33,6 +32,7 @@ def main(args):
         return 0
 
     datasets = {
+        c.IR.title: c.IR,
         c.ADULT.title: c.ADULT,
         c.NURSERY.title: c.NURSERY,
         c.ABALONE.title: c.ABALONE,
@@ -44,6 +44,7 @@ def main(args):
         c.HOSPITAL_10k.title: c.HOSPITAL_10k,
         c.HOSPITAL_100k.title: c.HOSPITAL_100k
     }
+
     plots = {
              'f1_cleaning_detection': plot_f1_cleaning_detection_local,
              'f1_cleaning_detection_global': plot_f1_cleaning_detection_global,
@@ -119,31 +120,32 @@ def plot_prec_rec_local(data, result_name: str):
         imputer = datawig.AutoGluonImputer.load(output_path='./',
                                                 model_name=r['model_checksum'])
 
-        df_probas = imputer.predict(df_dirty, return_probas=True)
+        if imputer.predictor.problem_type in ('multiclass', 'binary'):
+            df_probas = imputer.predict(df_dirty, return_probas=True)
 
-        # pu.figure_setup()
-        # fig_size = pu.get_fig_size(10, 4)
-        fig = plt.figure(figsize=(10, 4))
-        ax = fig.add_subplot(111)
-        for i in imputer.predictor.class_labels:
-            prec[i], rec[i], _ = precision_recall_curve(df_clean_y_true == i,
-                                                        df_probas.loc[:, i],
-                                                        pos_label=True)
-            ax.plot(rec[i], prec[i], label=f'class {i}')
+            # pu.figure_setup()
+            # fig_size = pu.get_fig_size(10, 4)
+            fig = plt.figure(figsize=(10, 4))
+            ax = fig.add_subplot(111)
+            for i in imputer.predictor.class_labels:
+                prec[i], rec[i], _ = precision_recall_curve(df_clean_y_true == i,
+                                                            df_probas.loc[:, i],
+                                                            pos_label=True)
+                ax.plot(rec[i], prec[i], label=f'class {i}')
 
-        plt.legend(loc="best")
-        ax.set(xlabel='Recall', ylabel='Precision')
-        ax.set_title("Data Cleaning Performance Column "
-                     f"{data.column_map[r['label']]}")
-        ax.set_axisbelow(True)
-        plt.tight_layout()
-        # p = Path(data.figures_path + result_name)
-        # p.mkdir(parents=True, exist_ok=True)
-        # fig.savefig(p + result_name + '.png', dpi=300, tight=True)
-        # print(f'Successfully saved the figure to {data.figures_path}.')
+            plt.legend(loc="best")
+            ax.set(xlabel='Recall', ylabel='Precision')
+            ax.set_title("Data Cleaning Performance Column "
+                         f"{data.column_map[r['label']]}")
+            ax.set_axisbelow(True)
+            plt.tight_layout()
+            # p = Path(data.figures_path + result_name)
+            # p.mkdir(parents=True, exist_ok=True)
+            # fig.savefig(p + result_name + '.png', dpi=300, tight=True)
+            # print(f'Successfully saved the figure to {data.figures_path}.')
 
-        # plt.title("Precision - Recall Curve")
-        plt.show()
+            # plt.title("Precision - Recall Curve")
+            plt.show()
 
 
 def plot_prec_threshold(data, *args):
@@ -244,6 +246,16 @@ def plot_f1_cleaning_detection_global(data, *kwargs):
 
     detection = [x['global_error_detection'] for x in global_results]
     cleaning = [x['global_error_cleaning'] for x in global_results]
+    prec_thresholds = [x['precision_threshold'] for x in all_results
+                       if x.get('precision_threshold') is not None]
+
+    print("Plotting Datapoints:")
+    for x in zip(detection, cleaning, timestamps, prec_thresholds):
+        print('~~~~~')
+        print(f'Detection performance: {round(x[0], 5)}')
+        print(f'Cleaning performance: {round(x[1], 5)}')
+        print(f'Precision Threshold: {x[3]}')
+        print(f'Timestamp: {x[2]}')
 
     pu.figure_setup()
     fig_size = pu.get_fig_size(10, 4)
@@ -259,8 +271,10 @@ def plot_f1_cleaning_detection_global(data, *kwargs):
 
 
 def plot_f1_cleaning_detection_local(data, result_name: str):
-    """ Plot the result stored at $data's $results_path with the name
-    $result_name. """
+    """
+    Plot the result stored at $data's $results_path with the name
+    $result_name.
+    """
     results = load_result(Path(f"{data.results_path}{result_name}.p"))
 
     local_results = list(filter(lambda x: x.get('label'), results))

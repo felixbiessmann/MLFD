@@ -27,18 +27,32 @@ def cleaning_performance(y_clean: pd.Series,
     Also, most data-cleaning publications work under the assumption that all
     errors have been successfully detected. (see Mahdavi 2020)
 
+    Be careful working with missing values, as NaN == NaN resolves to
+    False.
+
     TODO: Return classification report instead of just f1_score.
     """
+    logger = logging.getLogger('pfd')
+
+    # This makes comparison operations work for missing values.
+    fill = 'traumzauberbaum'
+    y_clean.fillna(fill, inplace=True)
+    y_dirty.fillna(fill, inplace=True)
+
     y_error_position_true = y_clean != y_dirty
     if assume_errors_known:
         y_clean = y_clean.loc[y_error_position_true]
         y_pred = y_pred.loc[y_error_position_true]
         y_dirty = y_dirty.loc[y_error_position_true]
 
+
     tp = sum(np.logical_and(y_dirty != y_clean, y_pred == y_clean))
     fp = sum(np.logical_and(y_dirty == y_clean, y_pred != y_clean))
     fn = sum(np.logical_and(y_dirty != y_clean, y_pred != y_clean))
     tn = sum(np.logical_and(y_dirty == y_clean, y_pred == y_clean))
+
+    logger.debug("Calculating Cleaning Performance.")
+    logger.debug(f"Counted {tp} TPs, {fp} FPs, {fn} FNs and {tn} TNs.")
 
     p = 0 if (tp + fp) == 0 else tp / (tp + fp)
     r = 0 if (tp + fn) == 0 else tp / (tp + fn)
@@ -60,6 +74,7 @@ def error_detection_performance(y_clean: pd.Series,
     y_error_position_true = y_clean != y_dirty
     y_error_position_pred = y_dirty != y_pred
     rep = classification_report(y_error_position_true, y_error_position_pred)
+    logger.debug("Calculating Error Detection Performance")
     logger.debug(f'Counted {sum(y_error_position_true)} errors in the original data.')
     logger.debug(f'And {sum(y_error_position_pred)} errors were predicted.')
     return f1_score(y_error_position_true, y_error_position_pred)
