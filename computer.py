@@ -10,7 +10,6 @@ import lib.helpers as helps
 import lib.optimizer as opt
 import lib.constants as c
 import lib.imputer as imp
-from pandas.api.types import is_numeric_dtype
 
 
 def clean_data(data: c.Dataset, save=True, *args, **kwargs):
@@ -24,13 +23,14 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
     """
 
     config = {"random_state": 0,
-              "verbosity": 0,
+              "verbosity": 2,
               "precision_threshold": 0.01,
               "numerical_confidence_quantile": 0.7,
               "force_multiclass": True,  # prevents regression from happening at all
-              "time_limit": 60,  # how long autogluon trains
+              "time_limit": 500,  # how long autogluon trains
               "replace_nans": False,  # replace values that weren't imputed with NaNs
-              "force_retrain": False,  # skip loading ag models by force
+              "force_retrain": True,  # skip loading ag models by force
+              "train_cleaning_cols": True,  # train only on cols that contain errors
               }
 
     logger = logging.getLogger('pfd')
@@ -43,16 +43,31 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
                     "and a dirty version of the data available.")
         return False
 
-    df_clean = helps.load_original_data(data, load_dirty=False)
-    df_dirty = helps.load_original_data(data, load_dirty=True)
+    original_df_clean = helps.load_original_data(data, load_dirty=False)
+    original_df_dirty = helps.load_original_data(data, load_dirty=True)
+
+    original_df_clean = original_df_clean.iloc[:10000, :]
+    original_df_dirty = original_df_dirty.iloc[:10000, :]
+
+    cols = data.column_map.keys()
+    if config['train_cleaning_cols']:
+        cols = data.cols_with_errors
 
     result = []
     result.append(config)
     global_pred_y = np.array([])
-    global_clean_y = df_clean.to_numpy().T.flatten()
-    global_dirty_y = df_dirty.to_numpy().T.flatten()
+    global_clean_y = original_df_clean.iloc[:, cols].to_numpy().T.flatten()
+    global_dirty_y = original_df_dirty.iloc[:, cols].to_numpy().T.flatten()
 
-    for label in data.column_map.keys():
+    for label in cols:
+
+        # cast target to str to avoid dtype-issues when cleaning
+        df_clean = original_df_clean.copy()
+        df_clean[label] = df_clean[label].astype('str')
+
+        df_dirty = original_df_dirty.copy()
+        df_dirty[label] = df_dirty[label].astype('str')
+
         r = {'label': label}
         logger.info('\n~~~~~')
         logger.info(f'Investigating RHS {data.column_map[label]} ({label})')
@@ -111,7 +126,6 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
     global_detection = helps.error_detection_performance(global_clean_y,
                                                      pd.Series(global_pred_y),
                                                      global_dirty_y)
-    breakpoint()
     global_cleaning = helps.cleaning_performance(pd.Series(global_clean_y),
                                              pd.Series(global_pred_y),
                                              pd.Series(global_dirty_y))

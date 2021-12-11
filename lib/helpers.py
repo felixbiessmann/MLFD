@@ -45,7 +45,6 @@ def cleaning_performance(y_clean: pd.Series,
         y_pred = y_pred.loc[y_error_position_true]
         y_dirty = y_dirty.loc[y_error_position_true]
 
-
     tp = sum(np.logical_and(y_dirty != y_clean, y_pred == y_clean))
     fp = sum(np.logical_and(y_dirty == y_clean, y_pred != y_clean))
     fn = sum(np.logical_and(y_dirty != y_clean, y_pred != y_clean))
@@ -57,7 +56,6 @@ def cleaning_performance(y_clean: pd.Series,
     p = 0 if (tp + fp) == 0 else tp / (tp + fp)
     r = 0 if (tp + fn) == 0 else tp / (tp + fn)
     f1_score = 0 if (p+r) == 0 else 2 * (p*r)/(p+r)
-
     return f1_score
 
 
@@ -168,11 +166,13 @@ def load_original_data(data, load_dirty=False) -> pd.DataFrame:
     if load_dirty:
         df = pd.read_csv(data.dirty_data_path,
                          sep=data.original_separator,
-                         header=None)
+                         header=None,
+                         dtype=data.dtypes)
     else:
         df = pd.read_csv(data.data_path,
                          sep=data.original_separator,
-                         header=None)
+                         header=None,
+                         dtype=data.dtypes)
     df = df.replace(data.missing_value_token, np.nan)
     return df
 

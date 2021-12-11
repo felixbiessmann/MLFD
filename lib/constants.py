@@ -8,7 +8,8 @@ METANOME_DATA_PATH = f'{root}/MLFD_fd_detection/backend/WEB-INF/classes/inputDat
 class Dataset:
     def __init__(self, title, fd_path, continuous,
                  column_map, original_separator,
-                 missing_value_token, origin, cleaning=False):
+                 missing_value_token, origin, cleaning=False,
+                 cols_with_errors=None, dtypes=None):
         self.title = title
         self.figures_path = f'{root}/figures/{title}/'
         self.results_path = f'{root}/figures/results/{title}/'
@@ -16,14 +17,16 @@ class Dataset:
         self.continuous = continuous
         self.column_map = column_map
         self.random_fd_path = f'{self.results_path}random_fds.p'
-        self.data_path = f'{data_root}/{title}.csv'
-        self.dirty_data_path = f'{data_root}/{title}_dirty.csv'
+        self.data_path = f'https://mlfd-data.s3.eu-central-1.amazonaws.com/data/{title}.csv'
+        self.dirty_data_path = f'https://mlfd-data.s3.eu-central-1.amazonaws.com/data/{title}_dirty.csv'
         self.splits_path = data_root
         self.original_separator = original_separator
         self.missing_value_token = missing_value_token
         self.dep_optimizer_results_path = f'{root}/figures/results/{title}'
         self.cleaning = cleaning
         self._origin = origin
+        self.cols_with_errors=cols_with_errors
+        self.dtypes=dtypes
 
 
 IR = Dataset(title='ir',
@@ -359,6 +362,24 @@ FLIGHTS = Dataset(title='flights',
 HOSPITAL_1k = Dataset(title='hospital_1k',
                       fd_path='',
                       continuous=[],
+                      cols_with_errors=[0, 2, 3, 4, 5, 7, 12],
+                      dtypes={0: "str",
+                              1: "str",
+                              2: "str",
+                              3: "str",
+                              4: "str",
+                              5: "str",
+                              6: "str",
+                              7: "str",
+                              8: "str",
+                              9: "str",
+                              10: "str",
+                              11: "str",
+                              12: "str",
+                              13: "str",
+                              14: "str",
+                              15: "str",
+                              16: "str"},
                       column_map={0: "PrNo",
                                   1: "HospitalName",
                                   2: "Address",
@@ -385,6 +406,24 @@ HOSPITAL_1k = Dataset(title='hospital_1k',
 HOSPITAL_10k = Dataset(title='hospital_10k',
                        fd_path='',
                        continuous=[],
+                       cols_with_errors=[0, 2, 3, 4, 5, 7, 12],
+                       dtypes={0: "str",
+                               1: "str",
+                               2: "str",
+                               3: "str",
+                               4: "str",
+                               5: "str",
+                               6: "str",
+                               7: "str",
+                               8: "str",
+                               9: "str",
+                               10: "str",
+                               11: "str",
+                               12: "str",
+                               13: "str",
+                               14: "str",
+                               15: "str",
+                               16: "str"},
                        column_map={0: "PrNo",
                                    1: "HospitalName",
                                    2: "Address",
@@ -411,6 +450,24 @@ HOSPITAL_10k = Dataset(title='hospital_10k',
 HOSPITAL_100k = Dataset(title='hospital_100k',
                         fd_path='',
                         continuous=[],
+                        cols_with_errors=[0, 2, 3, 4, 5, 7, 12],
+                        dtypes={0: "str",
+                                1: "str",
+                                2: "str",
+                                3: "str",
+                                4: "str",
+                                5: "str",
+                                6: "str",
+                                7: "str",
+                                8: "str",
+                                9: "str",
+                                10: "str",
+                                11: "str",
+                                12: "str",
+                                13: "str",
+                                14: "str",
+                                15: "str",
+                                16: "str"},
                         column_map={0: "PrNo",
                                     1: "HospitalName",
                                     2: "Address",

@@ -47,6 +47,7 @@ def main(args):
 
     plots = {
              'f1_cleaning_detection': plot_f1_cleaning_detection_local,
+             'f1_cleaning': plot_f1_cleaning_local,
              'f1_cleaning_detection_global': plot_f1_cleaning_detection_global,
              'prec_rec_local': plot_prec_rec_local,
              'auc_cleaning_global': plot_auc_cleaning_global,
@@ -113,7 +114,7 @@ def plot_prec_rec_local(data, result_name: str):
     df_dirty = helps.load_original_data(data, load_dirty=True)
 
     results = load_result(Path(f"{data.results_path}{result_name}.p"))
-    local_results = list(filter(lambda x: x.get('label'), results))
+    local_results = [x for x in results if x.get('label') is not None]
     prec, rec = {}, {}
     for r in local_results:
         df_clean_y_true = df_clean.loc[:, r['label']]
@@ -123,8 +124,6 @@ def plot_prec_rec_local(data, result_name: str):
         if imputer.predictor.problem_type in ('multiclass', 'binary'):
             df_probas = imputer.predict(df_dirty, return_probas=True)
 
-            # pu.figure_setup()
-            # fig_size = pu.get_fig_size(10, 4)
             fig = plt.figure(figsize=(10, 4))
             ax = fig.add_subplot(111)
             for i in imputer.predictor.class_labels:
@@ -139,12 +138,6 @@ def plot_prec_rec_local(data, result_name: str):
                          f"{data.column_map[r['label']]}")
             ax.set_axisbelow(True)
             plt.tight_layout()
-            # p = Path(data.figures_path + result_name)
-            # p.mkdir(parents=True, exist_ok=True)
-            # fig.savefig(p + result_name + '.png', dpi=300, tight=True)
-            # print(f'Successfully saved the figure to {data.figures_path}.')
-
-            # plt.title("Precision - Recall Curve")
             plt.show()
 
 
@@ -267,6 +260,42 @@ def plot_f1_cleaning_detection_global(data, *kwargs):
 
     ax.set(xlabel='Timestamp',
            ylabel='Cleaning Performance')
+    return(fig, ax)
+
+
+def plot_f1_cleaning_local(data, result_name: str):
+    results = load_result(Path(f"{data.results_path}{result_name}.p"))
+    local_results = [x for x in results if x.get('label') is not None]
+
+    cleaning_results = [x for x in local_results
+                        if x['n_errors_in_dirty'] > 0]
+    labels = [data.column_map[c['label']] for c in cleaning_results]
+    perf_cleaning = [round(c['error_cleaning'], 2)
+                     for c in cleaning_results]
+
+    global_f1_score = [x['global_error_cleaning'] for x in results
+                       if x.get('global_error_cleaning') is not None][0]
+    print(f'The run has a global f1-score on dataset {data.title} of '
+          f'{round(global_f1_score, 5)}')
+    pu.figure_setup()
+    fig_size = pu.get_fig_size(25, 5)
+    fig = plt.figure(figsize=list(fig_size))
+    ax = fig.add_subplot(111)
+
+    x = np.arange(len(labels))
+    width = 0.35  # the width of the bars
+    rects1 = ax.bar(x, perf_cleaning,
+                    width, label='Cleaning')
+
+    ax.set_ylabel('Cleaning F1-Score')
+    ax.set_title('Performance Cleaning')
+
+    ax.set_xlabel('Columns with Errors')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+
+    ax.bar_label(rects1, padding=3)
+
     return(fig, ax)
 
 

@@ -43,16 +43,18 @@ def train_cleaning_model(df_dirty: pd.DataFrame,
         model_name=checksum,
         input_columns=lhs,
         output_column=label,
-        force_multiclass=kwargs['force_multiclass']
+        force_multiclass=kwargs['force_multiclass'],
+        verbosity=kwargs['verbosity']
     )
 
     try:
         if kwargs.get('force_retrain'):
+            logger.info("Retraining a model as force_retrain is set.")
             raise FileNotFoundError
         imputer = datawig.AutoGluonImputer.load(output_path='./',
                                                 model_name=checksum)
     except FileNotFoundError:
-        logger.info("Didn't find a model to load from the cache.")
+        logger.info("Didn't find a model to load from cache.")
         imputer.fit(train_df=df_dirty,
                     time_limit=kwargs['time_limit'],
                     # preset='best_quality'
