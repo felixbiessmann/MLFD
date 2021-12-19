@@ -1,3 +1,4 @@
+import autogluon.core as ag
 import timeit
 import datetime
 import random
@@ -22,6 +23,12 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
     either an error-detection experiment, or a cleaning experiment.
     """
 
+    gbm_options = {  # non-default hyperparameters for lightGBM
+                     # gradient boosted trees
+                    'num_boost_round': 10,  # number of boosting rounds (controls training time of GBM models)
+                    'num_leaves': ag.space.Int(lower=26, upper=66, default=36),  # number of leaves in trees (integer hyperparameter)
+    }
+
     config = {"random_state": 0,
               "verbosity": 2,
               "precision_threshold": 0.01,
@@ -31,6 +38,16 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
               "replace_nans": False,  # replace values that weren't imputed with NaNs
               "force_retrain": True,  # skip loading ag models by force
               "train_cleaning_cols": True,  # train only on cols that contain errors
+              "n_rows": 1000,
+              "label_count_threshold": 1,
+              "hyperparameters": {
+                  'GBM': gbm_options,
+                },
+              'hyperparameter_tune_kwargs': {  # HPO is not performed unless hyperparameter_tune_kwargs is specified
+                'num_trials': 5,  # try at most 5 different hyperparameter configurations for each type of model
+                'scheduler': 'local',
+                'searcher': 'auto',  # to tune hyperparameters using Bayesian optimization routine with a local scheduler
+                }
               }
 
     logger = logging.getLogger('pfd')
@@ -46,8 +63,8 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
     original_df_clean = helps.load_original_data(data, load_dirty=False)
     original_df_dirty = helps.load_original_data(data, load_dirty=True)
 
-    original_df_clean = original_df_clean.iloc[:10000, :]
-    original_df_dirty = original_df_dirty.iloc[:10000, :]
+    original_df_clean = original_df_clean.iloc[:config['n_rows'], :]
+    original_df_dirty = original_df_dirty.iloc[:config['n_rows'], :]
 
     cols = data.column_map.keys()
     if config['train_cleaning_cols']:
