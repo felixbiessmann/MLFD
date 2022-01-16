@@ -34,20 +34,21 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
               "precision_threshold": 0.01,
               "numerical_confidence_quantile": 0.7,
               "force_multiclass": True,  # prevents regression from happening at all
-              "time_limit": 500,  # how long autogluon trains
+              "time_limit": 45,  # how long autogluon trains
               "replace_nans": False,  # replace values that weren't imputed with NaNs
               "force_retrain": True,  # skip loading ag models by force
               "train_cleaning_cols": True,  # train only on cols that contain errors
-              "n_rows": 1000,
-              "label_count_threshold": 1,
+              "n_rows": 10000,
+              "label_count_threshold": 10,
+              "holdout_frac": 0.15,
               "hyperparameters": {
-                  'GBM': gbm_options,
+                  'GBM': {},
                 },
-              'hyperparameter_tune_kwargs': {  # HPO is not performed unless hyperparameter_tune_kwargs is specified
-                'num_trials': 5,  # try at most 5 different hyperparameter configurations for each type of model
-                'scheduler': 'local',
-                'searcher': 'auto',  # to tune hyperparameters using Bayesian optimization routine with a local scheduler
-                }
+              # 'hyperparameter_tune_kwargs': {  # HPO is not performed unless hyperparameter_tune_kwargs is specified
+              #   'num_trials': 5,  # try at most 5 different hyperparameter configurations for each type of model
+              #   'scheduler': 'local',
+              #   'searcher': 'auto',  # to tune hyperparameters using Bayesian optimization routine with a local scheduler
+              #   }
               }
 
     logger = logging.getLogger('pfd')
@@ -77,7 +78,6 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
     global_dirty_y = original_df_dirty.iloc[:, cols].to_numpy().T.flatten()
 
     for label in cols:
-
         # cast target to str to avoid dtype-issues when cleaning
         df_clean = original_df_clean.copy()
         df_clean[label] = df_clean[label].astype('str')

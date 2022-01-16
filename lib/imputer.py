@@ -45,7 +45,7 @@ def train_cleaning_model(df_dirty: pd.DataFrame,
         output_column=label,
         force_multiclass=kwargs['force_multiclass'],
         verbosity=kwargs['verbosity'],
-        #label_count_threshold=kwargs['label_count_threshold']
+        label_count_threshold=kwargs['label_count_threshold']
     )
 
     try:
@@ -57,9 +57,10 @@ def train_cleaning_model(df_dirty: pd.DataFrame,
     except FileNotFoundError:
         logger.info("Didn't find a model to load from cache.")
         imputer.fit(train_df=df_dirty,
+                    holdout_frac=kwargs.get('holdout_frac', None),
                     time_limit=kwargs['time_limit'],
-                    hyperparameters=kwargs['hyperparameters'],
-                    hyperparameter_tune_kwargs=kwargs['hyperparameter_tune_kwargs'],
+                    hyperparameters=kwargs.get('hyperparameters', None),
+                    hyperparameter_tune_kwargs=kwargs.get('hyperparameter_tune_kwargs', None),
                     # preset='best_quality'
                     )
         imputer.save()
