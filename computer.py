@@ -34,21 +34,21 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
               "precision_threshold": 0.01,
               "numerical_confidence_quantile": 0.7,
               "force_multiclass": True,  # prevents regression from happening at all
-              "time_limit": 45,  # how long autogluon trains
+              "time_limit": 300,  # how long autogluon trains
               "replace_nans": False,  # replace values that weren't imputed with NaNs
               "force_retrain": True,  # skip loading ag models by force
               "train_cleaning_cols": True,  # train only on cols that contain errors
               "n_rows": 10000,
-              "label_count_threshold": 10,
+              "label_count_threshold": 5,
               "holdout_frac": 0.15,
               "hyperparameters": {
-                  'GBM': {},
+                  'GBM': gbm_options,
                 },
-              # 'hyperparameter_tune_kwargs': {  # HPO is not performed unless hyperparameter_tune_kwargs is specified
-              #   'num_trials': 5,  # try at most 5 different hyperparameter configurations for each type of model
-              #   'scheduler': 'local',
-              #   'searcher': 'auto',  # to tune hyperparameters using Bayesian optimization routine with a local scheduler
-              #   }
+              'hyperparameter_tune_kwargs': {  # HPO is not performed unless hyperparameter_tune_kwargs is specified
+                'num_trials': 5,  # try at most 5 different hyperparameter configurations for each type of model
+                'scheduler': 'local',
+                'searcher': 'auto',  # to tune hyperparameters using Bayesian optimization routine with a local scheduler
+                }
               }
 
     logger = logging.getLogger('pfd')
@@ -61,17 +61,18 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
                     "and a dirty version of the data available.")
         return False
 
-    original_df_clean = helps.load_original_data(data, load_dirty=False)
-    original_df_dirty = helps.load_original_data(data, load_dirty=True)
-
-    original_df_clean = original_df_clean.iloc[:config['n_rows'], :]
-    original_df_dirty = original_df_dirty.iloc[:config['n_rows'], :]
-
     cols = data.column_map.keys()
+
+    # only train for columns that contain errors to save time
     if config['train_cleaning_cols']:
         cols = data.cols_with_errors
 
+    original_df_clean = helps.load_original_data(data, load_dirty=False)
+    original_df_dirty = helps.load_original_data(data, load_dirty=True)
+
     result = []
+    original_df_clean = original_df_clean.iloc[:config['n_rows'], :]
+    original_df_dirty = original_df_dirty.iloc[:config['n_rows'], :]
     result.append(config)
     global_pred_y = np.array([])
     global_clean_y = original_df_clean.iloc[:, cols].to_numpy().T.flatten()
@@ -89,7 +90,7 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
         logger.info('\n~~~~~')
         logger.info(f'Investigating RHS {data.column_map[label]} ({label})')
 
-        imputer, r['model_checksum'] = imp.train_cleaning_model(df_dirty,
+        imputer, r['model_checksum'] = imp.train_cleaning_model(df_clean,
                                                                 label,
                                                                 **config)
         logger.info("Trained global imputer with complete LHS.")
