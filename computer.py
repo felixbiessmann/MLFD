@@ -40,15 +40,15 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
               "train_cleaning_cols": True,  # train only on cols that contain errors
               "n_rows": 10000,
               "label_count_threshold": 5,
-              "holdout_frac": 0.15,
-              "hyperparameters": {
-                  'GBM': gbm_options,
-                },
-              'hyperparameter_tune_kwargs': {  # HPO is not performed unless hyperparameter_tune_kwargs is specified
-                'num_trials': 5,  # try at most 5 different hyperparameter configurations for each type of model
-                'scheduler': 'local',
-                'searcher': 'auto',  # to tune hyperparameters using Bayesian optimization routine with a local scheduler
-                }
+              "holdout_frac": 0.1,
+              # "hyperparameters": {
+              #     'GBM': gbm_options,
+              #   },
+              # 'hyperparameter_tune_kwargs': {  # HPO is not performed unless hyperparameter_tune_kwargs is specified
+              #   'num_trials': 5,  # try at most 5 different hyperparameter configurations for each type of model
+              #   'scheduler': 'local',
+              #   'searcher': 'auto',  # to tune hyperparameters using Bayesian optimization routine with a local scheduler
+              #   }
               }
 
     logger = logging.getLogger('pfd')
@@ -70,9 +70,16 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
     original_df_clean = helps.load_original_data(data, load_dirty=False)
     original_df_dirty = helps.load_original_data(data, load_dirty=True)
 
+    original_df_clean = helps.preprocess_data(original_df_clean,
+                                              n_rows=config.get('n_rows'),
+                                              cast_to_string=False,
+                                              cols=None)
+    original_df_dirty = helps.preprocess_data(original_df_dirty,
+                                              n_rows=config.get('n_rows'),
+                                              cast_to_string=False,
+                                              cols=None)
+
     result = []
-    original_df_clean = original_df_clean.iloc[:config['n_rows'], :]
-    original_df_dirty = original_df_dirty.iloc[:config['n_rows'], :]
     result.append(config)
     global_pred_y = np.array([])
     global_clean_y = original_df_clean.iloc[:, cols].to_numpy().T.flatten()
@@ -86,11 +93,14 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
         df_dirty = original_df_dirty.copy()
         df_dirty[label] = df_dirty[label].astype('str')
 
+        no_error_rows = df_clean[label].fillna('') == df_dirty[label].fillna('')
+        df_dirty_train_subset = df_dirty[no_error_rows]
+
         r = {'label': label}
         logger.info('\n~~~~~')
         logger.info(f'Investigating RHS {data.column_map[label]} ({label})')
 
-        imputer, r['model_checksum'] = imp.train_cleaning_model(df_clean,
+        imputer, r['model_checksum'] = imp.train_cleaning_model(df_dirty_train_subset,
                                                                 label,
                                                                 **config)
         logger.info("Trained global imputer with complete LHS.")
@@ -102,21 +112,20 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
         df_dirty_y_true = df_dirty.loc[:, label].astype(str)
         df_clean_y_true = df_clean.loc[:, label].astype(str)
 
+        error_positions = df_clean_y_true.fillna('') != df_dirty_y_true.fillna('')
+        n_errors = sum(error_positions)
+
         logger.debug("Predicting values.")
         probas = imputer.predict(df_dirty,
                                  precision_threshold=config['precision_threshold'],
                                  return_probas=True)
 
         se_predicted = imp.make_cleaning_prediction(df_dirty,
-            probas,
-            label)
+                                                    probas,
+                                                    label)
 
         se_predicted = se_predicted.astype(str)
 
-        # count erorrs in the dirty dataset
-        error_positions = df_clean_y_true.fillna('') != df_dirty_y_true.fillna('')
-
-        n_errors = sum(error_positions)
         tp = sum(df_clean[label][error_positions].astype(str) == se_predicted[error_positions])
         r['n_errors_in_dirty'] = n_errors
 

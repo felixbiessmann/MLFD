@@ -10,6 +10,28 @@ from autogluon.tabular import TabularPredictor
 from sklearn.model_selection import train_test_split
 
 
+def preprocess_data(df,
+                    n_rows: int = None,
+                    cast_to_string: bool = False,
+                    cols: List[int] = None):
+    """
+    Preprocesses a dataframe as specified in the parameters of the function.
+    At some point, this sould be refactored and included into AutoGluon's
+    pipeline.
+
+    n_rows: Integer specifying a slice from [0:n_rows] of rows to be returned.
+    cast_to_string: Bool, cast the whole dataframe to string if True.
+    cols: List of integers, used to subset the dataframe when given.
+    """
+    if cols is not None:
+        df = df.iloc[:, cols]
+    if n_rows is not None:
+        df = df.iloc[:n_rows, :]
+    if cast_to_string:
+        df = df.iloc[:, :].astype('str')
+    return df
+
+
 def cleaning_performance(y_clean: pd.Series,
                          y_pred: pd.Series,
                          y_dirty: pd.Series,
