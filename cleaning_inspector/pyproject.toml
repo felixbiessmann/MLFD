@@ -5,9 +5,11 @@ description = "Utility to evaluate and inspect a data cleaning application."
 authors = ["Philipp Jung <philippjung@posteo.de>"]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4.0"
+python = "3.8.12"
 numpy = "^1.22.1"
 pandas = "^1.4.0"
+scikit-learn = "^1.0.2"
+jupyterlab = "^3.2.8"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
