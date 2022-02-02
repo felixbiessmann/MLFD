@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "cleaning_inspector"
+version = "0.1.0"
+description = "Utility to evaluate and inspect a data cleaning application."
+authors = ["Philipp Jung <philippjung@posteo.de>"]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4.0"
+numpy = "^1.22.1"
+pandas = "^1.4.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -85,7 +85,7 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
     global_clean_y = original_df_clean.iloc[:, cols].to_numpy().T.flatten()
     global_dirty_y = original_df_dirty.iloc[:, cols].to_numpy().T.flatten()
 
-    for label in cols:
+    for label in [5]:
         # cast target to str to avoid dtype-issues when cleaning
         df_clean = original_df_clean.copy()
         df_clean[label] = df_clean[label].astype('str')
@@ -125,6 +125,7 @@ def clean_data(data: c.Dataset, save=True, *args, **kwargs):
                                                     label)
 
         se_predicted = se_predicted.astype(str)
+        breakpoint()
 
         tp = sum(df_clean[label][error_positions].astype(str) == se_predicted[error_positions])
         r['n_errors_in_dirty'] = n_errors
