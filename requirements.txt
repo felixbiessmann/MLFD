@@ -74,7 +74,7 @@ opencv-python==4.5.5.62
 openml==0.12.2
 packaging==21.3
 pandas==1.3.5
-paramiko==2.9.2
+paramiko==2.10.1
 partd==1.2.0
 pathy==0.6.1
 -e git+ssh://git@github.com/felixbiessmann/MLFD.git@8495a90f9140ebd575fd0de3a002107d394c521d#egg=pfd
