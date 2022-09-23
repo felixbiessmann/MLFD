@@ -83,7 +83,7 @@ plotly==5.5.0
 pluggy==1.0.0
 portalocker==2.3.2
 preshed==3.0.6
-protobuf==3.19.3
+protobuf==3.19.5
 psutil==5.8.0
 py==1.11.0
 pyarrow==6.0.1
